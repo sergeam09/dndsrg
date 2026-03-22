@@ -267,9 +267,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <button class="hbtn dm-only" onclick="openAddToken()" title="Añadir token">＋</button>
 
   <!-- Menú desplegable para opciones secundarias -->
-  <div style="position:relative;z-index:300">
+  <div style="position:relative">
     <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" title="Más opciones">☰</button>
-    <div id="dropdown_menu" style="display:none;position:absolute;top:110%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:190px;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.5);overflow:hidden">
+    <div id="dropdown_menu" style="display:none;position:fixed;top:42px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:190px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
       <div class="drop-item" id="dmi_fog1"  onclick="clearFog();closeMenu()">☀ Revelar todo el mapa</div>
       <div class="drop-item" id="dmi_fog2"  onclick="fillFog();closeMenu()">🌑 Cubrir todo el mapa</div>
       <div class="drop-item" id="dmi_view"  onclick="togglePlayerView();closeMenu()" id="mi_playerview">👁 Vista jugador</div>
@@ -1457,10 +1457,18 @@ window.toggleMenu=function(e){
   if(e) e.stopPropagation();
   menuOpen=!menuOpen;
   const m=document.getElementById('dropdown_menu');
-  if(!m) return;
-  m.style.display=menuOpen?'block':'none';
   const btn=document.getElementById('menu_btn');
-  if(btn) btn.classList.toggle('active', menuOpen);
+  if(!m||!btn) return;
+  if(menuOpen){
+    // Position below the button using fixed coords
+    const rect=btn.getBoundingClientRect();
+    m.style.left=rect.left+'px';
+    m.style.top=(rect.bottom+4)+'px';
+    m.style.display='block';
+  } else {
+    m.style.display='none';
+  }
+  btn.classList.toggle('active', menuOpen);
 };
 
 window.closeMenu=function(){
