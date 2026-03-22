@@ -268,12 +268,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 
   <!-- Menú desplegable para opciones secundarias -->
   <div style="position:relative">
-    <button class="hbtn" onclick="toggleMenu()" id="menu_btn" title="Más opciones">☰</button>
-    <div id="dropdown_menu" style="display:none;position:absolute;top:110%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:180px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.5)">
-      <div class="drop-item dm-only" onclick="clearFog();closeMenu()">☀ Revelar todo el mapa</div>
-      <div class="drop-item dm-only" onclick="fillFog();closeMenu()">🌑 Cubrir todo el mapa</div>
-      <div class="drop-item dm-only" onclick="togglePlayerView();closeMenu()" id="mi_playerview">👁 Vista jugador</div>
-      <div class="drop-divider dm-only"></div>
+    <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" title="Más opciones">☰</button>
+    <div id="dropdown_menu" style="display:none;position:absolute;top:110%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:190px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.5);overflow:hidden">
+      <div class="drop-item" id="dmi_fog1"  onclick="clearFog();closeMenu()">☀ Revelar todo el mapa</div>
+      <div class="drop-item" id="dmi_fog2"  onclick="fillFog();closeMenu()">🌑 Cubrir todo el mapa</div>
+      <div class="drop-item" id="dmi_view"  onclick="togglePlayerView();closeMenu()" id="mi_playerview">👁 Vista jugador</div>
+      <div class="drop-divider" id="dmi_div"></div>
       <div class="drop-item" onclick="resetView();closeMenu()">⌂ Centrar vista</div>
       <div class="drop-item" onclick="copyLink();closeMenu()">🔗 Copiar link de sala</div>
       <div class="drop-item danger-item" onclick="confirmLeave();closeMenu()">✕ Salir de la sala</div>
@@ -577,23 +577,24 @@ function enter(){
 }
 
 function applyRole(){
-  // Show/hide DM controls
+  // Show/hide DM-only header buttons
   document.querySelectorAll('.dm-only').forEach(el=>{
-    el.style.display=isDM?'':'none';
+    el.style.display=isDM?'inline-block':'none';
+  });
+
+  // Show/hide DM-only dropdown items
+  ['dmi_fog1','dmi_fog2','dmi_view','dmi_div'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el) el.style.display=isDM?(id==='dmi_div'?'block':'block'):'none';
   });
 
   // Role badge
   const badge=document.getElementById('role_badge');
-  if(isDM){
-    badge.textContent='🎭 DM';
-    badge.className='role-dm';
-  } else {
-    badge.textContent='👤 Jugador';
-    badge.className='role-player';
+  if(badge){
+    if(isDM){ badge.textContent='🎭 DM'; badge.className='role-dm'; }
+    else     { badge.textContent='👤 Jugador'; badge.className='role-player'; }
   }
 
-  // Players can't drag tokens they don't own (handled in mdown)
-  // Players start in player view mode (opaque fog)
   if(!isDM) playerViewMode=true;
 }
 
@@ -1334,20 +1335,33 @@ function appendMsg(msg){
 }
 
 // ── DROPDOWN MENU ──────────────────────────────────────────
-window.toggleMenu=function(){
+let menuOpen=false;
+
+window.toggleMenu=function(e){
+  if(e) e.stopPropagation();
+  menuOpen=!menuOpen;
   const m=document.getElementById('dropdown_menu');
-  m.style.display=m.style.display==='none'?'block':'none';
+  if(!m) return;
+  m.style.display=menuOpen?'block':'none';
+  const btn=document.getElementById('menu_btn');
+  if(btn) btn.classList.toggle('active', menuOpen);
 };
+
 window.closeMenu=function(){
+  menuOpen=false;
   const m=document.getElementById('dropdown_menu');
   if(m) m.style.display='none';
+  const btn=document.getElementById('menu_btn');
+  if(btn) btn.classList.remove('active');
 };
-// Close menu when clicking outside
+
+// Close when clicking outside
 document.addEventListener('click',function(e){
+  if(!menuOpen) return;
   const btn=document.getElementById('menu_btn');
   const menu=document.getElementById('dropdown_menu');
-  if(menu&&btn&&!btn.contains(e.target)&&!menu.contains(e.target)){
-    menu.style.display='none';
+  if(btn&&menu&&!btn.contains(e.target)&&!menu.contains(e.target)){
+    closeMenu();
   }
 });
 
