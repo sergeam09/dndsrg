@@ -84,19 +84,30 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .crow{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
 
 /* LOBBY */
-#lobby{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center}
-#lcard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:28px;width:360px;max-width:94vw;text-align:center}
-#lcard h1{font-size:1.7rem;color:var(--gold);letter-spacing:4px;margin-bottom:4px}
-#lcard p{color:var(--text3);font-size:.82rem;margin-bottom:20px}
-.linput{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:9px 12px;font-family:var(--font);font-size:.88rem;margin-bottom:8px;text-align:center}
+#lobby{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+#lcard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:420px;max-width:100%;overflow:hidden}
+.l-header{padding:24px 24px 16px;text-align:center;border-bottom:1px solid var(--border)}
+.l-header h1{font-size:1.6rem;color:var(--gold);letter-spacing:4px;margin-bottom:4px}
+.l-header p{color:var(--text3);font-size:.8rem}
+.l-body{display:grid;grid-template-columns:1fr 1fr;min-height:280px}
+.l-panel{padding:20px 18px;display:flex;flex-direction:column;gap:10px}
+.l-panel:first-child{border-right:1px solid var(--border)}
+.l-panel-title{font-size:.68rem;letter-spacing:2px;color:var(--gold2);text-transform:uppercase;font-family:var(--font);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.l-panel-title span{font-size:1rem}
+.linput{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:8px 10px;font-family:var(--font);font-size:.85rem}
 .linput:focus{outline:none;border-color:var(--gold)}
-.ldiv{display:flex;align-items:center;gap:8px;margin:12px 0;color:var(--text3);font-size:.75rem}
-.ldiv::before,.ldiv::after{content:'';flex:1;height:1px;background:var(--border)}
-.blg{width:100%;padding:10px;background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.88rem;letter-spacing:1px;margin-bottom:7px;transition:all .15s}
+.blg{width:100%;padding:9px;background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.82rem;letter-spacing:1px;transition:all .15s;margin-top:auto}
 .blg:hover{background:rgba(200,168,75,.25)}
-.blg.sec{background:var(--bg3);border-color:var(--border);color:var(--text2)}
-.blg.sec:hover{border-color:var(--gold);color:var(--gold)}
-#lerr{color:#e74c3c;font-size:.75rem;margin-top:6px;display:none}
+.blg.blue{background:rgba(41,128,185,.15);border-color:#5bb3e8;color:#5bb3e8}
+.blg.blue:hover{background:rgba(41,128,185,.25)}
+.l-hint{font-size:.7rem;color:var(--text3);line-height:1.4;margin-top:-4px}
+.l-footer{padding:10px 18px;border-top:1px solid var(--border);background:var(--bg3)}
+#lerr{color:#e74c3c;font-size:.75rem;text-align:center;display:none;padding:6px}
+@media(max-width:480px){
+  .l-body{grid-template-columns:1fr}
+  .l-panel:first-child{border-right:none;border-bottom:1px solid var(--border)}
+  .l-header h1{font-size:1.3rem}
+}
 
 /* ROLES */
 .dm-only { display:none } /* hidden until isDM confirmed */
@@ -119,7 +130,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   z-index:10;
   letter-spacing:1px;
 }
-#tool_ind{position:absolute;bottom:10px;left:10px;background:rgba(13,15,20,.88);border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-size:.72rem;color:var(--text2);pointer-events:none;letter-spacing:1px}
+/* Room code bar */
+#room_bar{position:absolute;bottom:0;left:0;right:0;background:rgba(13,15,20,.9);border-top:1px solid rgba(200,168,75,.2);padding:5px 12px;font-size:.7rem;color:var(--text3);display:none;align-items:center;gap:8px;z-index:10;pointer-events:none}
+#room_bar.show{display:flex}
+#room_bar .rcode{font-family:monospace;color:var(--gold2);font-size:.85rem;font-weight:bold;letter-spacing:3px;cursor:pointer;pointer-events:all}
+#room_bar .rcode:hover{color:var(--gold)}
+
+/* TOOL INDICATOR */
+#tool_ind{position:absolute;bottom:36px;left:10px;background:rgba(13,15,20,.88);border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-size:.72rem;color:var(--text2);pointer-events:none;letter-spacing:1px}
 
 /* MEASURE TOOLTIP */
 #mtip{position:absolute;pointer-events:none;background:rgba(13,15,20,.92);border:1px solid var(--gold);border-radius:4px;padding:2px 8px;font-size:.72rem;color:var(--gold2);display:none;white-space:nowrap}
@@ -138,6 +156,40 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── MOBILE ─────────────────────────────────────── */
+@media (max-width:640px){
+  #header{padding:4px 6px;gap:4px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+  #header::-webkit-scrollbar{display:none}
+  #header h1{display:none}
+  .hbtn{font-size:.7rem;padding:4px 7px;flex-shrink:0}
+  #room_info{flex-shrink:0}
+  #sidebar{width:180px}
+}
+@media (max-width:480px){
+  #sidebar{display:none}
+  #sidebar.show{display:flex;position:absolute;right:0;top:0;bottom:0;z-index:50;box-shadow:-4px 0 20px rgba(0,0,0,.6)}
+}
+/* Sidebar toggle button (mobile) */
+#sb_toggle{
+  display:none;
+  position:absolute;
+  bottom:70px;right:0;
+  background:var(--bg2);border:1px solid var(--border);border-right:none;
+  border-radius:6px 0 0 6px;padding:10px 5px;cursor:pointer;z-index:40;
+  color:var(--text2);font-size:.8rem;writing-mode:vertical-rl;
+  -webkit-tap-highlight-color:transparent;
+}
+@media (max-width:480px){#sb_toggle{display:block}}
+
+/* Bigger tap targets on mobile */
+@media (max-width:768px){
+  .dbtn{min-height:38px;font-size:.78rem}
+  .tok-item{min-height:34px}
+  .init-row{min-height:30px}
+  #cinput{font-size:16px} /* prevent iOS zoom */
+  .hbtn{min-height:30px}
+}
 </style>
 </head>
 <body>
@@ -145,17 +197,46 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 <!-- LOBBY -->
 <div id="lobby">
   <div id="lcard">
-    <h1>⚔ EL CADEJO</h1>
-    <p>Mesa de juego virtual · D&D 5e</p>
-    <input class="linput" id="lname" placeholder="Tu nombre" maxlength="24">
+    <div class="l-header">
+      <h1>⚔ EL CADEJO</h1>
+      <p>Mesa de juego virtual para D&D 5e</p>
+    </div>
+    <div class="l-body">
 
-    <button class="blg" onclick="createRoom()">🎭 Crear sala como DM</button>
+      <!-- Panel DM -->
+      <div class="l-panel">
+        <div class="l-panel-title"><span>🎭</span> Dungeon Master</div>
+        <div>
+          <label style="font-size:.7rem;color:var(--text3)">Tu nombre</label>
+          <input class="linput" id="dm_name" placeholder="Nombre del DM" maxlength="24">
+        </div>
+        <p class="l-hint">Crea una sala nueva y obtén un código para compartir con tus jugadores.</p>
+        <button class="blg" onclick="createRoom()">✦ Crear sala</button>
+      </div>
 
-    <div class="ldiv">¿tienes un link o código?</div>
+      <!-- Panel Jugador -->
+      <div class="l-panel">
+        <div class="l-panel-title"><span>👤</span> Jugador</div>
+        <div>
+          <label style="font-size:.7rem;color:var(--text3)">Tu nombre</label>
+          <input class="linput" id="player_name" placeholder="Tu personaje" maxlength="24">
+        </div>
+        <div>
+          <label style="font-size:.7rem;color:var(--text3)">Código de sala</label>
+          <input class="linput" id="lcode" placeholder="Ej: DRAGON42" maxlength="10"
+            oninput="this.value=this.value.toUpperCase()"
+            style="text-align:center;letter-spacing:3px;font-weight:bold">
+        </div>
+        <button class="blg blue" onclick="joinRoom()">→ Unirse a la partida</button>
+      </div>
 
-    <input class="linput" id="lcode" placeholder="Código de sala (ej: DRAGON42)" maxlength="10" oninput="this.value=this.value.toUpperCase()">
-    <button class="blg sec" onclick="joinRoom()">👤 Unirse como jugador</button>
-    <div id="lerr"></div>
+    </div>
+    <div class="l-footer">
+      <div id="lerr"></div>
+      <p style="font-size:.68rem;color:var(--text3);text-align:center">
+        Si tienes un link de invitación, ábrelo directamente — el código se rellenará solo.
+      </p>
+    </div>
   </div>
 </div>
 
@@ -198,6 +279,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <label>Tamaño pincel</label>
       <input type="range" id="brush_range" min="1" max="8" value="3" oninput="fogBrush=parseInt(this.value);document.getElementById('brush_val').textContent=this.value" style="width:80px">
       <span id="brush_val">3</span>
+    </div>
+    <div id="sb_toggle" onclick="toggleSidebar()">≡<br>Menú</div>
+    <!-- Room code bar -->
+    <div id="room_bar">
+      <span>🎭 Sala:</span>
+      <span class="rcode" onclick="copyLink()" title="Copiar link de invitación" id="room_bar_code">—</span>
+      <span>· Toca para copiar el link</span>
     </div>
   </div>
 
@@ -386,42 +474,83 @@ function genCode(){
   return w[Math.floor(Math.random()*w.length)]+Math.floor(Math.random()*90+10);
 }
 
+function lerr(m){
+  const e=document.getElementById('lerr');
+  e.textContent=m; e.style.display='block';
+  setTimeout(()=>e.style.display='none', 4000);
+}
+
 window.createRoom = async function(){
-  const name=document.getElementById('lname').value.trim();
-  if(!name){lerr('Escribe tu nombre');return;}
+  const name=document.getElementById('dm_name').value.trim();
+  if(!name){lerr('Escribe tu nombre como DM');return;}
   myName=name; isDM=true; room=genCode();
-  await set(ref(db,'rooms/'+room),{created:serverTimestamp(),dmId:myId,mapUrl:'',cellSize:70,fogW:0,fogH:0});
+
+  // Save DM identity in localStorage so they can reclaim the room
+  try { localStorage.setItem('vtt_dm_'+room, myId); } catch(e){}
+
+  await set(ref(db,'rooms/'+room),{
+    created:serverTimestamp(),
+    dmId:myId,
+    dmName:myName,
+    mapUrl:'',
+    cellSize:70,
+    fogW:0, fogH:0
+  });
   enter();
 };
 
 window.joinRoom = async function(){
-  const name=document.getElementById('lname').value.trim();
+  const name=document.getElementById('player_name').value.trim();
   const code=document.getElementById('lcode').value.trim().toUpperCase();
-  if(!name){lerr('Escribe tu nombre');return;}
+  if(!name){lerr('Escribe tu nombre de personaje');return;}
   if(!code){lerr('Escribe el código de sala');return;}
+
+  // Check room exists
   const snap=await get(ref(db,'rooms/'+code));
-  if(!snap.exists()){lerr('Sala "'+code+'" no encontrada');return;}
+  if(!snap.exists()){lerr('Sala "'+code+'" no encontrada. Verifica el código.');return;}
+
+  const roomData=snap.val();
+
+  // DM protection: check if someone is trying to join as DM
+  // (joinRoom is always player — only createRoom gives DM role)
   myName=name; room=code; isDM=false;
+
+  // Check if this user was previously the DM (reclaim)
+  let savedDmId=null;
+  try { savedDmId=localStorage.getItem('vtt_dm_'+code); } catch(e){}
+  if(savedDmId && savedDmId===roomData.dmId){
+    // Same browser that created the room — restore DM
+    myId=savedDmId;
+    isDM=true;
+    toast('🎭 Sala retomada como DM');
+  }
+
   enter();
 };
 
-function lerr(m){const e=document.getElementById('lerr');e.textContent=m;e.style.display='block';}
-
 // Auto-fill from URL
 const qp=new URLSearchParams(location.search);
-if(qp.get('room')) document.getElementById('lcode').value=qp.get('room').toUpperCase();
+if(qp.get('room')){document.getElementById('lcode').value=qp.get('room').toUpperCase();setTimeout(()=>{const pn=document.getElementById('player_name');if(pn)pn.focus();},300);}
 
 function enter(){
   document.getElementById('lobby').style.display='none';
   document.getElementById('header').style.display='flex';
   document.getElementById('main').style.display='flex';
   document.getElementById('room_code_display').textContent=room;
+  // Show room bar
+  const rb=document.getElementById('room_bar');
+  document.getElementById('room_bar_code').textContent=room;
+  rb.classList.add('show');
   applyRole();
   initCanvas();
   subscribe();
   set(r('players/'+myId),{name:myName,isDM,joined:serverTimestamp()});
   sysMsg(myName+' entró'+(isDM?' como DM 🎭':' como jugador 👤'));
-  toast('Sala '+room+(isDM?' — eres el DM':' — conectado como jugador'));
+  if(isDM){
+    toast('🎭 Sala '+room+' creada — toca el código para copiar el link');
+  } else {
+    toast('👤 Conectado a sala '+room+' como '+myName);
+  }
 }
 
 function applyRole(){
@@ -480,15 +609,25 @@ function initCanvas(){
   cx=cv.getContext('2d');
   resize();
   window.addEventListener('resize',resize);
+
+  // Mouse
   cv.addEventListener('mousedown',mdown);
   cv.addEventListener('mousemove',mmove);
   cv.addEventListener('mouseup',mup);
   cv.addEventListener('dblclick',mdbl);
   cv.addEventListener('wheel',mwheel,{passive:false});
-  cv.addEventListener('contextmenu',e=>{e.preventDefault();const p=cvPos(e);const h=hitTok(p);if(h)openEdit(h);});
-  cv.addEventListener('touchstart',e=>{e.preventDefault();mdown(e.touches[0]);},{passive:false});
-  cv.addEventListener('touchmove', e=>{e.preventDefault();mmove(e.touches[0]);},{passive:false});
-  cv.addEventListener('touchend',  e=>{e.preventDefault();mup(e.changedTouches[0]);},{passive:false});
+  cv.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    const p=cvPos(e); const h=hitTok(p);
+    if(h) openEdit(h);
+  });
+
+  // Touch — full replacement, not wrapper
+  cv.addEventListener('touchstart', tstart, {passive:false});
+  cv.addEventListener('touchmove',  tmove,  {passive:false});
+  cv.addEventListener('touchend',   tend,   {passive:false});
+  cv.addEventListener('touchcancel',tend,   {passive:false});
+
   draw();
 }
 
@@ -496,6 +635,150 @@ function resize(){
   const w=document.getElementById('cwrap');
   cv.width=w.clientWidth; cv.height=w.clientHeight; draw();
 }
+
+// Touch state
+let touch1=null, touch2=null;      // active touches
+let pinchDist0=0;                   // initial pinch distance
+let pinchScale0=1, pinchOx0=0, pinchOy0=0; // initial values for pinch
+let tapTimer=null;                  // long-press timer
+let tapMoved=false;
+
+function touchPos(t){
+  const rc=cv.getBoundingClientRect();
+  return {
+    cx: t.clientX-rc.left,
+    cy: t.clientY-rc.top,
+    x:  (t.clientX-rc.left-ox)/scale,
+    y:  (t.clientY-rc.top -oy)/scale
+  };
+}
+
+function pinchMid(t1,t2){
+  const rc=cv.getBoundingClientRect();
+  return {
+    cx: ((t1.clientX+t2.clientX)/2)-rc.left,
+    cy: ((t1.clientY+t2.clientY)/2)-rc.top
+  };
+}
+
+function pinchDist(t1,t2){
+  const dx=t1.clientX-t2.clientX, dy=t1.clientY-t2.clientY;
+  return Math.sqrt(dx*dx+dy*dy);
+}
+
+function tstart(e){
+  e.preventDefault();
+  const touches=e.touches;
+
+  if(touches.length===1){
+    touch1=touches[0];
+    touch2=null;
+    tapMoved=false;
+    const p=touchPos(touch1);
+    const cl={c:Math.floor(p.x/CELL),r:Math.floor(p.y/CELL)};
+
+    if(tool==='fog'&&isDM)  { brushFog(cl,true); return; }
+    if(tool==='fogadd'&&isDM){ brushFog(cl,false); return; }
+    if(tool==='measure')    { ms={c:cl.c,r:cl.r}; me=null; return; }
+
+    // Check token hit
+    const h=hitTok({x:p.x,y:p.y});
+    if(h){
+      const tok=tokens[h];
+      const canMove=isDM||(tok&&tok.addedBy===myName);
+      selTok=h;
+      if(canMove){
+        dragging=true; dragId=h;
+        dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
+      }
+      // Long press = edit
+      tapTimer=setTimeout(()=>{
+        if(!tapMoved){ dragging=false; dragId=null; openEdit(h); }
+      }, 600);
+      draw(); renderToks();
+    } else {
+      selTok=null;
+      panning=true; panX=touch1.clientX-ox; panY=touch1.clientY-oy;
+      draw(); renderToks();
+    }
+
+  } else if(touches.length===2){
+    // Pinch start — cancel any drag/pan
+    dragging=false; dragId=null; panning=false;
+    clearTimeout(tapTimer);
+    touch1=touches[0]; touch2=touches[1];
+    pinchDist0=pinchDist(touch1,touch2);
+    pinchScale0=scale; pinchOx0=ox; pinchOy0=oy;
+  }
+}
+
+function tmove(e){
+  e.preventDefault();
+  const touches=e.touches;
+
+  if(touches.length===2 && touch1 && touch2){
+    // Pinch zoom
+    const t1=touches[0], t2=touches[1];
+    const dist=pinchDist(t1,t2);
+    const ratio=dist/pinchDist0;
+    const newScale=Math.max(0.15,Math.min(5,pinchScale0*ratio));
+    const mid=pinchMid(t1,t2);
+    // Scale around midpoint
+    ox=mid.cx-(mid.cx-pinchOx0)*(newScale/pinchScale0);
+    oy=mid.cy-(mid.cy-pinchOy0)*(newScale/pinchScale0);
+    scale=newScale;
+    draw();
+    return;
+  }
+
+  if(touches.length===1 && touch1){
+    const t=touches[0];
+    const p=touchPos(t);
+    const cl={c:Math.floor(p.x/CELL),r:Math.floor(p.y/CELL)};
+
+    // Check if moved enough to cancel long-press
+    const dx=t.clientX-touch1.clientX, dy=t.clientY-touch1.clientY;
+    if(Math.sqrt(dx*dx+dy*dy)>10){ tapMoved=true; clearTimeout(tapTimer); }
+
+    if(dragging&&dragId){
+      const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
+      const nr=Math.max(0,Math.floor((p.y-doy)/CELL));
+      tokens[dragId].x=nc; tokens[dragId].y=nr;
+      draw();
+    } else if(panning){
+      ox=t.clientX-panX; oy=t.clientY-panY; draw();
+    } else if(tool==='fog'&&isDM){
+      brushFog(cl,true);
+    } else if(tool==='fogadd'&&isDM){
+      brushFog(cl,false);
+    } else if(tool==='measure'&&ms){
+      me={c:cl.c,r:cl.r};
+      const dc=me.c-ms.c, dr=me.r-ms.r;
+      const dist=Math.round(Math.sqrt(dc*dc+dr*dr)*5);
+      const tt=document.getElementById('mtip');
+      const rc=cv.getBoundingClientRect();
+      tt.style.display='block';
+      tt.style.left=(t.clientX-rc.left+14)+'px';
+      tt.style.top=(t.clientY-rc.top-26)+'px';
+      tt.textContent=dist+' ft. ('+Math.round(dist/5)+' celd.)';
+      draw();
+    }
+  }
+}
+
+function tend(e){
+  e.preventDefault();
+  clearTimeout(tapTimer);
+
+  if(dragging&&dragId){
+    update(r('tokens/'+dragId),{x:tokens[dragId].x,y:tokens[dragId].y});
+  }
+  dragging=false; dragId=null; panning=false;
+  touch1=null; touch2=null;
+  document.getElementById('mtip').style.display='none';
+}
+
+// ── MOUSE HANDLERS (desktop) ───────────────────────────────
 
 // ── DRAW ───────────────────────────────────────────────────
 function draw(){
@@ -614,7 +897,8 @@ function drawMeasure(){
   });
 }
 
-// ── INPUT ──────────────────────────────────────────────────
+// ── MOUSE HANDLERS (desktop) ───────────────────────────────
+// ── INPUT SHARED ──────────────────────────────────────────
 function cvPos(e){
   const rc=cv.getBoundingClientRect();
   return {x:(e.clientX-rc.left-ox)/scale, y:(e.clientY-rc.top-oy)/scale};
@@ -1071,6 +1355,11 @@ window.toggleSec=function(id){
   if(ar)ar.textContent=hidden?'▾':'▸';
 };
 
+window.toggleSidebar=function(){
+  const sb=document.getElementById('sidebar');
+  sb.classList.toggle('show');
+};
+
 // ── LINK ───────────────────────────────────────────────────
 window.copyLink=function(){
   const link=location.origin+location.pathname+'?room='+room;
@@ -1084,7 +1373,7 @@ document.addEventListener('keydown',e=>{
 });
 
 // Check URL on init
-if(qp.get('room')) document.getElementById('lcode').value=qp.get('room').toUpperCase();
+if(qp.get('room')){document.getElementById('lcode').value=qp.get('room').toUpperCase();setTimeout(()=>{const pn=document.getElementById('player_name');if(pn)pn.focus();},300);}
 
 </script>
 </body>
