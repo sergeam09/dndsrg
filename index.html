@@ -138,29 +138,28 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .crow{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
 
 /* LOBBY */
-#lobby{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
-#lcard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:420px;max-width:100%;overflow:hidden}
-.l-header{padding:24px 24px 16px;text-align:center;border-bottom:1px solid var(--border)}
-.l-header h1{font-size:1.6rem;color:var(--gold);letter-spacing:4px;margin-bottom:4px}
-.l-header p{color:var(--text3);font-size:.8rem}
-.l-body{display:grid;grid-template-columns:1fr 1fr;min-height:280px}
-.l-panel{padding:20px 18px;display:flex;flex-direction:column;gap:10px}
-.l-panel:first-child{border-right:1px solid var(--border)}
-.l-panel-title{font-size:.68rem;letter-spacing:2px;color:var(--gold2);text-transform:uppercase;font-family:var(--font);margin-bottom:2px;display:flex;align-items:center;gap:6px}
-.l-panel-title span{font-size:1rem}
-.linput{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:8px 10px;font-family:var(--font);font-size:.85rem}
+#lobby{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+#lcard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:680px;max-width:100%;overflow:hidden}
+.l-header{padding:20px 24px 14px;text-align:center;border-bottom:1px solid var(--border)}
+.l-header h1{font-size:1.5rem;color:var(--gold);letter-spacing:4px;margin-bottom:4px}
+.l-header p{color:var(--text3);font-size:.78rem}
+.l-body{display:grid;grid-template-columns:1fr auto 1fr}
+.l-panel{padding:16px 18px;display:flex;flex-direction:column;gap:7px}
+.l-panel-title{font-size:.65rem;letter-spacing:2px;color:var(--gold2);text-transform:uppercase;font-family:var(--font);margin-bottom:2px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);padding-bottom:6px}
+.l-panel-title span{font-size:.9rem}
+.linput{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:7px 10px;font-family:var(--font);font-size:.83rem}
 .linput:focus{outline:none;border-color:var(--gold)}
-.blg{width:100%;padding:9px;background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.82rem;letter-spacing:1px;transition:all .15s;margin-top:auto}
+.blg{width:100%;padding:8px;background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.8rem;letter-spacing:1px;transition:all .15s}
 .blg:hover{background:rgba(200,168,75,.25)}
 .blg.blue{background:rgba(41,128,185,.15);border-color:#5bb3e8;color:#5bb3e8}
 .blg.blue:hover{background:rgba(41,128,185,.25)}
-.l-hint{font-size:.7rem;color:var(--text3);line-height:1.4;margin-top:-4px}
+.l-hint{font-size:.68rem;color:var(--text3);line-height:1.4}
 .l-footer{padding:10px 18px;border-top:1px solid var(--border);background:var(--bg3)}
-#lerr{color:#e74c3c;font-size:.75rem;text-align:center;display:none;padding:6px}
-@media(max-width:480px){
+#lerr{color:#e74c3c;font-size:.75rem;text-align:center;display:none;padding:4px}
+@media(max-width:580px){
   .l-body{grid-template-columns:1fr}
-  .l-panel:first-child{border-right:none;border-bottom:1px solid var(--border)}
-  .l-header h1{font-size:1.3rem}
+  .l-body>div:nth-child(2){display:none}
+  #lcard{border-radius:8px}
 }
 
 /* ROLES */
@@ -221,26 +220,58 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <h1>⚔ EL CADEJO</h1>
       <p>Mesa de juego virtual para D&D 5e</p>
     </div>
+
     <div class="l-body">
 
-      <!-- Panel DM -->
+      <!-- Panel IZQUIERDO: DM (crear + recuperar) -->
       <div class="l-panel">
         <div class="l-panel-title"><span>🎭</span> Dungeon Master</div>
+
+        <!-- Crear sala -->
+        <div style="font-size:.68rem;color:var(--text3);margin-bottom:2px">✦ CREAR SALA NUEVA</div>
         <div>
           <label style="font-size:.7rem;color:var(--text3)">Tu nombre</label>
           <input class="linput" id="dm_name" placeholder="Nombre del DM" maxlength="24">
         </div>
         <div>
-          <label style="font-size:.7rem;color:var(--text3)">PIN de sala (4 dígitos)</label>
-          <input class="linput" id="dm_pin" placeholder="Ej: 1234" maxlength="4" type="password"
-            style="letter-spacing:4px;text-align:center">
+          <label style="font-size:.7rem;color:var(--text3)">PIN de 4 dígitos</label>
+          <input class="linput" id="dm_pin" placeholder="1234" maxlength="4" type="password"
+            style="letter-spacing:6px;text-align:center;font-size:1.1rem">
         </div>
-        <p class="l-hint">El PIN te permite recuperar tu rol de DM si recargas o cambias de dispositivo.</p>
         <button class="blg" onclick="createRoom()">✦ Crear sala</button>
+
+        <!-- Separador -->
+        <div style="height:1px;background:var(--border);margin:8px 0"></div>
+
+        <!-- Recuperar sesión -->
+        <div style="font-size:.68rem;color:var(--text3);margin-bottom:2px">🔑 RECUPERAR SESIÓN</div>
+        <div>
+          <label style="font-size:.7rem;color:var(--text3)">Tu nombre</label>
+          <input class="linput" id="reclaim_name" placeholder="Nombre del DM" maxlength="24">
+        </div>
+        <div>
+          <label style="font-size:.7rem;color:var(--text3)">Código de sala</label>
+          <input class="linput" id="reclaim_code" placeholder="DRAGON42" maxlength="10"
+            oninput="this.value=this.value.toUpperCase()"
+            style="text-align:center;letter-spacing:3px;font-weight:bold">
+        </div>
+        <div>
+          <label style="font-size:.7rem;color:var(--text3)">PIN del DM</label>
+          <input class="linput" id="reclaim_pin" placeholder="1234" maxlength="4" type="password"
+            style="letter-spacing:6px;text-align:center;font-size:1.1rem">
+        </div>
+        <button class="blg" style="background:rgba(200,168,75,.08)" onclick="reclaimRoom()">🔑 Recuperar como DM</button>
       </div>
 
-      <!-- Panel Jugador -->
-      <div class="l-panel">
+      <!-- Separador vertical -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 4px">
+        <div style="flex:1;width:1px;background:var(--border)"></div>
+        <span style="color:var(--text3);font-size:.7rem;padding:8px 0">ó</span>
+        <div style="flex:1;width:1px;background:var(--border)"></div>
+      </div>
+
+      <!-- Panel DERECHO: Jugador -->
+      <div class="l-panel" style="justify-content:center">
         <div class="l-panel-title"><span>👤</span> Jugador</div>
         <div>
           <label style="font-size:.7rem;color:var(--text3)">Tu nombre</label>
@@ -248,26 +279,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         </div>
         <div>
           <label style="font-size:.7rem;color:var(--text3)">Código de sala</label>
-          <input class="linput" id="lcode" placeholder="Ej: DRAGON42" maxlength="10"
+          <input class="linput" id="lcode" placeholder="DRAGON42" maxlength="10"
             oninput="this.value=this.value.toUpperCase()"
             style="text-align:center;letter-spacing:3px;font-weight:bold">
         </div>
-        <div id="pin_reclaim_row" style="display:none">
-          <label style="font-size:.7rem;color:var(--gold2)">PIN del DM (para recuperar sala)</label>
-          <input class="linput" id="player_pin" placeholder="PIN de 4 dígitos" maxlength="4" type="password"
-            style="letter-spacing:4px;text-align:center">
-        </div>
-        <p style="font-size:.68rem;color:var(--text3);margin-top:-4px">
-          ¿Eres el DM? <span style="color:var(--gold2);cursor:pointer;text-decoration:underline" onclick="toggleReclaimPin()">Recuperar sala con PIN</span>
-        </p>
-        <button class="blg blue" onclick="joinRoom()">→ Unirse a la partida</button>
+        <p class="l-hint">Pide el código al DM o abre el link de invitación directamente.</p>
+        <button class="blg blue" onclick="joinRoom()">→ Unirse como jugador</button>
       </div>
 
     </div>
+
     <div class="l-footer">
       <div id="lerr"></div>
       <p style="font-size:.68rem;color:var(--text3);text-align:center">
-        Si tienes un link de invitación, ábrelo directamente — el código se rellenará solo.
+        ¿Tienes un link de invitación? Ábrelo — el código se rellenará solo.
       </p>
       <div style="text-align:center;margin-top:10px">
         <a href="https://ko-fi.com/srg954078" target="_blank"
@@ -460,8 +485,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         <div style="color:var(--text3);line-height:1.5">
           1. Sube la imagen → click derecho → <em>Compartir</em><br>
           2. Cambia a "Cualquier persona con el enlace"<br>
-          3. Copia el ID del link (entre /d/ y /view)<br>
-          4. Usa: <span style="font-family:monospace;color:var(--gold2);font-size:.72rem">https://drive.google.com/uc?id=TU_ID</span>
+          3. Copia el link y pégalo — <span style="color:var(--gold2)">se convierte automáticamente ✓</span>
         </div>
       </div>
 
@@ -606,9 +630,28 @@ function lerr(m){
   setTimeout(()=>e.style.display='none', 4000);
 }
 
-window.toggleReclaimPin=function(){
-  const row=document.getElementById('pin_reclaim_row');
-  row.style.display=row.style.display==='none'?'block':'none';
+window.reclaimRoom = async function(){
+  const name=document.getElementById('reclaim_name').value.trim();
+  const code=document.getElementById('reclaim_code').value.trim().toUpperCase();
+  const pin =document.getElementById('reclaim_pin').value.trim();
+  if(!name){lerr('Escribe tu nombre');return;}
+  if(!code){lerr('Escribe el código de sala');return;}
+  if(!pin) {lerr('Escribe el PIN del DM');return;}
+
+  const snap=await get(ref(db,'rooms/'+code));
+  if(!snap.exists()){lerr('Sala "'+code+'" no encontrada');return;}
+
+  const roomData=snap.val();
+  const pinHash=btoa(code+':'+pin);
+
+  if(pinHash!==roomData.pinHash){
+    lerr('PIN incorrecto');return;
+  }
+
+  myName=name; room=code; isDM=true;
+  myId=roomData.dmId;
+  try { localStorage.setItem('vtt_dm_'+code, JSON.stringify({id:myId,pin:pinHash})); } catch(e){}
+  enter();
 };
 
 window.createRoom = async function(){
@@ -672,7 +715,7 @@ window.joinRoom = async function(){
 
 // Auto-fill from URL
 const qp=new URLSearchParams(location.search);
-if(qp.get('room')){document.getElementById('lcode').value=qp.get('room').toUpperCase();setTimeout(()=>{const pn=document.getElementById('player_name');if(pn)pn.focus();},300);}
+if(qp.get('room')){const rc=qp.get('room').toUpperCase();document.getElementById('lcode').value=rc;document.getElementById('reclaim_code').value=rc;setTimeout(()=>{const pn=document.getElementById('player_name');if(pn)pn.focus();},300);}
 
 function enter(){
   document.getElementById('lobby').style.display='none';
@@ -978,14 +1021,13 @@ function draw(){
 
 function drawFogLayer(mw,mh){
   if(!fog.length||!fogW)return;
-  // In DM mode: fog is semitransparent (DM sees through)
-  // In player mode OR actual player: fog is opaque
   const opaque = playerViewMode || !isDM;
   for(let row=0;row<fog.length;row++){
     if(!fog[row])continue;
     for(let col=0;col<fogW;col++){
       if(!fog[row][col]){
-        cx.fillStyle=opaque?'rgba(5,7,15,0.97)':'rgba(5,7,15,0.60)';
+        // Players: pure black. DM: semitransparent dark blue tint
+        cx.fillStyle=opaque?'#000000':'rgba(0,5,20,0.72)';
         cx.fillRect(col*CELL,row*CELL,CELL+1,CELL+1);
       }
     }
@@ -1225,13 +1267,32 @@ window.uploadToImgur=function(){
 };
 
 window.applyMap=function(){
-  const url=document.getElementById('map_url_input').value.trim();
+  let url=document.getElementById('map_url_input').value.trim();
   const cs=parseInt(document.getElementById('cell_size_input').value)||70;
-  if(!url){ toast('Pega una URL de imagen (Discord, Drive, GitHub)'); return; }
+  if(!url){ toast('Pega una URL de imagen primero'); return; }
+
+  // Auto-convert Google Drive share links
+  url=convertDriveUrl(url);
+
   CELL=cs;
   applyMapData(url, true);
   closeModal('map_modal');
 };
+
+function convertDriveUrl(url){
+  // Handle various Drive URL formats
+  // Format 1: https://drive.google.com/file/d/FILE_ID/view
+  // Format 2: https://drive.google.com/open?id=FILE_ID
+  // Format 3: https://drive.google.com/uc?id=FILE_ID (already correct)
+  var m;
+  m=url.match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
+  if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
+  m=url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
+  m=url.match(/drive\.google\.com\/uc\?id=([^&]+)/);
+  if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
+  return url;
+}
 
 function applyMapData(src, isExternal){
   mapWasFit=false; // allow refit for new map
@@ -1688,7 +1749,7 @@ document.addEventListener('keydown',e=>{
 });
 
 // Check URL on init
-if(qp.get('room')){document.getElementById('lcode').value=qp.get('room').toUpperCase();setTimeout(()=>{const pn=document.getElementById('player_name');if(pn)pn.focus();},300);}
+if(qp.get('room')){const rc=qp.get('room').toUpperCase();document.getElementById('lcode').value=rc;document.getElementById('reclaim_code').value=rc;setTimeout(()=>{const pn=document.getElementById('player_name');if(pn)pn.focus();},300);}
 
 </script>
 </body>
