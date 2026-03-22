@@ -209,16 +209,35 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 <div class="mbg" id="map_modal">
   <div class="mcard" id="mapurl_modal">
     <h2>🗺 CARGAR MAPA</h2>
-    <label>Subir imagen desde tu dispositivo</label>
-    <input type="file" id="map_file" accept="image/*" onchange="loadMapFile(event)" style="margin-bottom:12px">
-    <div style="text-align:center;color:var(--text3);font-size:.75rem;margin:8px 0">— o —</div>
-    <label>URL de imagen (Imgur, Discord, etc.)</label>
+
+    <!-- PRIMARY: File upload -->
+    <label>📁 Subir imagen desde tu dispositivo</label>
+    <div id="drop_zone" style="border:2px dashed var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:12px;cursor:pointer;transition:border-color .2s"
+      onclick="document.getElementById('map_file').click()"
+      ondragover="event.preventDefault();this.style.borderColor='var(--gold)'"
+      ondragleave="this.style.borderColor='var(--border)'"
+      ondrop="handleMapDrop(event)">
+      <div style="font-size:1.5rem;margin-bottom:6px">🖼</div>
+      <div style="font-size:.8rem;color:var(--text2)">Click para seleccionar imagen</div>
+      <div style="font-size:.72rem;color:var(--text3);margin-top:3px">o arrastra aquí · JPG, PNG, WebP</div>
+      <div id="drop_filename" style="font-size:.75rem;color:var(--gold2);margin-top:6px"></div>
+    </div>
+    <input type="file" id="map_file" accept="image/*" style="display:none" onchange="loadMapFile(event)">
+
+    <!-- SECONDARY: URL -->
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0;color:var(--text3);font-size:.72rem">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      o usa una URL externa (Imgur, Discord...)
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
     <input type="text" id="map_url_input" placeholder="https://i.imgur.com/...">
-    <label>Tamaño de celda (px en la imagen original)</label>
-    <input type="number" id="cell_size_input" value="70" min="20" max="200" placeholder="px por casilla">
-    <p style="font-size:.72rem;color:var(--text3);margin-bottom:10px">Ajusta según el grid de tu mapa. Valor típico: 50-100px</p>
+
+    <label style="margin-top:4px">Tamaño de celda en la imagen (px)</label>
+    <input type="number" id="cell_size_input" value="70" min="20" max="300" placeholder="px por casilla">
+    <p style="font-size:.7rem;color:var(--text3);margin-bottom:10px">Si tu mapa ya tiene grid, ajusta este valor al tamaño de cada casilla en píxeles.</p>
+
     <div class="mbtns">
-      <button class="bprimary" onclick="applyMapUrl()">✓ Cargar mapa</button>
+      <button class="bprimary" onclick="applyMap()">✓ Cargar</button>
       <button class="bcancel" onclick="closeModal('map_modal')">Cancelar</button>
     </div>
   </div>
@@ -618,65 +637,96 @@ function hitTok(p){
 // ── MAP ────────────────────────────────────────────────────
 window.openMapModal=()=>document.getElementById('map_modal').classList.add('open');
 
+// Pending file data (base64) waiting for cell size confirmation
+let pendingMapData = null;
+
+window.handleMapDrop=function(e){
+  e.preventDefault();
+  e.currentTarget.style.borderColor='var(--border)';
+  const file=e.dataTransfer.files[0];
+  if(file&&file.type.startsWith('image/')) readMapFile(file);
+};
+
 window.loadMapFile=function(e){
   const file=e.target.files[0]; if(!file)return;
+  readMapFile(file);
+};
+
+function readMapFile(file){
   const reader=new FileReader();
   reader.onload=function(ev){
-    const url=ev.target.result;
-    // Load locally without crossOrigin (base64 doesn't need it)
-    mapImg=new Image();
-    mapImg.onload=function(){
-      mapOK=true;
-      const fw=Math.ceil(mapImg.naturalWidth/CELL);
-      const fh=Math.ceil(mapImg.naturalHeight/CELL);
-      if(!fog.length||fogW!==fw||fogH!==fh) initFog(fw,fh);
-      fitMap(); draw();
-      toast('Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
-    };
-    mapImg.onerror=function(){ toast('❌ Error al cargar la imagen'); };
-    mapImg.src=url;
+    pendingMapData=ev.target.result; // base64 data URL
+    const fn=document.getElementById('drop_filename');
+    if(fn) fn.textContent='✓ '+file.name;
+    document.getElementById('drop_zone').style.borderColor='var(--gold)';
+    // Clear URL field since we have a file
+    document.getElementById('map_url_input').value='';
   };
+  reader.onerror=function(){ toast('❌ Error leyendo el archivo'); };
   reader.readAsDataURL(file);
-  closeModal('map_modal');
-};
+}
 
-window.applyMapUrl=function(){
-  const url=document.getElementById('map_url_input').value.trim();
+window.applyMap=function(){
   const cs=parseInt(document.getElementById('cell_size_input').value)||70;
-  if(!url){toast('Escribe una URL');return;}
   CELL=cs;
-  loadMapUrl(url);
-  // Push to Firebase so all players see it
-  update(r(''),{mapUrl:url,cellSize:cs});
+
+  // Priority: file > URL
+  if(pendingMapData){
+    applyMapData(pendingMapData, false);
+    pendingMapData=null;
+  } else {
+    const url=document.getElementById('map_url_input').value.trim();
+    if(!url){toast('Selecciona una imagen o escribe una URL');return;}
+    applyMapData(url, true);
+  }
   closeModal('map_modal');
-  toast('Mapa cargado y compartido');
 };
 
-function loadMapUrl(url){
+function applyMapData(src, isExternal){
   mapImg=new Image();
-  // Only set crossOrigin for external URLs, not base64/blob
-  if(url.startsWith('http')){
-    mapImg.crossOrigin='anonymous';
-  }
+  if(isExternal) mapImg.crossOrigin='anonymous';
+
   mapImg.onload=function(){
     mapOK=true;
     const fw=Math.ceil(mapImg.naturalWidth/CELL);
     const fh=Math.ceil(mapImg.naturalHeight/CELL);
-    if(!fog.length||fogW!==fw||fogH!==fh) initFog(fw,fh);
+    initFog(fw,fh);
     fitMap(); draw();
-    toast('Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
-  };
-  mapImg.onerror=function(){
-    // If crossOrigin failed, try without it
-    if(mapImg.crossOrigin){
-      toast('⚠ CORS bloqueado — intenta con Imgur');
+    toast('✓ Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
+
+    // Share via Firebase if external URL (base64 too large for Firebase)
+    if(isExternal){
+      update(r(''),{mapUrl:src,cellSize:CELL});
+      toast('✓ Mapa compartido con todos los jugadores');
     } else {
-      toast('❌ No se pudo cargar la imagen');
+      // Local only — notify DM
+      toast('✓ Mapa cargado localmente (solo tú lo ves). Para compartir usa una URL.');
     }
-    mapOK=false; draw();
   };
-  mapImg.src=url;
+
+  mapImg.onerror=function(){
+    if(isExternal){
+      // Try without crossOrigin as fallback
+      const img2=new Image();
+      img2.onload=function(){
+        mapImg=img2; mapOK=true;
+        const fw=Math.ceil(mapImg.naturalWidth/CELL);
+        const fh=Math.ceil(mapImg.naturalHeight/CELL);
+        initFog(fw,fh); fitMap(); draw();
+        toast('✓ Mapa cargado (sin CORS)');
+      };
+      img2.onerror=function(){ toast('❌ No se pudo cargar. Prueba Imgur.'); mapOK=false; draw(); };
+      img2.src=src;
+    } else {
+      toast('❌ Error cargando la imagen'); mapOK=false; draw();
+    }
+  };
+
+  mapImg.src=src;
 }
+
+// Keep applyMapUrl as alias just in case
+window.applyMapUrl=window.applyMap;
 
 function fitMap(){
   const cw=document.getElementById('cwrap');
