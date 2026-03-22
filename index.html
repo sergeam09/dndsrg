@@ -85,6 +85,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .hbtn-secondary { display:inline-block }
 @media(max-width:640px){ .hbtn-secondary { display:none } }
 
+/* Draw tool */
+.draw-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;flex-shrink:0}
+.draw-swatch:hover,.draw-swatch.sel{transform:scale(1.3);border-color:#fff}
+#draw_ctrl{display:none}
+#draw_ctrl.show{display:flex !important}
+
+/* Laser animation */
+@keyframes laser-pulse{from{opacity:1;transform:scale(1)}to{opacity:0.6;transform:scale(1.3)}}
+
+/* Scenes */
+.scene-item{display:flex;align-items:center;gap:5px;padding:5px 6px;border-radius:4px;border:1px solid transparent;margin-bottom:3px;cursor:pointer;font-size:.77rem;transition:all .15s}
+.scene-item:hover{background:var(--bg3);border-color:var(--border)}
+.scene-item.active-scene{background:rgba(200,168,75,.1);border-color:var(--gold);color:var(--gold)}
+.scene-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* Bigger touch targets */
 @media(max-width:768px){
   .dbtn{min-height:38px;font-size:.78rem}
@@ -311,10 +326,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <!-- Herramientas principales — siempre visibles -->
   <button class="hbtn active" id="tb_select" onclick="setTool('select')" title="Mover tokens">↖ Mover</button>
   <button class="hbtn" id="tb_measure" onclick="setTool('measure')" title="Medir distancia">📏 Medir</button>
+  <button class="hbtn" id="tb_laser" onclick="setTool('laser')" title="Apuntador láser">🔴 Láser</button>
 
   <!-- DM only — herramientas de uso frecuente -->
   <button class="hbtn dm-only" id="tb_fog"    onclick="setTool('fog')"    title="Revelar niebla">🌫 Revelar</button>
   <button class="hbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')" title="Oscurecer">🌑 Oscu.</button>
+  <button class="hbtn dm-only" id="tb_draw"   onclick="setTool('draw')"   title="Dibujar sobre el mapa">✏ Dibujar</button>
+  <button class="hbtn dm-only" id="tb_erase"  onclick="setTool('erase')"  title="Borrar dibujo">⬜ Borrar</button>
+  <button class="hbtn dm-only" onclick="clearDrawing()" title="Borrar todo el dibujo">🗑 Limpiar</button>
   <button class="hbtn dm-only" onclick="openMapModal()">🗺 Mapa</button>
   <button class="hbtn dm-only" onclick="openAddToken()">＋ Token</button>
 
@@ -364,6 +383,30 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <label>Tamaño pincel</label>
       <input type="range" id="brush_range" min="1" max="8" value="3" oninput="fogBrush=parseInt(this.value);document.getElementById('brush_val').textContent=this.value" style="width:80px">
       <span id="brush_val">3</span>
+    </div>
+
+    <!-- Draw toolbar (appears when draw/erase tool active) -->
+    <div id="draw_ctrl" style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(13,15,20,.92);border:1px solid var(--border);border-radius:6px;padding:8px 12px;display:none;align-items:center;gap:8px;z-index:10;flex-wrap:wrap">
+      <span style="font-size:.68rem;color:var(--text3);letter-spacing:1px">COLOR:</span>
+      <div id="draw_colors" style="display:flex;gap:4px">
+        <div class="draw-swatch sel" style="background:#e74c3c" data-color="#e74c3c" onclick="setDrawColor(this)"></div>
+        <div class="draw-swatch" style="background:#e67e22" data-color="#e67e22" onclick="setDrawColor(this)"></div>
+        <div class="draw-swatch" style="background:#f1c40f" data-color="#f1c40f" onclick="setDrawColor(this)"></div>
+        <div class="draw-swatch" style="background:#2ecc71" data-color="#2ecc71" onclick="setDrawColor(this)"></div>
+        <div class="draw-swatch" style="background:#3498db" data-color="#3498db" onclick="setDrawColor(this)"></div>
+        <div class="draw-swatch" style="background:#9b59b6" data-color="#9b59b6" onclick="setDrawColor(this)"></div>
+        <div class="draw-swatch" style="background:#ffffff" data-color="#ffffff" onclick="setDrawColor(this)"></div>
+        <div class="draw-swatch" style="background:#1a1a2e" data-color="#1a1a2e" onclick="setDrawColor(this)"></div>
+      </div>
+      <span style="font-size:.68rem;color:var(--text3);letter-spacing:1px">GROSOR:</span>
+      <input type="range" id="draw_size" min="2" max="40" value="6" style="width:70px;accent-color:var(--gold)"
+        oninput="drawSize=parseInt(this.value);document.getElementById('draw_size_val').textContent=this.value">
+      <span id="draw_size_val" style="font-size:.72rem;color:var(--gold2);min-width:18px">6</span>
+    </div>
+
+    <!-- Laser dot -->
+    <div id="laser_dot" style="display:none;position:absolute;pointer-events:none;z-index:20;transform:translate(-50%,-50%)">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,50,50,0.9);box-shadow:0 0 12px 4px rgba(255,50,50,0.6);animation:laser-pulse 0.5s ease-in-out infinite alternate"></div>
     </div>
 
     <!-- Map adjustment panel (DM only) -->
@@ -422,6 +465,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   </div>
 
   <div id="sidebar">
+    <!-- Scenes (DM only) -->
+    <div id="scenes_section" style="border-top:1px solid var(--border);display:none">
+      <div class="s-title" onclick="toggleSec('ss')">🗺 Escenas <span id="ss_arr">▾</span></div>
+      <div class="s-body" id="ss">
+        <div id="scene_list" style="margin-bottom:6px"></div>
+        <button class="hbtn" style="width:100%;font-size:.7rem" onclick="openNewScene()">＋ Nueva escena</button>
+      </div>
+    </div>
     <!-- Tokens -->
     <div>
       <div class="s-title" onclick="toggleSec('st')">🎭 Tokens <span id="st_arr">▾</span></div>
@@ -453,6 +504,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div id="cinput_wrap">
       <input id="cinput" placeholder="Mensaje o /r 2d6+3..." onkeydown="if(event.key==='Enter')sendChat()">
       <button class="hbtn" onclick="sendChat()">↵</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SCENE MODAL -->
+<div class="mbg" id="scene_modal">
+  <div class="mcard">
+    <h2>🗺 NUEVA ESCENA</h2>
+    <label>Nombre de la escena</label>
+    <input id="scene_name" placeholder="Ej: Taberna, Mazmorra nivel 2..." maxlength="32">
+    <label>URL del mapa</label>
+    <input id="scene_url" placeholder="https://... (Discord, Drive, GitHub)">
+    <label>Tamaño de celda (px)</label>
+    <input type="number" id="scene_cell" value="70" min="20" max="300">
+    <div class="mbtns">
+      <button class="bprimary" onclick="createScene()">✦ Crear escena</button>
+      <button class="bcancel" onclick="closeModal('scene_modal')">Cancelar</button>
     </div>
   </div>
 </div>
@@ -735,6 +803,10 @@ function applyRole(){
     }
   });
 
+  // Scenes sidebar section — DM only
+  const sceneSec=document.getElementById('scenes_section');
+  if(sceneSec) sceneSec.style.display=isDM?'block':'none';
+
   // Role badge
   const badge=document.getElementById('role_badge');
   if(badge){
@@ -781,7 +853,11 @@ function subscribe(){
     draw();
   });
 
-  // Players presence
+  // Drawing layer + laser
+  subscribeDrawing();
+
+  // Scenes (DM manages, all clients follow active scene)
+  subscribeScenes();
   onValue(r('players'),s=>{
     const pl=s.val()||{};
     const n=Object.keys(pl).length;
@@ -867,9 +943,19 @@ function tstart(e){
     const p=touchPos(touch1);
     const cl={c:Math.floor(p.x/CELL),r:Math.floor(p.y/CELL)};
 
-    if(tool==='fog'&&isDM)  { brushFog(cl,true); return; }
-    if(tool==='fogadd'&&isDM){ brushFog(cl,false); return; }
-    if(tool==='measure')    { ms={c:cl.c,r:cl.r}; me=null; return; }
+    if(tool==='draw'||tool==='erase'){
+      const p=touchPos(touch1);
+      mdown({clientX:touch1.clientX,clientY:touch1.clientY,buttons:1});
+      return;
+    }
+    if(tool==='laser'){
+      const rc=cv.getBoundingClientRect();
+      pushLaser(touch1.clientX-rc.left,touch1.clientY-rc.top);
+      resetLaserTimer(); return;
+    }
+    if(tool==='fog'&&isDM)  { brushFog(cellOf({clientX:touch1.clientX,clientY:touch1.clientY}),true); return; }
+    if(tool==='fogadd'&&isDM){ brushFog(cellOf({clientX:touch1.clientX,clientY:touch1.clientY}),false); return; }
+    if(tool==='measure')    { ms={c:Math.floor(touchPos(touch1).x/CELL),r:Math.floor(touchPos(touch1).y/CELL)}; me=null; return; }
 
     // Check token hit
     const h=hitTok({x:p.x,y:p.y});
@@ -1003,6 +1089,9 @@ function draw(){
   // Tokens
   Object.entries(tokens).forEach(([id,t])=>drawTok(id,t));
 
+  // Drawing layer — on top of everything
+  drawAllStrokes();
+
   cx.restore();
 }
 
@@ -1097,18 +1186,32 @@ function cellOf(e){const p=cvPos(e);return{c:Math.floor(p.x/CELL),r:Math.floor(p
 
 function mdown(e){
   const p=cvPos(e), cl=cellOf(e);
+  if(tool==='draw'){
+    isDrawing=true;
+    currentStroke={color:drawColor,size:drawSize,points:[{x:p.x,y:p.y}]};
+    draw(); return;
+  }
+  if(tool==='erase'){
+    isDrawing=true;
+    currentStroke={color:'erase',size:drawSize*3,points:[{x:p.x,y:p.y}]};
+    draw(); return;
+  }
+  if(tool==='laser'){
+    const rc=cv.getBoundingClientRect();
+    const sx=e.clientX-rc.left, sy=e.clientY-rc.top;
+    pushLaser(sx,sy); resetLaserTimer(); return;
+  }
   if(tool==='select'){
     const h=hitTok(p);
     if(h){
       const tok=tokens[h];
-      // Players can only move their own token (matched by name)
       const canMove=isDM||(tok&&tok.addedBy===myName)||false;
       if(canMove){
         selTok=h; dragging=true; dragId=h;
         dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
         lastDragCol=tokens[h].x; lastDragRow=tokens[h].y;
       } else {
-        selTok=h; // can still select/view
+        selTok=h;
       }
       draw(); renderToks();
     } else {
@@ -1123,6 +1226,26 @@ function mdown(e){
 
 function mmove(e){
   const p=cvPos(e), cl=cellOf(e);
+
+  // Drawing
+  if(isDrawing&&currentStroke&&(tool==='draw'||tool==='erase')){
+    currentStroke.points.push({x:p.x,y:p.y});
+    // Live preview
+    if(tool==='erase'){
+      eraseAt(p);
+    } else {
+      drawLiveStroke();
+    }
+    return;
+  }
+
+  // Laser
+  if(tool==='laser'&&e.buttons===1){
+    const rc=cv.getBoundingClientRect();
+    pushLaser(e.clientX-rc.left, e.clientY-rc.top);
+    resetLaserTimer(); return;
+  }
+
   if(dragging&&dragId){
     const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
     const nr=Math.max(0,Math.floor((p.y-doy)/CELL));
@@ -1147,6 +1270,19 @@ function mmove(e){
 }
 
 function mup(e){
+  // Finish drawing stroke
+  if(isDrawing&&currentStroke){
+    isDrawing=false;
+    if(tool==='draw'&&currentStroke.points.length>1){
+      drawStrokes.push(currentStroke);
+      pushStroke(currentStroke);
+    }
+    currentStroke=null;
+    draw();
+    return;
+  }
+  isDrawing=false;
+
   if(dragging&&dragId){
     const p=cvPos(e);
     const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
@@ -1382,7 +1518,6 @@ function debounceFog(){clearTimeout(fogTimer);fogTimer=setTimeout(pushFog,500);}
 
 function pushFog(){
   if(!fog.length)return;
-  // Convert to 1/0 — Firebase drops false/null values
   const rows={};
   for(let r2=0;r2<fogH;r2++){
     rows[r2]={};
@@ -1390,7 +1525,13 @@ function pushFog(){
       rows[r2][c]=fog[r2]&&fog[r2][c]?1:0;
     }
   }
-  update(r('fog'),{rows:rows,w:fogW,h:fogH});
+  const fogData={rows:rows,w:fogW,h:fogH};
+  // Save to main room (for players watching)
+  update(r('fog'),fogData);
+  // Save to current scene (for persistence)
+  if(activeSceneId){
+    update(ref(db,'rooms/'+room+'/scenes/'+activeSceneId+'/fog'),fogData);
+  }
 }
 
 window.clearFog=function(){
@@ -1631,6 +1772,299 @@ window.applyMapAdj=function(){
   toast('✓ Ajustes sincronizados con todos los jugadores');
 };
 
+// ── SCENES ─────────────────────────────────────────────────
+let scenes={};        // id -> {name, mapUrl, cellSize, fog, ...}
+let activeSceneId=null;
+
+window.openNewScene=function(){
+  document.getElementById('scene_name').value='';
+  document.getElementById('scene_url').value='';
+  document.getElementById('scene_cell').value='70';
+  document.getElementById('scene_modal').classList.add('open');
+  document.getElementById('scene_name').focus();
+};
+
+window.createScene=function(){
+  const name=document.getElementById('scene_name').value.trim();
+  const url =document.getElementById('scene_url').value.trim();
+  const cell=parseInt(document.getElementById('scene_cell').value)||70;
+  if(!name){toast('Escribe un nombre para la escena');return;}
+
+  const id='sc_'+Date.now();
+  const scene={
+    id,name,
+    mapUrl: url ? convertDriveUrl(url) : '',
+    cellSize: cell,
+    fogW:0, fogH:0,
+    mapOffX2:0, mapOffY2:0, mapScaleAdj:1,
+    created: Date.now()
+  };
+
+  set(ref(db,'rooms/'+room+'/scenes/'+id), scene);
+  closeModal('scene_modal');
+  toast('🗺 Escena "'+name+'" creada');
+};
+
+window.switchScene=function(id){
+  if(!isDM){toast('Solo el DM puede cambiar de escena');return;}
+  // Save current scene state first
+  saveCurrentSceneState();
+  // Switch active scene in Firebase
+  update(ref(db,'rooms/'+room),{activeScene:id});
+  toast('🗺 Cambiando a escena...');
+};
+
+window.deleteScene=function(id,e){
+  e.stopPropagation();
+  if(!confirm('¿Eliminar esta escena?')) return;
+  remove(ref(db,'rooms/'+room+'/scenes/'+id));
+  if(activeSceneId===id){
+    // Switch to another scene or clear
+    const remaining=Object.keys(scenes).filter(k=>k!==id);
+    if(remaining.length>0) switchScene(remaining[0]);
+    else update(ref(db,'rooms/'+room),{activeScene:null,mapUrl:'',fog:{rows:{},w:0,h:0}});
+  }
+};
+
+function saveCurrentSceneState(){
+  if(!activeSceneId) return;
+  // Save fog of current scene
+  if(fog.length){
+    const rows={};
+    for(let r2=0;r2<fogH;r2++){
+      rows[r2]={};
+      for(let c=0;c<fogW;c++){
+        rows[r2][c]=fog[r2]&&fog[r2][c]?1:0;
+      }
+    }
+    update(ref(db,'rooms/'+room+'/scenes/'+activeSceneId),{
+      fog:{rows:rows,w:fogW,h:fogH},
+      cellSize:CELL,
+      mapOffX2:mapOffX2, mapOffY2:mapOffY2, mapScaleAdj:mapScaleAdj
+    });
+  }
+}
+
+function loadScene(scene){
+  if(!scene) return;
+  activeSceneId=scene.id;
+
+  // Load map
+  CELL=scene.cellSize||70;
+  mapOffX2=scene.mapOffX2||0;
+  mapOffY2=scene.mapOffY2||0;
+  mapScaleAdj=scene.mapScaleAdj||1;
+
+  // Load fog
+  if(scene.fog&&scene.fog.rows){
+    const d=scene.fog;
+    fogW=d.w||0; fogH=d.h||0;
+    fog=[];
+    for(let row=0;row<fogH;row++){
+      fog[row]=[];
+      const rawRow=d.rows[row]||{};
+      for(let col=0;col<fogW;col++){
+        fog[row][col]=rawRow[col]===1?true:false;
+      }
+    }
+  } else {
+    fog=[]; fogW=0; fogH=0;
+  }
+
+  // Load map image
+  if(scene.mapUrl){
+    mapWasFit=false;
+    loadSharedMap(scene.mapUrl);
+  } else {
+    mapOK=false; draw();
+  }
+
+  renderScenes();
+
+  // Sync to Firebase main map fields for players
+  update(ref(db,'rooms/'+room),{
+    mapUrl: scene.mapUrl||'',
+    cellSize: CELL,
+    mapOffX2: mapOffX2,
+    mapOffY2: mapOffY2,
+    mapScaleAdj: mapScaleAdj,
+    fog: scene.fog||{rows:{},w:0,h:0}
+  });
+}
+
+function subscribeScenes(){
+  // Listen for scene list changes
+  onValue(ref(db,'rooms/'+room+'/scenes'),function(s){
+    scenes=s.val()||{};
+    renderScenes();
+  });
+
+  // Listen for active scene changes
+  onValue(ref(db,'rooms/'+room+'/activeScene'),function(s){
+    const sceneId=s.val();
+    if(sceneId && sceneId!==activeSceneId && scenes[sceneId]){
+      loadScene(scenes[sceneId]);
+    } else if(sceneId && !scenes[sceneId]){
+      // Scene data not loaded yet — wait
+      activeSceneId=sceneId;
+    }
+  });
+}
+
+function renderScenes(){
+  const container=document.getElementById('scene_list');
+  if(!container) return;
+  const list=Object.values(scenes).sort(function(a,b){return a.created-b.created;});
+  if(!list.length){
+    container.innerHTML='<p style="color:var(--text3);font-size:.73rem">Sin escenas. Crea una para empezar.</p>';
+    return;
+  }
+  container.innerHTML=list.map(function(sc){
+    const isActive=sc.id===activeSceneId;
+    return '<div class="scene-item'+(isActive?' active-scene':'')+'" onclick="switchScene(\''+sc.id+'\')">'
+      +'<span style="font-size:.85rem">🗺</span>'
+      +'<span class="scene-name">'+sc.name+'</span>'
+      +(isActive?'<span style="font-size:.65rem;color:var(--gold)">▶ ACTIVA</span>':'')
+      +(isDM?'<button onclick="deleteScene(\''+sc.id+'\',event)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.75rem;padding:0 2px" title="Eliminar">✕</button>':'')
+      +'</div>';
+  }).join('');
+}
+
+// ── DRAWING SYSTEM ─────────────────────────────────────────
+let drawStrokes=[];      // [{color,size,points:[{x,y}]}]
+let currentStroke=null;
+let drawColor='#e74c3c';
+let drawSize=6;
+let isDrawing=false;
+
+// Laser
+let laserPos=null;       // {x,y} in screen coords
+let laserActive=false;
+
+window.setDrawColor=function(el){
+  document.querySelectorAll('.draw-swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+  drawColor=el.dataset.color;
+};
+
+window.clearDrawing=function(){
+  if(!confirm('¿Borrar todo el dibujo del mapa?'))return;
+  drawStrokes=[];
+  update(r('drawing'),{strokes:[]});
+  draw();
+  toast('🗑 Dibujo borrado');
+};
+
+function subscribeDrawing(){
+  onValue(r('drawing'),function(s){
+    const d=s.val();
+    if(d&&d.strokes){
+      // Convert Firebase object back to array
+      const raw=d.strokes;
+      drawStrokes=Object.values(raw).map(function(stroke){
+        stroke.points=Object.values(stroke.points||{});
+        return stroke;
+      });
+    } else {
+      drawStrokes=[];
+    }
+    draw();
+  });
+
+  // Laser pointer — shared position
+  onValue(r('laser'),function(s){
+    const d=s.val();
+    if(d&&d.active){
+      showLaserAt(d.sx,d.sy,d.name);
+    } else {
+      hideLaser();
+    }
+  });
+}
+
+function pushStroke(stroke){
+  const idx=drawStrokes.length-1;
+  set(ref(db,'rooms/'+room+'/drawing/strokes/'+idx),{
+    color:stroke.color,
+    size:stroke.size,
+    points:stroke.points
+  });
+}
+
+function drawAllStrokes(){
+  cx.save();
+  var all=drawStrokes.slice();
+  if(currentStroke&&tool==='draw') all.push(currentStroke);
+  all.forEach(function(stroke){
+    if(!stroke.points||stroke.points.length<2)return;
+    cx.beginPath();
+    cx.strokeStyle=stroke.color||'#e74c3c';
+    cx.lineWidth=(stroke.size||6)/scale;
+    cx.lineCap='round';
+    cx.lineJoin='round';
+    cx.globalAlpha=0.85;
+    cx.moveTo(stroke.points[0].x,stroke.points[0].y);
+    for(var i=1;i<stroke.points.length;i++){
+      cx.lineTo(stroke.points[i].x,stroke.points[i].y);
+    }
+    cx.stroke();
+  });
+  cx.globalAlpha=1;
+  cx.restore();
+}
+
+// Laser display
+function showLaserAt(sx,sy,name){
+  const dot=document.getElementById('laser_dot');
+  if(!dot)return;
+  dot.style.display='block';
+  dot.style.left=sx+'px';
+  dot.style.top=sy+'px';
+  dot.title=name||'';
+}
+
+function hideLaser(){
+  const dot=document.getElementById('laser_dot');
+  if(dot) dot.style.display='none';
+}
+
+function pushLaser(sx,sy){
+  update(r('laser'),{active:true,sx:Math.round(sx),sy:Math.round(sy),name:myName,ts:Date.now()});
+}
+
+function clearLaser(){
+  update(r('laser'),{active:false});
+}
+
+function drawLiveStroke(){
+  draw(); // redraws everything including currentStroke
+}
+
+function eraseAt(p){
+  const r2=drawSize*3/scale;
+  drawStrokes=drawStrokes.filter(function(stroke){
+    return !stroke.points.some(function(pt){
+      return Math.abs(pt.x-p.x)<r2 && Math.abs(pt.y-p.y)<r2;
+    });
+  });
+  draw();
+  // Debounce push
+  clearTimeout(eraseTimer);
+  eraseTimer=setTimeout(pushAllStrokes,400);
+}
+var eraseTimer=null;
+
+function pushAllStrokes(){
+  var obj={};
+  drawStrokes.forEach(function(s,i){ obj[i]=s; });
+  update(r('drawing'),{strokes:obj});
+}
+let laserHideTimer=null;
+function resetLaserTimer(){
+  clearTimeout(laserHideTimer);
+  laserHideTimer=setTimeout(clearLaser,3000);
+}
+
 // ── DROPDOWN MENU ──────────────────────────────────────────
 let menuOpen=false;
 
@@ -1705,9 +2139,28 @@ window.setTool=function(t){
   tool=t;
   document.querySelectorAll('.hbtn[id^="tb_"]').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('tb_'+t); if(btn)btn.classList.add('active');
-  const labels={select:'MOVER TOKENS',fog:'REVELAR NIEBLA (arrastra)',fogadd:'OSCURECER (arrastra)',measure:'MEDIR DISTANCIA'};
+
+  const labels={
+    select:'MOVER TOKENS',
+    fog:'REVELAR NIEBLA (arrastra)',
+    fogadd:'OSCURECER (arrastra)',
+    measure:'MEDIR DISTANCIA',
+    draw:'DIBUJAR — arrastra para trazar',
+    erase:'BORRADOR — arrastra para borrar',
+    laser:'APUNTADOR LÁSER — mantén presionado'
+  };
   document.getElementById('tool_ind').textContent='HERRAMIENTA: '+(labels[t]||t.toUpperCase());
+
+  // Fog brush
   document.getElementById('brush_ctrl').style.display=(t==='fog'||t==='fogadd')?'block':'none';
+
+  // Draw controls
+  const dc=document.getElementById('draw_ctrl');
+  if(dc){ t==='draw'||t==='erase' ? dc.classList.add('show') : dc.classList.remove('show'); }
+
+  // Clear laser when switching away
+  if(t!=='laser') clearLaser();
+
   ms=null; me=null;
   document.getElementById('mtip').style.display='none';
 };
