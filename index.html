@@ -77,6 +77,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 }
 @media(max-width:480px){#sb_toggle{display:block}}
 
+/* Header group separator */
+.hbtn-sep{width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0;align-self:center}
+
 /* ── Hamburger: solo móvil ── */
 #menu_btn { display:none }
 @media(max-width:640px){ #menu_btn { display:inline-block } }
@@ -346,37 +349,47 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 <div id="header" style="display:none">
   <h1>⚔</h1>
 
-  <!-- Herramientas principales — siempre visibles -->
-  <button class="hbtn active" id="tb_select" onclick="setTool('select')" title="Mover tokens">↖ Mover</button>
-  <button class="hbtn" id="tb_measure" onclick="setTool('measure')" title="Medir distancia">📏 Medir</button>
-  <button class="hbtn" id="tb_laser" onclick="setTool('laser')" title="Apuntador láser">🔴 Láser</button>
+  <!-- GRUPO: Navegación (todos) -->
+  <button class="hbtn active" id="tb_select"  onclick="setTool('select')"  title="Mover tokens y props">↖ Mover</button>
+  <button class="hbtn"        id="tb_measure" onclick="setTool('measure')" title="Medir distancia">📏 Medir</button>
+  <button class="hbtn"        id="tb_laser"   onclick="setTool('laser')"   title="Apuntador láser">🔴 Láser</button>
 
-  <!-- DM only — herramientas de uso frecuente -->
+  <!-- Separador visual -->
+  <div class="hbtn-sep dm-only"></div>
+
+  <!-- GRUPO: Niebla (DM) -->
   <button class="hbtn dm-only" id="tb_fog"    onclick="setTool('fog')"    title="Revelar niebla">🌫 Revelar</button>
-  <button class="hbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')" title="Oscurecer">🌑 Oscu.</button>
-  <button class="hbtn dm-only" id="tb_draw"   onclick="setTool('draw')"   title="Dibujar sobre el mapa">✏ Dibujar</button>
-  <button class="hbtn dm-only" id="tb_erase"  onclick="setTool('erase')"  title="Borrar dibujo">⬜ Borrar</button>
-  <button class="hbtn dm-only" onclick="clearDrawing()" title="Borrar todo el dibujo">🗑 Limpiar</button>
+  <button class="hbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')" title="Oscurecer zona">🌑 Cubrir</button>
+
+  <!-- Separador visual -->
+  <div class="hbtn-sep dm-only"></div>
+
+  <!-- GRUPO: Dibujo (DM) -->
+  <button class="hbtn dm-only" id="tb_draw"  onclick="setTool('draw')"   title="Dibujar sobre el mapa">✏ Dibujar</button>
+  <button class="hbtn dm-only" id="tb_erase" onclick="setTool('erase')"  title="Borrar trazos">⬜ Borrar</button>
+  <button class="hbtn dm-only" onclick="clearDrawing()"                   title="Limpiar todo el dibujo">🗑 Limpiar</button>
+
+  <!-- Separador visual -->
+  <div class="hbtn-sep dm-only"></div>
+
+  <!-- GRUPO: Objetos (DM) -->
   <button class="hbtn dm-only" onclick="openMapModal()">🗺 Mapa</button>
   <button class="hbtn dm-only" onclick="openAddToken()">＋ Token</button>
-  <button class="hbtn dm-only" onclick="openAddProp()" title="Añadir imagen/prop al mapa">🖼 Prop</button>
-  <button class="hbtn dm-only" onclick="openAddProp()" title="Añadir imagen libre al mapa">🖼 Prop</button>
+  <button class="hbtn dm-only" onclick="openAddProp()" title="Añadir imagen/prop">🖼 Prop</button>
 
-  <!-- DM only — secundarios: visibles en desktop, en hamburguesa en móvil -->
-  <button class="hbtn dm-only hbtn-secondary" onclick="clearFog()">☀ Revelar todo</button>
-  <button class="hbtn dm-only hbtn-secondary" onclick="fillFog()">🌑 Cubrir todo</button>
-  <button class="hbtn dm-only hbtn-secondary" id="btn_playerview" onclick="togglePlayerView()">👁 Vista jugador</button>
-  <button class="hbtn dm-only hbtn-secondary" onclick="toggleMapAdj()">⚙ Ajustar mapa</button>
+  <!-- Secundarios desktop (DM) -->
+  <button class="hbtn dm-only hbtn-secondary" onclick="clearFog()">☀ Todo</button>
+  <button class="hbtn dm-only hbtn-secondary" id="btn_playerview" onclick="togglePlayerView()">👁 Jugador</button>
+  <button class="hbtn dm-only hbtn-secondary" onclick="toggleMapAdj()">⚙ Ajustar</button>
 
-  <!-- Siempre visibles en desktop, en hamburguesa en móvil -->
-  <button class="hbtn hbtn-secondary" onclick="resetView()">⌂ Centrar</button>
-  <button class="hbtn hbtn-secondary" onclick="copyLink()">🔗 Link</button>
+  <!-- Secundarios desktop (todos) -->
+  <button class="hbtn hbtn-secondary" onclick="resetView()">⌂</button>
+  <button class="hbtn hbtn-secondary" onclick="copyLink()" title="Copiar link de sala">🔗</button>
 
-  <!-- Hamburguesa — SOLO MÓVIL -->
+  <!-- Hamburguesa SOLO MÓVIL -->
   <div style="position:relative">
-    <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" title="Más opciones">☰</button>
+    <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn">☰</button>
     <div id="dropdown_menu" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:190px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
-      <!-- En móvil muestra lo que el header no puede -->
       <div class="drop-item dm-only" id="dmi_fog1" onclick="clearFog();closeMenu()">☀ Revelar todo</div>
       <div class="drop-item dm-only" id="dmi_fog2" onclick="fillFog();closeMenu()">🌑 Cubrir todo</div>
       <div class="drop-item dm-only" id="dmi_view" onclick="togglePlayerView();closeMenu()">👁 Vista jugador</div>
@@ -388,7 +401,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     </div>
   </div>
 
-  <!-- Room info — siempre visible -->
+  <!-- Room info -->
   <div id="room_info">
     <div id="cdot"></div>
     <span id="role_badge" style="font-size:.68rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
@@ -956,7 +969,7 @@ function subscribe(){
   });
 
   // Shared measure line
-  onValue(r('measure'),function(s){
+  onValue(r("measure"),function(s){
     const d=s.val();
     if(d&&d.active){
       ms={c:d.c1,r:d.r1};
@@ -1344,7 +1357,7 @@ function mdown(e){
   if(tool==='select'){
     // Props first (DM only, on top visually)
     if(isDM){
-      const hp=hitProp(p);
+      const hp=hitProp(p.x,p.y);
       if(hp && !props[hp]?.locked){
         selPropId=hp; selTok=null;
         propDragging=true;
@@ -1425,7 +1438,7 @@ function mmove(e){
     tt.style.left=(e.clientX-rc2.left+14)+'px';
     tt.style.top=(e.clientY-rc2.top-26)+'px';
     tt.textContent=dist+' ft. ('+Math.round(dist/5)+' casillas) — '+myName;
-    update(r('measure'),{active:true,c1:ms.c,r1:ms.r,c2:me.c,r2:me.r,name:myName,dist:dist});
+    update(r("measure"),{active:true,c1:ms.c,r1:ms.r,c2:me.c,r2:me.r,name:myName,dist:dist});
     draw();
   }
 }
@@ -1460,14 +1473,14 @@ function mup(e){
   dragging=false; dragId=null; panning=false;
   document.getElementById('mtip').style.display='none';
   if(tool==='measure'&&me){
-    setTimeout(function(){ update(r('measure'),{active:false}); },1500);
+    var mRef=r("measure"); setTimeout(function(){ update(mRef,{active:false}); },1500);
   }
 }
 
 function mdbl(e){
   const p=cvPos(e);
   if(isDM){
-    const hp=hitProp(p);
+    const hp=hitProp(p.x,p.y);
     if(hp){selectProp(hp);return;}
   }
   const h=hitTok(p);
