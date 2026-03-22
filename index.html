@@ -23,7 +23,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .drop-divider{height:1px;background:var(--border);margin:3px 0}
 
 /* HEADER responsive */
-#header{display:flex;align-items:center;gap:4px;padding:5px 8px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;z-index:100}
+#header{display:flex;align-items:center;gap:4px;padding:5px 8px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;z-index:200;position:relative}
 #header::-webkit-scrollbar{display:none}
 #header h1{font-size:.95rem;color:var(--gold);letter-spacing:2px;margin-right:2px;white-space:nowrap;flex-shrink:0}
 .hbtn{padding:5px 9px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.78rem;transition:all .15s;white-space:nowrap;flex-shrink:0;min-height:30px;-webkit-tap-highlight-color:transparent}
@@ -267,12 +267,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <button class="hbtn dm-only" onclick="openAddToken()" title="Añadir token">＋</button>
 
   <!-- Menú desplegable para opciones secundarias -->
-  <div style="position:relative">
+  <div style="position:relative;z-index:300">
     <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" title="Más opciones">☰</button>
-    <div id="dropdown_menu" style="display:none;position:absolute;top:110%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:190px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.5);overflow:hidden">
+    <div id="dropdown_menu" style="display:none;position:absolute;top:110%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:190px;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.5);overflow:hidden">
       <div class="drop-item" id="dmi_fog1"  onclick="clearFog();closeMenu()">☀ Revelar todo el mapa</div>
       <div class="drop-item" id="dmi_fog2"  onclick="fillFog();closeMenu()">🌑 Cubrir todo el mapa</div>
       <div class="drop-item" id="dmi_view"  onclick="togglePlayerView();closeMenu()" id="mi_playerview">👁 Vista jugador</div>
+      <div class="drop-item" id="dmi_adj"   onclick="toggleMapAdj();closeMenu()">⚙ Ajustar mapa</div>
       <div class="drop-divider" id="dmi_div"></div>
       <div class="drop-item" onclick="resetView();closeMenu()">⌂ Centrar vista</div>
       <div class="drop-item" onclick="copyLink();closeMenu()">🔗 Copiar link de sala</div>
@@ -302,6 +303,53 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <label>Tamaño pincel</label>
       <input type="range" id="brush_range" min="1" max="8" value="3" oninput="fogBrush=parseInt(this.value);document.getElementById('brush_val').textContent=this.value" style="width:80px">
       <span id="brush_val">3</span>
+    </div>
+
+    <!-- Map adjustment panel (DM only) -->
+    <div id="map_adj" style="display:none;position:absolute;top:8px;left:8px;background:rgba(13,15,20,.92);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:.72rem;color:var(--text2);min-width:200px;z-index:10">
+      <div style="font-size:.65rem;color:var(--gold2);letter-spacing:2px;margin-bottom:8px;font-family:var(--font)">🗺 AJUSTES DEL MAPA</div>
+
+      <!-- Cell size -->
+      <div style="margin-bottom:8px">
+        <label style="color:var(--text3);font-size:.68rem;display:block;margin-bottom:3px">Tamaño de celda (px)</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="range" id="adj_cell" min="20" max="200" value="70"
+            oninput="liveAdjCell(this.value)"
+            style="flex:1;accent-color:var(--gold)">
+          <span id="adj_cell_val" style="min-width:28px;text-align:right;color:var(--gold2);font-family:monospace">70</span>
+        </div>
+      </div>
+
+      <!-- Map scale -->
+      <div style="margin-bottom:8px">
+        <label style="color:var(--text3);font-size:.68rem;display:block;margin-bottom:3px">Escala del mapa</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="range" id="adj_scale" min="20" max="300" value="100"
+            oninput="liveAdjScale(this.value)"
+            style="flex:1;accent-color:var(--gold)">
+          <span id="adj_scale_val" style="min-width:32px;text-align:right;color:var(--gold2);font-family:monospace">100%</span>
+        </div>
+      </div>
+
+      <!-- Map offset X/Y -->
+      <div style="margin-bottom:8px">
+        <label style="color:var(--text3);font-size:.68rem;display:block;margin-bottom:3px">Posición X / Y</label>
+        <div style="display:flex;gap:4px">
+          <input type="number" id="adj_x" value="0" placeholder="X"
+            oninput="liveAdjPos()"
+            style="width:60px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:.75rem">
+          <input type="number" id="adj_y" value="0" placeholder="Y"
+            oninput="liveAdjPos()"
+            style="width:60px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:.75rem">
+          <button onclick="liveAdjReset()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.72rem">↺</button>
+        </div>
+      </div>
+
+      <!-- Apply buttons -->
+      <div style="display:flex;gap:4px;margin-top:6px">
+        <button onclick="applyMapAdj()" style="flex:1;background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:5px;cursor:pointer;font-size:.72rem">✓ Aplicar y sincronizar</button>
+        <button onclick="toggleMapAdj()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:5px 8px;cursor:pointer;font-size:.72rem">✕</button>
+      </div>
     </div>
     <div id="sb_toggle" onclick="toggleSidebar()">≡<br>Menú</div>
     <!-- Room code bar -->
@@ -473,6 +521,7 @@ let playerViewMode=false; // DM can preview what players see
 let cv, cx, mapImg=new Image(), mapOK=false;
 let scale=1, ox=0, oy=0;
 let CELL=70; // configurable px per cell
+let mapOffX2=0, mapOffY2=0, mapScaleAdj=1; // map adjustment panel values
 
 // Pan/drag
 let panning=false, panX=0, panY=0;
@@ -583,9 +632,9 @@ function applyRole(){
   });
 
   // Show/hide DM-only dropdown items
-  ['dmi_fog1','dmi_fog2','dmi_view','dmi_div'].forEach(function(id){
+  ['dmi_fog1','dmi_fog2','dmi_view','dmi_adj','dmi_div'].forEach(function(id){
     const el=document.getElementById(id);
-    if(el) el.style.display=isDM?(id==='dmi_div'?'block':'block'):'none';
+    if(el) el.style.display=isDM?'block':'none';
   });
 
   // Role badge
@@ -608,6 +657,9 @@ function subscribe(){
   // Map
   onValue(r('mapUrl'),s=>{if(s.val())loadMapUrl(s.val());});
   onValue(r('cellSize'),s=>{if(s.val()){CELL=s.val();draw();}});
+  onValue(r('mapOffX2'),s=>{if(s.val()!==null){mapOffX2=s.val();draw();}});
+  onValue(r('mapOffY2'),s=>{if(s.val()!==null){mapOffY2=s.val();draw();}});
+  onValue(r('mapScaleAdj'),s=>{if(s.val()){mapScaleAdj=s.val();draw();}});
 
   // Fog
   onValue(r('fog'),s=>{
@@ -812,13 +864,14 @@ function draw(){
   cx.translate(ox,oy);
   cx.scale(scale,scale);
 
-  // Background
-  const mw=mapOK?mapImg.naturalWidth:4000, mh=mapOK?mapImg.naturalHeight:4000;
+  // Background + map
+  const mw=mapOK?Math.round(mapImg.naturalWidth*mapScaleAdj):4000;
+  const mh=mapOK?Math.round(mapImg.naturalHeight*mapScaleAdj):4000;
   if(!mapOK){
     cx.fillStyle='#080a0f';
-    cx.fillRect(0,0,mw,mh);
+    cx.fillRect(0,0,4000,4000);
   } else {
-    cx.drawImage(mapImg,0,0);
+    cx.drawImage(mapImg, mapOffX2, mapOffY2, mw, mh);
   }
 
   // Grid
@@ -1333,6 +1386,69 @@ function appendMsg(msg){
   log.scrollTop=log.scrollHeight;
   while(log.children.length>120)log.removeChild(log.firstChild);
 }
+
+// ── MAP ADJUSTMENTS ────────────────────────────────────────
+window.toggleMapAdj=function(){
+  const panel=document.getElementById('map_adj');
+  if(!panel)return;
+  const visible=panel.style.display!=='none';
+  if(visible){ panel.style.display='none'; return; }
+  // Sync sliders to current values
+  document.getElementById('adj_cell').value=CELL;
+  document.getElementById('adj_cell_val').textContent=CELL;
+  document.getElementById('adj_scale').value=Math.round(mapScaleAdj*100);
+  document.getElementById('adj_scale_val').textContent=Math.round(mapScaleAdj*100)+'%';
+  document.getElementById('adj_x').value=Math.round(mapOffX2);
+  document.getElementById('adj_y').value=Math.round(mapOffY2);
+  panel.style.display='block';
+};
+
+window.liveAdjCell=function(v){
+  v=parseInt(v)||70;
+  document.getElementById('adj_cell_val').textContent=v;
+  CELL=v;
+  // Rebuild fog grid for new cell size
+  if(mapOK){
+    const fw=Math.ceil(mapImg.naturalWidth/CELL);
+    const fh=Math.ceil(mapImg.naturalHeight/CELL);
+    if(fw!==fogW||fh!==fogH) initFog(fw,fh);
+  }
+  draw();
+};
+
+window.liveAdjScale=function(v){
+  v=parseInt(v)||100;
+  document.getElementById('adj_scale_val').textContent=v+'%';
+  mapScaleAdj=v/100;
+  draw();
+};
+
+window.liveAdjPos=function(){
+  mapOffX2=parseInt(document.getElementById('adj_x').value)||0;
+  mapOffY2=parseInt(document.getElementById('adj_y').value)||0;
+  draw();
+};
+
+window.liveAdjReset=function(){
+  mapOffX2=0; mapOffY2=0; mapScaleAdj=1;
+  document.getElementById('adj_x').value=0;
+  document.getElementById('adj_y').value=0;
+  document.getElementById('adj_scale').value=100;
+  document.getElementById('adj_scale_val').textContent='100%';
+  draw();
+};
+
+window.applyMapAdj=function(){
+  // Push cell size and map offsets to Firebase so all players sync
+  update(r(''),{
+    cellSize: CELL,
+    mapOffX2: mapOffX2,
+    mapOffY2: mapOffY2,
+    mapScaleAdj: mapScaleAdj
+  });
+  document.getElementById('map_adj').style.display='none';
+  toast('✓ Ajustes sincronizados con todos los jugadores');
+};
 
 // ── DROPDOWN MENU ──────────────────────────────────────────
 let menuOpen=false;
