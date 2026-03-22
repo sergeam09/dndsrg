@@ -989,7 +989,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div style="display:flex;gap:6px;align-items:center">
       <input id="eaura" type="number" min="0" max="60" value="0" placeholder="0 = sin aura" style="width:80px">
       <span style="font-size:.75rem;color:var(--text3)">ft.</span>
-      <input id="eaura_color" type="color" value="#ff000033" style="width:36px;height:28px;border:1px solid var(--border);border-radius:4px;background:var(--bg3);cursor:pointer" title="Color del aura">
+      <input id="eaura_color" type="color" value="#ff0000" style="width:36px;height:28px;border:1px solid var(--border);border-radius:4px;background:var(--bg3);cursor:pointer" title="Color del aura">
       <span style="font-size:.72rem;color:var(--text3)">color</span>
       <input id="eaura_opacity" type="range" min="5" max="80" value="20" style="flex:1;accent-color:var(--gold)" title="Opacidad">
     </div>
@@ -3806,7 +3806,8 @@ window.openEdit=function(id){
   document.getElementById('eico').value=t.icon||'';
   // Aura
   document.getElementById('eaura').value=t.aura||0;
-  document.getElementById('eaura_color').value=t.auraColor||'#ff0000';
+  var auraCol=(t.auraColor||'#ff0000').slice(0,7); // strip alpha if present
+  document.getElementById('eaura_color').value=auraCol;
   document.getElementById('eaura_opacity').value=t.auraOpacity!==undefined?Math.round(t.auraOpacity*100):20;
   // Conditions
   buildCondPicker(id);
@@ -3823,7 +3824,7 @@ window.saveEdit=function(){
   const init=parseInt(document.getElementById('einit').value)||0;
   const icon=document.getElementById('eico').value.trim();
   const aura=parseInt(document.getElementById('eaura').value)||0;
-  const auraColor=document.getElementById('eaura_color').value||'#ff0000';
+  const auraColor=(document.getElementById('eaura_color').value||'#ff0000').slice(0,7);
   const auraOpacity=parseInt(document.getElementById('eaura_opacity').value)/100;
   // Get conditions from current token state (toggled in place)
   const conditions=tokens[id]?.conditions||[];
@@ -4859,8 +4860,6 @@ window.showTokenStatBlock=function(id){
   document.getElementById('statblock_modal').classList.add('open');
 };
 
--click on empty space = ping (all roles)
-// Override mdbl to handle pings
 // ── HP QUICK POPUP ─────────────────────────────────────────
 var hpqTokId=null;
 var hpqTimer=null;
@@ -4980,10 +4979,10 @@ function showTurnBanner(name,color){
 var pingTimer=null;
 
 function subscribePings(){
-  onValue(r("ping"),function(s){
+  onValue(r('ping'),function(s){
     const d=s.val();
     if(d&&d.active) showPing(d.x,d.y,d.name,d.color);
-    else { const dot=document.getElementById("ping_dot"); if(dot) dot.style.display="none"; }
+    else { var dot=document.getElementById('ping_dot'); if(dot) dot.style.display='none'; }
   });
 }
 
