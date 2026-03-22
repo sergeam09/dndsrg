@@ -88,6 +88,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .hbtn-secondary { display:inline-block }
 @media(max-width:640px){ .hbtn-secondary { display:none } }
 
+/* Conditions */
+.cond-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .1s;user-select:none}
+.cond-btn:hover{border-color:var(--gold);transform:scale(1.1)}
+.cond-btn.cond-active{border-color:var(--gold);background:rgba(200,168,75,.2);box-shadow:0 0 6px rgba(200,168,75,.4)}
+
 /* Monster list */
 .mon-item{padding:6px 8px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
 .mon-item:hover{background:var(--bg3)}
@@ -400,6 +405,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <div class="drop-item dm-only" id="dmi_fog2" onclick="fillFog();closeMenu()">🌑 Cubrir todo</div>
       <div class="drop-item dm-only" id="dmi_view" onclick="togglePlayerView();closeMenu()">👁 Vista jugador</div>
       <div class="drop-item dm-only" id="dmi_adj"  onclick="toggleMapAdj();closeMenu()">⚙ Ajustar mapa</div>
+      <div class="drop-item dm-only" onclick="openCurrentSceneNotes();closeMenu()">📝 Notas de la escena</div>
       <div class="drop-divider" id="dmi_div"></div>
       <div class="drop-item" onclick="resetView();closeMenu()">⌂ Centrar vista</div>
       <div class="drop-item" onclick="copyLink();closeMenu()">🔗 Copiar link</div>
@@ -500,6 +506,24 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       </div>
     </div>
     <div id="sb_toggle" onclick="toggleSidebar()">≡<br>Menú</div>
+
+    <!-- DM Notes Panel -->
+    <div id="notes_panel" style="display:none;position:absolute;top:8px;right:8px;width:280px;background:rgba(13,15,20,.96);border:1px solid var(--gold);border-radius:8px;z-index:15;box-shadow:0 4px 20px rgba(0,0,0,.6)">
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border)">
+        <span style="font-size:.7rem;color:var(--gold2);letter-spacing:2px;flex:1">📝 NOTAS DE LA ESCENA</span>
+        <span id="notes_scene_name" style="font-size:.68rem;color:var(--text3);margin-right:8px"></span>
+        <button onclick="saveNotes()" style="background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:.72rem">💾</button>
+        <button onclick="closeNotes()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.9rem;margin-left:4px">✕</button>
+      </div>
+      <textarea id="notes_textarea"
+        placeholder="Notas privadas del DM para esta escena...&#10;&#10;• Descripción del lugar&#10;• PNJs presentes&#10;• Secretos&#10;• Pistas para los jugadores"
+        style="width:100%;height:200px;background:transparent;border:none;color:var(--text);padding:10px 12px;font-family:var(--font);font-size:.8rem;resize:vertical;outline:none;line-height:1.5"
+        onkeydown="if(event.ctrlKey&&event.key==='s'){saveNotes();event.preventDefault();}"></textarea>
+      <div style="padding:4px 12px 8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:.65rem;color:var(--text3)">Ctrl+S para guardar · Solo visible para el DM</span>
+        <span id="notes_saved" style="font-size:.65rem;color:var(--green);display:none">✓ Guardado</span>
+      </div>
+    </div>
     <!-- Room code bar -->
     <div id="room_bar">
       <span>🎭 Sala:</span>
@@ -514,7 +538,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <div class="s-title" onclick="toggleSec('ss')">🗺 Escenas <span id="ss_arr">▾</span></div>
       <div class="s-body" id="ss">
         <div id="scene_list" style="margin-bottom:6px"></div>
-        <button class="hbtn" style="width:100%;font-size:.7rem" onclick="openNewScene()">＋ Nueva escena</button>
+        <div style="display:flex;gap:4px">
+          <button class="hbtn" style="flex:1;font-size:.7rem" onclick="openNewScene()">＋ Nueva escena</button>
+          <button class="hbtn" style="font-size:.7rem" onclick="openCurrentSceneNotes()" title="Notas de la escena activa">📝</button>
+        </div>
       </div>
     </div>
     <!-- Tokens -->
@@ -534,8 +561,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         </div>
       </div>
     </div>
-    <!-- Chat -->
+    <!-- Chat / Dice tabs -->
+    <div style="display:flex;border-top:1px solid var(--border);border-bottom:1px solid var(--border);flex-shrink:0">
+      <div id="tab_chat" class="s-tab active" onclick="switchSideTab('chat')" style="flex:1;padding:5px;text-align:center;font-size:.7rem;cursor:pointer;color:var(--gold2);border-bottom:2px solid var(--gold)">💬 Chat</div>
+      <div id="tab_hist" class="s-tab" onclick="switchSideTab('hist')" style="flex:1;padding:5px;text-align:center;font-size:.7rem;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">🎲 Historial</div>
+    </div>
+
+    <!-- Chat log -->
     <div id="chat_log"></div>
+
+    <!-- Dice history -->
+    <div id="dice_history_log" style="display:none;flex:1;overflow-y:auto;padding:6px 8px;font-size:.75rem"></div>
+
     <div id="dice_bar">
       <button class="dbtn" onclick="rollDie(4)">d4</button>
       <button class="dbtn" onclick="rollDie(6)">d6</button>
@@ -711,12 +748,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <div style="color:var(--gold2);font-size:.7rem;letter-spacing:1px;margin-bottom:8px">📋 CÓMO OBTENER EL LINK</div>
 
       <div style="margin-bottom:8px">
-        <div style="color:var(--text);font-weight:bold;margin-bottom:2px">🎮 Discord (recomendado)</div>
-        <div style="color:var(--text3);line-height:1.5">
+        <div style="color:var(--text);font-weight:bold;margin-bottom:4px">🎮 Discord (recomendado)</div>
+        <div style="color:var(--text3);line-height:1.6;font-size:.72rem">
           1. Sube la imagen a cualquier canal<br>
-          2. Click en la imagen → abre en el navegador<br>
-          3. Copia la URL de la barra de direcciones<br>
-          <span style="color:var(--gold2)">✓ Debe terminar en .jpg .png o .webp</span>
+          2. Haz click en la imagen para abrirla<br>
+          3. Click en <strong style="color:var(--text2)">"Abrir en el navegador"</strong> o en el ícono de expandir<br>
+          4. Copia la URL — debe contener <span style="color:var(--gold2);font-family:monospace">cdn.discordapp.com</span><br>
+          <span style="color:#e74c3c">✗ NO uses el link del canal (discord.com/channels/...)</span><br>
+          <span style="color:var(--green)">✓ USA el link CDN (cdn.discordapp.com/attachments/...)</span>
         </div>
       </div>
 
@@ -791,15 +830,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 
 <!-- EDIT TOKEN MODAL -->
 <div class="mbg" id="edit_modal">
-  <div class="mcard">
+  <div class="mcard" style="width:380px">
     <h2>✦ EDITAR TOKEN</h2>
     <input type="hidden" id="eid">
+
+    <!-- Basic stats -->
     <label>Nombre</label><input id="en" maxlength="24">
-    <label>HP actual</label><input id="ehp" type="number" min="0">
-    <label>HP máximo</label><input id="ehpm" type="number" min="1">
-    <label>CA</label><input id="eac" type="number" min="0">
-    <label>Iniciativa</label><input id="einit" type="number" placeholder="Opcional">
-    <label>Icono</label><input id="eico" maxlength="4">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+      <div><label>HP actual</label><input id="ehp" type="number" min="0"></div>
+      <div><label>HP máx</label><input id="ehpm" type="number" min="1"></div>
+      <div><label>CA</label><input id="eac" type="number" min="0"></div>
+      <div><label>Ini</label><input id="einit" type="number"></div>
+    </div>
+    <label>Icono (emoji)</label><input id="eico" maxlength="4" placeholder="🧙 🐉 👹">
+
+    <!-- Aura -->
+    <label style="margin-top:6px">🔴 Aura / Radio</label>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input id="eaura" type="number" min="0" max="60" value="0" placeholder="0 = sin aura" style="width:80px">
+      <span style="font-size:.75rem;color:var(--text3)">ft.</span>
+      <input id="eaura_color" type="color" value="#ff000033" style="width:36px;height:28px;border:1px solid var(--border);border-radius:4px;background:var(--bg3);cursor:pointer" title="Color del aura">
+      <span style="font-size:.72rem;color:var(--text3)">color</span>
+      <input id="eaura_opacity" type="range" min="5" max="80" value="20" style="flex:1;accent-color:var(--gold)" title="Opacidad">
+    </div>
+
+    <!-- Conditions -->
+    <label style="margin-top:6px">⚡ Condiciones</label>
+    <div id="cond_picker" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px"></div>
+
     <div class="mbtns">
       <button class="bprimary" onclick="saveEdit()">💾 Guardar</button>
       <button class="bcancel" style="border-color:var(--red);color:var(--red)" onclick="delToken()">🗑 Eliminar</button>
@@ -2653,50 +2711,99 @@ function drawTok(id,t){
   const opaque=playerViewMode||!isDM;
   if(opaque&&fog.length&&fogW){
     const row=Math.floor(t.y), col=Math.floor(t.x);
-    if(fog[row]&&fog[row][col]===false) return; // hidden in fog
+    if(fog[row]&&fog[row][col]===false) return;
   }
 
-  const cx2=cx;
   const x=t.x*CELL+CELL/2, y=t.y*CELL+CELL/2, r2=CELL*0.41;
 
-  cx2.shadowColor=t.color||'#e74c3c';
-  cx2.shadowBlur=id===selTok?18:7;
-  cx2.beginPath();
-  cx2.arc(x,y,r2,0,Math.PI*2);
-  cx2.fillStyle=t.color||'#e74c3c';
-  cx2.globalAlpha=t.dead?0.3:1;
-  cx2.fill();
-  cx2.shadowBlur=0;
+  // ── AURA ──────────────────────────────────────────────────
+  if(t.aura&&t.aura>0){
+    const auraR=(t.aura/5)*CELL + r2; // convert ft to px
+    const aColor=t.auraColor||'#ff0000';
+    const aOpacity=t.auraOpacity!==undefined?t.auraOpacity:0.2;
+    // Hex color + alpha
+    cx.beginPath();
+    cx.arc(x,y,auraR,0,Math.PI*2);
+    cx.fillStyle=aColor;
+    cx.globalAlpha=aOpacity;
+    cx.fill();
+    cx.strokeStyle=aColor;
+    cx.lineWidth=1.5/scale;
+    cx.globalAlpha=Math.min(1,aOpacity*3);
+    cx.stroke();
+    cx.globalAlpha=1;
+  }
+
+  // ── TOKEN CIRCLE ──────────────────────────────────────────
+  cx.shadowColor=t.color||'#e74c3c';
+  cx.shadowBlur=id===selTok?18:7;
+  cx.beginPath();
+  cx.arc(x,y,r2,0,Math.PI*2);
+  cx.fillStyle=t.color||'#e74c3c';
+  cx.globalAlpha=t.dead?0.3:1;
+  cx.fill();
+  cx.shadowBlur=0;
 
   if(id===selTok){
-    cx2.strokeStyle='rgba(255,255,255,0.9)';
-    cx2.lineWidth=2.5/scale;
-    cx2.stroke();
+    cx.strokeStyle='rgba(255,255,255,0.9)';
+    cx.lineWidth=2.5/scale;
+    cx.stroke();
   }
-  cx2.globalAlpha=1;
+  cx.globalAlpha=1;
 
   // Label
   const lbl=t.icon||t.name.charAt(0).toUpperCase();
-  cx2.font=t.icon?(r2*1.1)+'px serif':'bold '+(r2*0.88)+'px sans-serif';
-  cx2.fillStyle='rgba(0,0,0,0.7)';
-  cx2.textAlign='center';
-  cx2.textBaseline='middle';
-  cx2.fillText(lbl,x,y);
+  cx.font=t.icon?(r2*1.1)+'px serif':'bold '+(r2*0.88)+'px sans-serif';
+  cx.fillStyle='rgba(0,0,0,0.7)';
+  cx.textAlign='center';
+  cx.textBaseline='middle';
+  cx.fillText(lbl,x,y);
 
   // Name below
-  cx2.fillStyle='rgba(255,255,255,0.85)';
-  cx2.font='bold '+Math.max(8,CELL*0.16)+'px sans-serif';
+  cx.fillStyle='rgba(255,255,255,0.85)';
+  cx.font='bold '+Math.max(8,CELL*0.16)+'px sans-serif';
   const shortName=t.name.length>12?t.name.slice(0,11)+'…':t.name;
-  cx2.fillText(shortName,x,y+r2+11);
+  cx.fillText(shortName,x,y+r2+11);
 
   // HP bar
   if(t.hpMax>0){
     const pct=Math.max(0,Math.min(1,t.hp/t.hpMax));
     const bw=CELL*0.75, bx=x-bw/2, by=y+r2+16;
-    cx2.fillStyle='#222';
-    cx2.fillRect(bx,by,bw,4);
-    cx2.fillStyle=pct>0.5?'#27ae60':pct>0.25?'#f39c12':'#e74c3c';
-    cx2.fillRect(bx,by,bw*pct,4);
+    cx.fillStyle='#222';
+    cx.fillRect(bx,by,bw,4);
+    cx.fillStyle=pct>0.5?'#27ae60':pct>0.25?'#f39c12':'#e74c3c';
+    cx.fillRect(bx,by,bw*pct,4);
+  }
+
+  // ── CONDITIONS (icons around token) ───────────────────────
+  const conds=t.conditions||[];
+  if(conds.length>0){
+    const iconSize=Math.max(10,CELL*0.22)/scale;
+    const iconR=r2+iconSize*0.6*scale;
+    const maxVisible=Math.min(conds.length,5);
+    for(var ci=0;ci<maxVisible;ci++){
+      const cDef=CONDITIONS.find(c=>c.id===conds[ci]);
+      if(!cDef)continue;
+      const angle=(ci/maxVisible)*Math.PI*2 - Math.PI/2;
+      const ix=x+Math.cos(angle)*iconR;
+      const iy=y+Math.sin(angle)*iconR;
+      // Background circle
+      cx.beginPath();
+      cx.arc(ix,iy,iconSize*0.7,0,Math.PI*2);
+      cx.fillStyle='rgba(0,0,0,0.7)';
+      cx.fill();
+      // Icon
+      cx.font=iconSize+'px serif';
+      cx.textAlign='center';
+      cx.textBaseline='middle';
+      cx.fillText(cDef.icon,ix,iy);
+    }
+    // If more than 5, show +N
+    if(conds.length>5){
+      cx.fillStyle='rgba(255,255,255,0.8)';
+      cx.font='bold '+(iconSize*0.7)+'px sans-serif';
+      cx.fillText('+'+(conds.length-5), x+iconR, y-iconR);
+    }
   }
 }
 
@@ -3047,8 +3154,25 @@ window.applyMap=function(){
   const cs=parseInt(document.getElementById('cell_size_input').value)||70;
   if(!url){ toast('Pega una URL de imagen primero'); return; }
 
+  // Detect wrong Discord URL (channel link, not image)
+  if(url.match(/discord\.com\/channels\//)){
+    toast('❌ Esa es la URL del canal, no de la imagen. Sigue las instrucciones.');
+    return;
+  }
+
   // Auto-convert Google Drive share links
   url=convertDriveUrl(url);
+
+  // Warn if URL doesn't look like a direct image
+  var looksLikeImage=/\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?|$)/i.test(url)
+    || url.indexOf('cdn.discordapp.com')>-1
+    || url.indexOf('drive.google.com/thumbnail')>-1
+    || url.indexOf('raw.githubusercontent.com')>-1
+    || url.indexOf('i.imgur.com')>-1;
+
+  if(!looksLikeImage){
+    if(!confirm('La URL no parece ser una imagen directa. ¿Intentar de todas formas?')) return;
+  }
 
   CELL=cs;
   applyMapData(url, true);
@@ -3056,59 +3180,56 @@ window.applyMap=function(){
 };
 
 function convertDriveUrl(url){
-  // Extract Drive file ID from any Drive URL format
-  var id=null;
-  var m;
+  var id=null, m;
   m=url.match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
   if(m) id=m[1];
   if(!id){ m=url.match(/drive\.google\.com\/open\?id=([^&]+)/); if(m) id=m[1]; }
   if(!id){ m=url.match(/drive\.google\.com\/uc\?.*id=([^&]+)/); if(m) id=m[1]; }
   if(!id){ m=url.match(/id=([^&]+)/); if(m&&url.includes('google')) id=m[1]; }
-
-  if(id){
-    // Use thumbnail API which has CORS enabled (sz=s4096 = max quality)
-    return 'https://drive.google.com/thumbnail?id='+id+'&sz=s4096';
-  }
+  if(id) return 'https://drive.google.com/thumbnail?id='+id+'&sz=s4096';
   return url;
 }
 
 function applyMapData(src, isExternal){
-  mapWasFit=false; // allow refit for new map
+  mapWasFit=false;
   loadSharedMap(src);
-  if(isExternal){
-    update(r(''),{mapUrl:src,cellSize:CELL});
-  }
+  if(isExternal) update(r(''),{mapUrl:src,cellSize:CELL});
 }
 
 window.applyMapUrl=window.applyMap;
 
-// CORS proxies to try in order
+// CORS proxies — ordered by reliability
+// Discord CDN works direct with crossOrigin, no proxy needed
+// GitHub raw works direct
+// Drive thumbnails work direct
 const CORS_PROXIES=[
-  '',                                                    // 1. direct (works for GitHub raw, some Discord)
-  'https://api.allorigins.win/raw?url=',                 // 2. allorigins
-  'https://thingproxy.freeboard.io/fetch/',              // 3. thingproxy
-  'https://api.codetabs.com/v1/proxy?quest='             // 4. codetabs
+  '',                                              // 1. Direct (works for Discord CDN, GitHub, Drive thumbnails)
+  'https://api.allorigins.win/raw?url=',           // 2. allorigins (fallback)
+  'https://api.codetabs.com/v1/proxy?quest='       // 3. codetabs (last resort)
 ];
 
-function loadSharedMap(url){
-  tryLoadImage(url, 0);
-}
+function loadSharedMap(url){ tryLoadImage(url, 0); }
 
 function tryLoadImage(url, proxyIdx){
   if(proxyIdx >= CORS_PROXIES.length){
-    toast('❌ No se pudo cargar el mapa. Prueba con Discord o GitHub raw.');
+    toast('❌ No se pudo cargar. Asegúrate de usar el link DIRECTO a la imagen (CDN de Discord).');
     mapOK=false; draw();
     return;
   }
-  // GitHub raw and drive thumbnails work direct - skip proxies
-  var isGithub = url.indexOf('raw.githubusercontent.com')>-1 || url.indexOf('github.com')>-1;
-  var isDriveThumbnail = url.indexOf('drive.google.com/thumbnail')>-1;
-  if((isGithub || isDriveThumbnail) && proxyIdx>0){
-    tryLoadImage(url, CORS_PROXIES.length); return; // force error toast
+
+  const isDiscordCDN = url.indexOf('cdn.discordapp.com')>-1 || url.indexOf('media.discordapp.net')>-1;
+  const isGithub     = url.indexOf('raw.githubusercontent.com')>-1;
+  const isDrive      = url.indexOf('drive.google.com/thumbnail')>-1;
+
+  // These work direct — don't bother with proxies
+  if((isDiscordCDN || isGithub || isDrive) && proxyIdx>0){
+    toast('❌ No se pudo cargar. El link puede haber expirado (Discord expira los links).');
+    mapOK=false; draw(); return;
   }
-  const src = CORS_PROXIES[proxyIdx] + (proxyIdx>0 ? encodeURIComponent(url) : url);
+
+  const src = proxyIdx>0 ? CORS_PROXIES[proxyIdx]+encodeURIComponent(url) : url;
   const img = new Image();
-  if(proxyIdx===0) img.crossOrigin='anonymous';
+  img.crossOrigin='anonymous';
 
   img.onload=function(){
     mapImg=img; mapOK=true;
@@ -3117,19 +3238,31 @@ function tryLoadImage(url, proxyIdx){
     if(fw!==fogW||fh!==fogH) initFog(fw,fh);
     if(!mapWasFit){ fitMap(); mapWasFit=true; }
     draw();
-    if(proxyIdx>0) toast('✓ Mapa cargado via proxy');
-    else toast('✓ Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
+    toast('✓ Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
   };
 
   img.onerror=function(){
-    // Try next proxy
-    tryLoadImage(url, proxyIdx+1);
+    if(proxyIdx===0 && isDiscordCDN){
+      // Discord CDN failed with crossOrigin — try without it
+      const img2=new Image();
+      img2.onload=function(){
+        mapImg=img2; mapOK=true;
+        const fw=Math.ceil(img2.naturalWidth/CELL);
+        const fh=Math.ceil(img2.naturalHeight/CELL);
+        if(fw!==fogW||fh!==fogH) initFog(fw,fh);
+        if(!mapWasFit){ fitMap(); mapWasFit=true; }
+        draw();
+        toast('✓ Mapa cargado');
+      };
+      img2.onerror=function(){ tryLoadImage(url, proxyIdx+1); };
+      img2.src=url;
+    } else {
+      tryLoadImage(url, proxyIdx+1);
+    }
   };
 
   img.src=src;
 }
-
-let mapWasFit=false;
 
 function fitMap(){
   const cw=document.getElementById('cwrap');
@@ -3242,6 +3375,58 @@ window.addToken=function(){
   toast('Token "'+name+'" añadido');
 };
 
+// ── CONDITIONS ─────────────────────────────────────────────
+const CONDITIONS=[
+  {id:'blinded',    icon:'🙈', name:'Cegado'},
+  {id:'charmed',    icon:'💕', name:'Encantado'},
+  {id:'deafened',   icon:'🔇', name:'Ensordecido'},
+  {id:'exhausted',  icon:'😴', name:'Agotado'},
+  {id:'frightened', icon:'😱', name:'Asustado'},
+  {id:'grappled',   icon:'🤝', name:'Agarrado'},
+  {id:'incapacitated',icon:'💫',name:'Incapacitado'},
+  {id:'invisible',  icon:'👻', name:'Invisible'},
+  {id:'paralyzed',  icon:'⚡', name:'Paralizado'},
+  {id:'petrified',  icon:'🗿', name:'Petrificado'},
+  {id:'poisoned',   icon:'🤢', name:'Envenenado'},
+  {id:'prone',      icon:'⬇️', name:'Derribado'},
+  {id:'restrained', icon:'⛓', name:'Restringido'},
+  {id:'stunned',    icon:'💥', name:'Aturdido'},
+  {id:'unconscious',icon:'💀', name:'Inconsciente'},
+  {id:'concentrating',icon:'🎯',name:'Concentración'},
+  {id:'raging',     icon:'😡', name:'Frenético'},
+  {id:'blessed',    icon:'✨', name:'Bendecido'},
+  {id:'hasted',     icon:'⚡', name:'Acelerado'},
+  {id:'flying',     icon:'🦅', name:'Volando'},
+];
+
+// Active conditions per token (local+firebase)
+let tokenConditions={}; // id -> Set of condition ids
+
+function buildCondPicker(tokenId){
+  const tok=tokens[tokenId]||{};
+  const active=new Set(tok.conditions||[]);
+  const el=document.getElementById('cond_picker');
+  if(!el)return;
+  el.innerHTML=CONDITIONS.map(c=>`
+    <div class="cond-btn ${active.has(c.id)?'cond-active':''}"
+      onclick="toggleCond('${c.id}')"
+      title="${c.name}"
+      data-cid="${c.id}">
+      ${c.icon}
+    </div>`).join('');
+}
+
+window.toggleCond=function(cid){
+  const id=document.getElementById('eid').value;
+  const tok=tokens[id]; if(!tok)return;
+  const active=new Set(tok.conditions||[]);
+  if(active.has(cid)) active.delete(cid); else active.add(cid);
+  // Update locally for instant feedback
+  tok.conditions=[...active];
+  // Re-render picker
+  buildCondPicker(id);
+};
+
 window.openEdit=function(id){
   const t=tokens[id]; if(!t)return;
   selTok=id;
@@ -3252,6 +3437,12 @@ window.openEdit=function(id){
   document.getElementById('eac').value=t.ac;
   document.getElementById('einit').value=t.init||'';
   document.getElementById('eico').value=t.icon||'';
+  // Aura
+  document.getElementById('eaura').value=t.aura||0;
+  document.getElementById('eaura_color').value=t.auraColor||'#ff0000';
+  document.getElementById('eaura_opacity').value=t.auraOpacity!==undefined?Math.round(t.auraOpacity*100):20;
+  // Conditions
+  buildCondPicker(id);
   document.getElementById('edit_modal').classList.add('open');
 };
 
@@ -3264,7 +3455,12 @@ window.saveEdit=function(){
   const ac=parseInt(document.getElementById('eac').value)||10;
   const init=parseInt(document.getElementById('einit').value)||0;
   const icon=document.getElementById('eico').value.trim();
-  update(r('tokens/'+id),{name,hp,hpMax,ac,init,icon});
+  const aura=parseInt(document.getElementById('eaura').value)||0;
+  const auraColor=document.getElementById('eaura_color').value||'#ff0000';
+  const auraOpacity=parseInt(document.getElementById('eaura_opacity').value)/100;
+  // Get conditions from current token state (toggled in place)
+  const conditions=tokens[id]?.conditions||[];
+  update(r('tokens/'+id),{name,hp,hpMax,ac,init,icon,aura,auraColor,auraOpacity,conditions});
   closeModal('edit_modal');
 };
 
@@ -3273,6 +3469,50 @@ window.delToken=function(){
   remove(r('tokens/'+id));
   closeModal('edit_modal');
   toast('Token eliminado');
+};
+
+// ── DICE HISTORY ────────────────────────────────────────────
+let diceHistory=[]; // [{who,die,result,ts,crit,fail}]
+const MAX_DICE_HIST=100;
+
+function addToDiceHistory(entry){
+  diceHistory.unshift(entry);
+  if(diceHistory.length>MAX_DICE_HIST) diceHistory=diceHistory.slice(0,MAX_DICE_HIST);
+  renderDiceHistory();
+}
+
+function renderDiceHistory(){
+  const el=document.getElementById('dice_history_log');
+  if(!el||el.style.display==='none')return;
+  if(!diceHistory.length){
+    el.innerHTML='<p style="color:var(--text3);font-style:italic">Sin tiradas aún</p>';
+    return;
+  }
+  el.innerHTML=diceHistory.map(function(h){
+    var color=h.crit?'#f0ad4e':h.fail?'#e74c3c':'var(--text2)';
+    var icon=h.crit?'💥':h.fail?'💀':'🎲';
+    var time=new Date(h.ts).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+    return '<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:5px">'
+      +'<span style="font-size:.85rem">'+icon+'</span>'
+      +'<span style="color:var(--text3);font-size:.68rem">'+time+'</span>'
+      +'<span style="color:var(--text3);font-size:.72rem;flex:1">'+h.who+'</span>'
+      +'<span style="font-size:.75rem;color:var(--text2)">'+h.die+'</span>'
+      +'<span style="font-weight:bold;color:'+color+';font-size:.9rem;min-width:24px;text-align:right">'+h.result+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+window.switchSideTab=function(tab){
+  var isChat=tab==='chat';
+  document.getElementById('chat_log').style.display=isChat?'':'none';
+  document.getElementById('dice_history_log').style.display=isChat?'none':'';
+  document.getElementById('tab_chat').style.cssText=isChat
+    ?'flex:1;padding:5px;text-align:center;font-size:.7rem;cursor:pointer;color:var(--gold2);border-bottom:2px solid var(--gold)'
+    :'flex:1;padding:5px;text-align:center;font-size:.7rem;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent';
+  document.getElementById('tab_hist').style.cssText=isChat
+    ?'flex:1;padding:5px;text-align:center;font-size:.7rem;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent'
+    :'flex:1;padding:5px;text-align:center;font-size:.7rem;cursor:pointer;color:var(--gold2);border-bottom:2px solid var(--gold)';
+  if(!isChat) renderDiceHistory();
 };
 
 function renderToks(){
@@ -3329,6 +3569,8 @@ function renderInit(){
 window.rollDie=function(s){
   const roll=Math.ceil(Math.random()*s);
   const crit=s===20&&roll===20, fail=s===20&&roll===1;
+  const entry={who:myName,die:'d'+s,result:roll,ts:Date.now(),crit,fail};
+  addToDiceHistory(entry);
   pushMsg({who:myName,text:(crit?'💥 ¡CRÍTICO! ':fail?'💀 Pifia — ':'')+' d'+s,result:roll,type:crit?'crit':fail?'fail':'dice',detail:'d'+s+'('+roll+')'});
 };
 
@@ -3348,6 +3590,8 @@ function rollFx(f){
   const rolls=Array.from({length:n},()=>Math.ceil(Math.random()*s));
   const total=rolls.reduce((a,b)=>a+b,0)+mod;
   const crit=n===1&&s===20&&rolls[0]===20, fail=n===1&&s===20&&rolls[0]===1;
+  const entry={who:myName,die:f,result:total,ts:Date.now(),crit,fail};
+  addToDiceHistory(entry);
   pushMsg({who:myName,text:f,result:total,type:crit?'crit':fail?'fail':'dice',detail:'['+rolls.join(',')+']'+(mod?(mod>0?'+':'')+mod:'')});
 }
 
@@ -3581,14 +3825,73 @@ function renderScenes(){
   }
   container.innerHTML=list.map(function(sc){
     const isActive=sc.id===activeSceneId;
+    const hasNotes=sc.notes&&sc.notes.trim().length>0;
     return '<div class="scene-item'+(isActive?' active-scene':'')+'" onclick="switchScene(\''+sc.id+'\')">'
       +'<span style="font-size:.85rem">🗺</span>'
       +'<span class="scene-name">'+sc.name+'</span>'
-      +(isActive?'<span style="font-size:.65rem;color:var(--gold)">▶ ACTIVA</span>':'')
+      +(hasNotes?'<span title="Tiene notas" style="color:var(--gold2);font-size:.7rem">📝</span>':'')
+      +(isActive?'<span style="font-size:.65rem;color:var(--gold)">▶</span>':'')
+      +(isDM?'<button onclick="openSceneNotes(\''+sc.id+'\',event)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.75rem;padding:0 2px" title="Notas de la escena">📝</button>':'')
       +(isDM?'<button onclick="deleteScene(\''+sc.id+'\',event)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.75rem;padding:0 2px" title="Eliminar">✕</button>':'')
       +'</div>';
   }).join('');
 }
+
+// ── DM NOTES ───────────────────────────────────────────────
+var notesSceneId=null;
+var notesSaveTimer=null;
+
+window.openSceneNotes=function(id, e){
+  if(e) e.stopPropagation();
+  if(!isDM) return;
+  notesSceneId=id;
+  const sc=scenes[id];
+  const panel=document.getElementById('notes_panel');
+  const textarea=document.getElementById('notes_textarea');
+  const nameEl=document.getElementById('notes_scene_name');
+  if(!panel||!textarea) return;
+  textarea.value=sc&&sc.notes?sc.notes:'';
+  if(nameEl) nameEl.textContent=sc?sc.name:'';
+  panel.style.display='block';
+  textarea.focus();
+};
+
+window.openCurrentSceneNotes=function(){
+  if(activeSceneId) openSceneNotes(activeSceneId);
+  else toast('No hay escena activa. Crea o activa una escena primero.');
+};
+
+window.saveNotes=function(){
+  if(!notesSceneId) return;
+  const text=document.getElementById('notes_textarea').value;
+  update(ref(db,'rooms/'+room+'/scenes/'+notesSceneId),{notes:text});
+  // Update local scenes cache
+  if(scenes[notesSceneId]) scenes[notesSceneId].notes=text;
+  // Show saved indicator
+  const saved=document.getElementById('notes_saved');
+  if(saved){
+    saved.style.display='inline';
+    clearTimeout(notesSaveTimer);
+    notesSaveTimer=setTimeout(function(){saved.style.display='none';},2000);
+  }
+  renderScenes(); // refresh 📝 indicator
+};
+
+window.closeNotes=function(){
+  document.getElementById('notes_panel').style.display='none';
+  notesSceneId=null;
+};
+
+// Auto-save notes on typing (debounced)
+document.addEventListener('DOMContentLoaded',function(){
+  var ta=document.getElementById('notes_textarea');
+  if(ta){
+    ta.addEventListener('input',function(){
+      clearTimeout(notesSaveTimer);
+      notesSaveTimer=setTimeout(saveNotes, 1500);
+    });
+  }
+});
 
 // ── DRAWING SYSTEM ─────────────────────────────────────────
 let drawStrokes=[];      // [{color,size,points:[{x,y}]}]
