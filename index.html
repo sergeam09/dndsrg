@@ -1620,9 +1620,10 @@ window.applyMapUrl=window.applyMap;
 
 // CORS proxies to try in order
 const CORS_PROXIES=[
-  '',                                          // direct first
-  'https://corsproxy.io/?',
-  'https://api.allorigins.win/raw?url='
+  '',                                                    // 1. direct (works for GitHub raw, some Discord)
+  'https://api.allorigins.win/raw?url=',                 // 2. allorigins
+  'https://thingproxy.freeboard.io/fetch/',              // 3. thingproxy
+  'https://api.codetabs.com/v1/proxy?quest='             // 4. codetabs
 ];
 
 function loadSharedMap(url){
@@ -1631,9 +1632,15 @@ function loadSharedMap(url){
 
 function tryLoadImage(url, proxyIdx){
   if(proxyIdx >= CORS_PROXIES.length){
-    toast('❌ No se pudo cargar el mapa. Intenta con otra URL.');
+    toast('❌ No se pudo cargar el mapa. Prueba con Discord o GitHub raw.');
     mapOK=false; draw();
     return;
+  }
+  // GitHub raw and drive thumbnails work direct - skip proxies
+  var isGithub = url.indexOf('raw.githubusercontent.com')>-1 || url.indexOf('github.com')>-1;
+  var isDriveThumbnail = url.indexOf('drive.google.com/thumbnail')>-1;
+  if((isGithub || isDriveThumbnail) && proxyIdx>0){
+    tryLoadImage(url, CORS_PROXIES.length); return; // force error toast
   }
   const src = CORS_PROXIES[proxyIdx] + (proxyIdx>0 ? encodeURIComponent(url) : url);
   const img = new Image();
@@ -2320,7 +2327,7 @@ function loadPropImage(id, url){
   };
   // Try proxy first for Drive/Discord
   if(url.indexOf('drive.google')>-1||url.indexOf('discord')>-1){
-    img.src = 'https://corsproxy.io/?'+encodeURIComponent(url);
+    img.src = 'https://api.allorigins.win/raw?url='+encodeURIComponent(url);
   } else {
     img.src = url;
   }
