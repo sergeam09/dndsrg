@@ -4600,10 +4600,11 @@ window.toggleMenu=function(e){
   const btn=document.getElementById('menu_btn');
   if(!m||!btn) return;
   if(menuOpen){
-    // Position below the button using fixed coords
     const rect=btn.getBoundingClientRect();
-    m.style.left=rect.left+'px';
+    // Open to the LEFT of the button so it doesn't go off-screen
     m.style.top=(rect.bottom+4)+'px';
+    m.style.left='auto';
+    m.style.right=(window.innerWidth-rect.right)+'px';
     m.style.display='block';
   } else {
     m.style.display='none';
