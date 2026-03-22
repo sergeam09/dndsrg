@@ -2466,10 +2466,28 @@ function tstart(e){
     }
 
   } else if(touches.length===2){
-    // Pinch start — cancel any drag/pan
     dragging=false; dragId=null; panning=false;
     clearTimeout(tapTimer);
     touch1=touches[0]; touch2=touches[1];
+
+    // Check if both fingers are on the selected prop → prop pinch
+    if(isDM && selPropId && !props[selPropId]?.locked){
+      var p1=touchPos(touch1), p2=touchPos(touch2);
+      var hp1=hitProp(p1.x,p1.y), hp2=hitProp(p2.x,p2.y);
+      if(hp1===selPropId || hp2===selPropId){
+        var prop=props[selPropId];
+        propPinching=true;
+        propPinch0={
+          dist: pinchDist(touch1,touch2),
+          angle: Math.atan2(touch2.clientY-touch1.clientY, touch2.clientX-touch1.clientX),
+          w: prop.w, h: prop.h,
+          rot: prop.rot||0
+        };
+        return;
+      }
+    }
+
+    // Regular map pinch
     pinchDist0=pinchDist(touch1,touch2);
     pinchScale0=scale; pinchOx0=ox; pinchOy0=oy;
   }
@@ -2480,13 +2498,26 @@ function tmove(e){
   const touches=e.touches;
 
   if(touches.length===2 && touch1 && touch2){
-    // Pinch zoom
     const t1=touches[0], t2=touches[1];
+
+    // Prop pinch (scale + rotate)
+    if(propPinching && selPropId && props[selPropId]){
+      var prop=props[selPropId];
+      var newDist=pinchDist(t1,t2);
+      var newAngle=Math.atan2(t2.clientY-t1.clientY, t2.clientX-t1.clientX);
+      var scaleRatio=newDist/propPinch0.dist;
+      var angleDelta=(newAngle-propPinch0.angle)*(180/Math.PI);
+      prop.w=Math.max(0.3, Math.round(propPinch0.w*scaleRatio*10)/10);
+      prop.h=Math.max(0.3, Math.round(propPinch0.h*scaleRatio*10)/10);
+      prop.rot=Math.round(propPinch0.rot+angleDelta);
+      draw(); return;
+    }
+
+    // Regular map pinch zoom
     const dist=pinchDist(t1,t2);
     const ratio=dist/pinchDist0;
     const newScale=Math.max(0.15,Math.min(5,pinchScale0*ratio));
     const mid=pinchMid(t1,t2);
-    // Scale around midpoint
     ox=mid.cx-(mid.cx-pinchOx0)*(newScale/pinchScale0);
     oy=mid.cy-(mid.cy-pinchOy0)*(newScale/pinchScale0);
     scale=newScale;
@@ -2533,11 +2564,25 @@ function tend(e){
   e.preventDefault();
   clearTimeout(tapTimer);
 
+  // Release prop pinch
+  if(propPinching && selPropId){
+    var prop=props[selPropId];
+    if(prop) update(ref(db,'rooms/'+room+'/props/'+selPropId),{
+      w:prop.w, h:prop.h, rot:prop.rot||0
+    });
+    propPinching=false;
+    updatePropCtrl();
+    touch1=null; touch2=null;
+    return;
+  }
+
   if(dragging&&dragId){
     update(r('tokens/'+dragId),{x:tokens[dragId].x,y:tokens[dragId].y});
   }
   dragging=false; dragId=null; panning=false;
   touch1=null; touch2=null;
+  document.getElementById('mtip').style.display='none';
+}
   document.getElementById('mtip').style.display='none';
 }
 
@@ -2711,7 +2756,25 @@ function mdown(e){
   if(tool==='select'){
     // Props first (DM only, on top visually)
     if(isDM){
-      const hp=hitProp(p.x,p.y);
+      // Check handles on selected prop first
+      if(selPropId && !props[selPropId]?.locked){
+        var h2=hitPropHandle(p.x,p.y);
+        if(h2){
+          var prop=props[selPropId];
+          propHandle={
+            type:h2.type, idx:h2.idx,
+            startX:p.x, startY:p.y,
+            startW:prop.w, startH:prop.h,
+            startRot:prop.rot||0,
+            cpx:prop.x*CELL+prop.w*CELL/2,
+            cpy:prop.y*CELL+prop.h*CELL/2,
+            aspectRatio:prop.w/prop.h
+          };
+          return;
+        }
+      }
+      // Hit test prop body
+      var hp=hitProp(p.x,p.y);
       if(hp && !props[hp]?.locked){
         selPropId=hp; selTok=null;
         propDragging=true;
@@ -2719,6 +2782,8 @@ function mdown(e){
         propDragOffY=p.y-props[hp].y*CELL;
         updatePropCtrl(); draw(); return;
       }
+      // Clicked empty space — deselect prop
+      if(selPropId){ selPropId=null; deselectProp(); }
     }
     // Tokens
     const h=hitTok(p);
@@ -2748,7 +2813,34 @@ function mdown(e){
 function mmove(e){
   const p=cvPos(e), cl=cellOf(e);
 
-  // Prop drag
+  // Prop handle drag (corner scale or rotation)
+  if(propHandle && selPropId){
+    var prop=props[selPropId]; if(!prop){propHandle=null;}
+    else {
+      if(propHandle.type==='corner'){
+        // Distance from center determines scale
+        var dx2=p.x-propHandle.cpx, dy2=p.y-propHandle.cpy;
+        // Unrotate to get local distance
+        var rotRad=(propHandle.startRot||0)*Math.PI/180;
+        var lx2=dx2*Math.cos(-rotRad)-dy2*Math.sin(-rotRad);
+        var ly2=dx2*Math.sin(-rotRad)+dy2*Math.cos(-rotRad);
+        // Corner sign multipliers
+        var signs=[[-1,-1],[1,-1],[1,1],[-1,1]][propHandle.idx];
+        var newW=Math.max(0.5, Math.abs(lx2*signs[0])*2/CELL);
+        var newH=Math.max(0.5, Math.abs(ly2*signs[1])*2/CELL);
+        prop.w=Math.round(newW*10)/10;
+        prop.h=Math.round(newH*10)/10;
+      } else if(propHandle.type==='rotate'){
+        // Angle from center to current mouse position
+        var dx3=p.x-propHandle.cpx, dy3=p.y-propHandle.cpy;
+        var angle=Math.atan2(dy3,dx3)*(180/Math.PI)+90;
+        prop.rot=Math.round(angle);
+      }
+      draw(); return;
+    }
+  }
+
+  // Prop drag (move)
   if(propDragging&&selPropId){
     if(props[selPropId]){
       props[selPropId].x=(p.x-propDragOffX)/CELL;
@@ -2798,6 +2890,17 @@ function mmove(e){
 }
 
 function mup(e){
+  // Release prop handle
+  if(propHandle && selPropId){
+    var prop=props[selPropId];
+    if(prop) update(ref(db,'rooms/'+room+'/props/'+selPropId),{
+      w:prop.w, h:prop.h, rot:prop.rot||0
+    });
+    propHandle=null;
+    updatePropCtrl();
+    return;
+  }
+
   // Release prop drag
   if(propDragging&&selPropId){
     const prop=props[selPropId];
@@ -3633,6 +3736,13 @@ var selPropId = null;
 var propDragging = false;
 var propDragOffX = 0, propDragOffY = 0;
 
+// Prop handle interaction (desktop)
+var propHandle = null; // {type:'corner'|'rotate', corner:0-3, startX,startY,startW,startH,startRot,cx,cy}
+
+// Prop pinch (touch)
+var propPinching = false;
+var propPinch0 = {dist:0, angle:0, w:1, h:1, rot:0}; // initial state when pinch started
+
 window.openAddProp = function(){
   document.getElementById('prop_url').value='';
   document.getElementById('prop_name').value='';
@@ -3697,58 +3807,87 @@ function drawProps(){
   var list = Object.values(props).sort(function(a,b){return (a.zIndex||0)-(b.zIndex||0);});
   list.forEach(function(prop){
     var img = propImgs[prop.id];
-    var px = prop.x*CELL, py = prop.y*CELL;
     var pw = prop.w*CELL, ph = prop.h*CELL;
-    var cx2 = cx;
 
-    cx2.save();
-    cx2.globalAlpha = prop.opacity||1;
-    cx2.translate(px + pw/2, py + ph/2);
-    cx2.rotate((prop.rot||0)*Math.PI/180);
+    cx.save();
+    cx.globalAlpha = prop.opacity||1;
+    cx.translate(prop.x*CELL + pw/2, prop.y*CELL + ph/2);
+    cx.rotate((prop.rot||0)*Math.PI/180);
 
     if(img && img.complete && img.naturalWidth>0){
-      cx2.drawImage(img, -pw/2, -ph/2, pw, ph);
+      cx.drawImage(img, -pw/2, -ph/2, pw, ph);
     } else {
-      // Placeholder while loading
-      cx2.fillStyle='rgba(100,100,100,0.3)';
-      cx2.strokeStyle='rgba(200,168,75,0.5)';
-      cx2.lineWidth=1/scale;
-      cx2.fillRect(-pw/2,-ph/2,pw,ph);
-      cx2.strokeRect(-pw/2,-ph/2,pw,ph);
-      cx2.fillStyle='rgba(200,168,75,0.7)';
-      cx2.font=(Math.min(pw,ph)*0.3)+'px sans-serif';
-      cx2.textAlign='center'; cx2.textBaseline='middle';
-      cx2.fillText('⏳',0,0);
+      cx.fillStyle='rgba(100,100,100,0.3)';
+      cx.strokeStyle='rgba(200,168,75,0.5)';
+      cx.lineWidth=1/scale;
+      cx.fillRect(-pw/2,-ph/2,pw,ph);
+      cx.strokeRect(-pw/2,-ph/2,pw,ph);
+      cx.fillStyle='rgba(200,168,75,0.7)';
+      cx.font=(Math.min(pw,ph)*0.3)+'px sans-serif';
+      cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText('⏳',0,0);
     }
 
-    // Selection border
-    if(prop.id===selPropId){
-      cx2.strokeStyle='rgba(200,168,75,0.9)';
-      cx2.lineWidth=2/scale;
-      cx2.setLineDash([6/scale,3/scale]);
-      cx2.strokeRect(-pw/2-2/scale,-ph/2-2/scale,pw+4/scale,ph+4/scale);
-      cx2.setLineDash([]);
-      // Corner handles
-      [[-pw/2,-ph/2],[pw/2,-ph/2],[pw/2,ph/2],[-pw/2,ph/2]].forEach(function(h){
-        cx2.beginPath();
-        cx2.arc(h[0],h[1],5/scale,0,Math.PI*2);
-        cx2.fillStyle='#c8a84b'; cx2.fill();
+    // Selection handles
+    if(prop.id===selPropId && !prop.locked){
+      // Dashed border
+      cx.strokeStyle='rgba(200,168,75,0.9)';
+      cx.lineWidth=2/scale;
+      cx.setLineDash([6/scale,3/scale]);
+      cx.strokeRect(-pw/2-3/scale,-ph/2-3/scale,pw+6/scale,ph+6/scale);
+      cx.setLineDash([]);
+
+      var hr=7/scale; // handle radius
+
+      // Corner handles (gold) — for scale
+      [[-pw/2,-ph/2],[pw/2,-ph/2],[pw/2,ph/2],[-pw/2,ph/2]].forEach(function(h,i){
+        cx.beginPath();
+        cx.arc(h[0],h[1],hr,0,Math.PI*2);
+        cx.fillStyle='#c8a84b';
+        cx.fill();
+        cx.strokeStyle='rgba(0,0,0,0.5)';
+        cx.lineWidth=1/scale;
+        cx.stroke();
       });
+
+      // Rotation handle (blue circle above top-center)
+      var rotHandleY = -ph/2 - 22/scale;
+      // Stem line
+      cx.beginPath();
+      cx.moveTo(0, -ph/2);
+      cx.lineTo(0, rotHandleY+hr);
+      cx.strokeStyle='rgba(91,179,232,0.7)';
+      cx.lineWidth=1.5/scale;
+      cx.stroke();
+      // Circle
+      cx.beginPath();
+      cx.arc(0, rotHandleY, hr*1.2, 0, Math.PI*2);
+      cx.fillStyle='#5bb3e8';
+      cx.fill();
+      cx.strokeStyle='rgba(0,0,0,0.4)';
+      cx.lineWidth=1/scale;
+      cx.stroke();
+      // Rotation arrow icon
+      cx.fillStyle='#fff';
+      cx.font='bold '+(hr*1.5)+'px sans-serif';
+      cx.textAlign='center';
+      cx.textBaseline='middle';
+      cx.fillText('↻', 0, rotHandleY);
     }
 
     // Name label
     if(prop.name){
-      cx2.globalAlpha=0.85;
-      cx2.font='bold '+(Math.max(10,CELL*0.15)/scale)+'px sans-serif';
-      cx2.fillStyle='rgba(0,0,0,0.7)';
-      cx2.textAlign='center';
-      cx2.fillText(prop.name,0,ph/2+12/scale);
-      cx2.fillStyle='#e8e0d0';
-      cx2.fillText(prop.name,0,ph/2+11/scale);
+      cx.globalAlpha=0.85;
+      cx.font='bold '+(Math.max(9,CELL*0.14)/scale)+'px sans-serif';
+      cx.fillStyle='rgba(0,0,0,0.6)';
+      cx.textAlign='center';
+      cx.fillText(prop.name,0,ph/2+13/scale);
+      cx.fillStyle='#e8e0d0';
+      cx.fillText(prop.name,0,ph/2+12/scale);
     }
 
-    cx2.globalAlpha=1;
-    cx2.restore();
+    cx.globalAlpha=1;
+    cx.restore();
   });
 }
 
@@ -3757,15 +3896,43 @@ function hitProp(px, py){
   var list = Object.values(props).reverse();
   for(var i=0;i<list.length;i++){
     var prop=list[i];
-    var cx2= prop.x*CELL + prop.w*CELL/2;
-    var cy2= prop.y*CELL + prop.h*CELL/2;
-    var dx = px-cx2, dy = py-cy2;
+    var cpx= prop.x*CELL + prop.w*CELL/2;
+    var cpy= prop.y*CELL + prop.h*CELL/2;
+    var dx = px-cpx, dy = py-cpy;
     var rot = -(prop.rot||0)*Math.PI/180;
     var lx = dx*Math.cos(rot)-dy*Math.sin(rot);
     var ly = dx*Math.sin(rot)+dy*Math.cos(rot);
     if(Math.abs(lx)<prop.w*CELL/2 && Math.abs(ly)<prop.h*CELL/2){
       return prop.id;
     }
+  }
+  return null;
+}
+
+// Hit test corner handles and rotation handle for selected prop
+// Returns {type:'corner',idx:0-3} or {type:'rotate'} or null
+function hitPropHandle(px, py){
+  if(!selPropId) return null;
+  var prop=props[selPropId]; if(!prop) return null;
+  var pw=prop.w*CELL, ph=prop.h*CELL;
+  var cpx=prop.x*CELL+pw/2, cpy=prop.y*CELL+ph/2;
+  var rot=-(prop.rot||0)*Math.PI/180;
+
+  // Transform point to prop local space
+  var dx=px-cpx, dy=py-cpy;
+  var lx=dx*Math.cos(rot)-dy*Math.sin(rot);
+  var ly=dx*Math.sin(rot)+dy*Math.cos(rot);
+
+  var hr=12/scale; // hit radius (larger than visual for easier touch)
+
+  // Check rotation handle (top-center, above prop)
+  var rotHY=-ph/2-22/scale;
+  if(Math.hypot(lx-0, ly-rotHY)<hr*1.4) return {type:'rotate'};
+
+  // Check corners [TL,TR,BR,BL]
+  var corners=[[-pw/2,-ph/2],[pw/2,-ph/2],[pw/2,ph/2],[-pw/2,ph/2]];
+  for(var i=0;i<corners.length;i++){
+    if(Math.hypot(lx-corners[i][0], ly-corners[i][1])<hr) return {type:'corner',idx:i};
   }
   return null;
 }
@@ -3790,11 +3957,16 @@ function updatePropCtrl(){
   var pc=document.getElementById('prop_ctrl');
   if(!pc) return;
   pc.style.display='flex';
-  document.getElementById('prop_ctrl_name').textContent=prop.name||'Prop';
-  document.getElementById('prop_scale_val').textContent=(prop.w||1).toFixed(1)+'c';
-  document.getElementById('prop_rot_val').textContent=(prop.rot||0)+'°';
-  document.getElementById('prop_opacity_range').value=Math.round((prop.opacity||1)*100);
-  document.getElementById('prop_lock_btn').textContent=prop.locked?'🔒 Fijo':'🔓 Libre';
+  var nameEl=document.getElementById('prop_ctrl_name');
+  if(nameEl) nameEl.textContent=(prop.locked?'🔒 ':'')+prop.name;
+  var sv=document.getElementById('prop_scale_val');
+  if(sv) sv.textContent=prop.w.toFixed(1)+'c';
+  var rv=document.getElementById('prop_rot_val');
+  if(rv) rv.textContent=(prop.rot||0)+'°';
+  var opEl=document.getElementById('prop_opacity_range');
+  if(opEl) opEl.value=Math.round((prop.opacity||1)*100);
+  var lb=document.getElementById('prop_lock_btn');
+  if(lb) lb.textContent=prop.locked?'🔒 Fijo':'🔓 Libre';
 }
 
 window.scaleProp=function(delta){
