@@ -687,8 +687,11 @@ function subscribe(){
   onChildChanged(r('tokens'),s=>{tokens[s.key]=s.val();draw();renderToks();renderInit();});
   onChildRemoved(r('tokens'),s=>{delete tokens[s.key];if(selTok===s.key)selTok=null;draw();renderToks();renderInit();});
 
-  // Map
-  onValue(r('mapUrl'),s=>{if(s.val())loadMapUrl(s.val());});
+  // Map — when URL changes, all clients load it
+  onValue(r('mapUrl'),s=>{
+    const url=s.val();
+    if(url) loadSharedMap(url);
+  });
   onValue(r('cellSize'),s=>{if(s.val()){CELL=s.val();draw();}});
   onValue(r('mapOffX2'),s=>{if(s.val()!==null){mapOffX2=s.val();draw();}});
   onValue(r('mapOffY2'),s=>{if(s.val()!==null){mapOffY2=s.val();draw();}});
@@ -1183,52 +1186,56 @@ window.applyMap=function(){
 };
 
 function applyMapData(src, isExternal){
-  mapImg=new Image();
-
-  mapImg.onload=function(){
-    mapOK=true;
-    const fw=Math.ceil(mapImg.naturalWidth/CELL);
-    const fh=Math.ceil(mapImg.naturalHeight/CELL);
-    initFog(fw,fh);
-    fitMap(); draw();
-    toast('✓ Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
-    if(isExternal){
-      update(r(''),{mapUrl:src,cellSize:CELL});
-      toast('✓ Mapa compartido con todos los jugadores');
-    }
-  };
-
-  mapImg.onerror=function(){
-    // Try without crossOrigin as fallback (some CDNs block CORS headers)
-    if(mapImg.crossOrigin){
-      const img2=new Image();
-      img2.onload=function(){
-        mapImg=img2; mapOK=true;
-        const fw=Math.ceil(mapImg.naturalWidth/CELL);
-        const fh=Math.ceil(mapImg.naturalHeight/CELL);
-        initFog(fw,fh); fitMap(); draw();
-        // Note: without crossOrigin we can't use fog on this image
-        // but it still displays
-        if(isExternal) update(r(''),{mapUrl:src,cellSize:CELL});
-        toast('✓ Mapa cargado (modo compatibilidad)');
-      };
-      img2.onerror=function(){
-        toast('❌ No se pudo cargar. Verifica que la URL sea directa a la imagen (.jpg/.png/.webp)');
-        mapOK=false; draw();
-      };
-      img2.src=src;
-    } else {
-      toast('❌ Error cargando la imagen');
-      mapOK=false; draw();
-    }
-  };
-
-  // Set crossOrigin for fog to work
-  if(isExternal) mapImg.crossOrigin='anonymous';
-  mapImg.src=src;
+  mapWasFit=false; // allow refit for new map
+  loadSharedMap(src);
+  if(isExternal){
+    update(r(''),{mapUrl:src,cellSize:CELL});
+  }
 }
 
 window.applyMapUrl=window.applyMap;
+
+// CORS proxies to try in order
+const CORS_PROXIES=[
+  '',                                          // direct first
+  'https://corsproxy.io/?',
+  'https://api.allorigins.win/raw?url='
+];
+
+function loadSharedMap(url){
+  tryLoadImage(url, 0);
+}
+
+function tryLoadImage(url, proxyIdx){
+  if(proxyIdx >= CORS_PROXIES.length){
+    toast('❌ No se pudo cargar el mapa. Intenta con otra URL.');
+    mapOK=false; draw();
+    return;
+  }
+  const src = CORS_PROXIES[proxyIdx] + (proxyIdx>0 ? encodeURIComponent(url) : url);
+  const img = new Image();
+  if(proxyIdx===0) img.crossOrigin='anonymous';
+
+  img.onload=function(){
+    mapImg=img; mapOK=true;
+    const fw=Math.ceil(mapImg.naturalWidth/CELL);
+    const fh=Math.ceil(mapImg.naturalHeight/CELL);
+    if(fw!==fogW||fh!==fogH) initFog(fw,fh);
+    if(!mapWasFit){ fitMap(); mapWasFit=true; }
+    draw();
+    if(proxyIdx>0) toast('✓ Mapa cargado via proxy');
+    else toast('✓ Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
+  };
+
+  img.onerror=function(){
+    // Try next proxy
+    tryLoadImage(url, proxyIdx+1);
+  };
+
+  img.src=src;
+}
+
+let mapWasFit=false;
 
 function fitMap(){
   const cw=document.getElementById('cwrap');
