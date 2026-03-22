@@ -725,6 +725,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 
 <div id="toast"></div>
 
+<script>
+// Global functions accessible from HTML onclick attributes
+function switchTab(tab){
+  ['dm','player','reclaim'].forEach(function(t){
+    var panel=document.getElementById('panel_'+t);
+    var tabEl=document.getElementById('tab_'+t);
+    if(panel) panel.classList.toggle('show',t===tab);
+    if(tabEl) tabEl.classList.toggle('active',t===tab);
+  });
+  var first=document.querySelector('#panel_'+tab+' .linput');
+  if(first) setTimeout(function(){first.focus();},60);
+}
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
@@ -780,15 +793,7 @@ function genCode(){
   return w[Math.floor(Math.random()*w.length)]+Math.floor(Math.random()*90+10);
 }
 
-// ── LOBBY TABS ─────────────────────────────────────────────
-window.switchTab=function(tab){
-  ['dm','player','reclaim'].forEach(function(t){
-    document.getElementById('panel_'+t).classList.toggle('show',t===tab);
-    document.getElementById('tab_'+t).classList.toggle('active',t===tab);
-  });
-  var first=document.querySelector('#panel_'+tab+' .linput');
-  if(first) setTimeout(function(){first.focus();},60);
-};
+// ── LOBBY TABS handled by global switchTab() above ─────────
 
 function lerr(m){
   const e=document.getElementById('lerr');
@@ -1458,24 +1463,12 @@ function mup(e){
     setTimeout(function(){ update(r('measure'),{active:false}); },1500);
   }
 }
-    const p=cvPos(e);
-    const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
-    const nr=Math.max(0,Math.floor((p.y-doy)/CELL));
-    update(r('tokens/'+dragId),{x:nc,y:nr});
-  }
-  dragging=false; dragId=null; panning=false;
-  document.getElementById('mtip').style.display='none';
-  // Clear shared measure line when released
-  if(tool==='measure'&&me){
-    setTimeout(function(){ update(r('measure'),{active:false}); },1500);
-  }
-}
 
 function mdbl(e){
   const p=cvPos(e);
   if(isDM){
-    const hp=hitTestProp(p);
-    if(hp){openEditProp(hp);return;}
+    const hp=hitProp(p);
+    if(hp){selectProp(hp);return;}
   }
   const h=hitTok(p);
   if(h) openEdit(h);
