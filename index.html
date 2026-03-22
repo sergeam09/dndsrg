@@ -620,15 +620,24 @@ window.openMapModal=()=>document.getElementById('map_modal').classList.add('open
 
 window.loadMapFile=function(e){
   const file=e.target.files[0]; if(!file)return;
-  // Use FileReader to get local URL for preview, but warn about size
-  if(file.size>2*1024*1024){
-    toast('⚠ Imagen grande — considera usar una URL externa (Imgur)');
-  }
-  const url=URL.createObjectURL(file);
-  loadMapUrl(url);
-  // Don't push to Firebase — local only for large files
-  // For sharing, they should use a URL
-  toast('Mapa cargado localmente. Para compartir usa una URL.');
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const url=ev.target.result;
+    // Load locally without crossOrigin (base64 doesn't need it)
+    mapImg=new Image();
+    mapImg.onload=function(){
+      mapOK=true;
+      const fw=Math.ceil(mapImg.naturalWidth/CELL);
+      const fh=Math.ceil(mapImg.naturalHeight/CELL);
+      if(!fog.length||fogW!==fw||fogH!==fh) initFog(fw,fh);
+      fitMap(); draw();
+      toast('Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
+    };
+    mapImg.onerror=function(){ toast('❌ Error al cargar la imagen'); };
+    mapImg.src=url;
+  };
+  reader.readAsDataURL(file);
+  closeModal('map_modal');
 };
 
 window.applyMapUrl=function(){
@@ -645,18 +654,25 @@ window.applyMapUrl=function(){
 
 function loadMapUrl(url){
   mapImg=new Image();
-  mapImg.crossOrigin='anonymous';
-  mapImg.onload=()=>{
+  // Only set crossOrigin for external URLs, not base64/blob
+  if(url.startsWith('http')){
+    mapImg.crossOrigin='anonymous';
+  }
+  mapImg.onload=function(){
     mapOK=true;
-    // Init fog if needed
     const fw=Math.ceil(mapImg.naturalWidth/CELL);
     const fh=Math.ceil(mapImg.naturalHeight/CELL);
     if(!fog.length||fogW!==fw||fogH!==fh) initFog(fw,fh);
     fitMap(); draw();
     toast('Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
   };
-  mapImg.onerror=()=>{
-    toast('❌ No se pudo cargar la imagen. Prueba otra URL.');
+  mapImg.onerror=function(){
+    // If crossOrigin failed, try without it
+    if(mapImg.crossOrigin){
+      toast('⚠ CORS bloqueado — intenta con Imgur');
+    } else {
+      toast('❌ No se pudo cargar la imagen');
+    }
     mapOK=false; draw();
   };
   mapImg.src=url;
