@@ -485,7 +485,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         <div style="color:var(--text3);line-height:1.5">
           1. Sube la imagen → click derecho → <em>Compartir</em><br>
           2. Cambia a "Cualquier persona con el enlace"<br>
-          3. Copia el link y pégalo — <span style="color:var(--gold2)">se convierte automáticamente ✓</span>
+          3. Copia el link y pégalo aquí<br>
+          <span style="color:var(--gold2)">✓ Se convierte automáticamente al formato correcto</span>
         </div>
       </div>
 
@@ -679,35 +680,21 @@ window.createRoom = async function(){
 window.joinRoom = async function(){
   const name=document.getElementById('player_name').value.trim();
   const code=document.getElementById('lcode').value.trim().toUpperCase();
-  const pin =document.getElementById('player_pin').value.trim();
   if(!name){lerr('Escribe tu nombre');return;}
   if(!code){lerr('Escribe el código de sala');return;}
 
   const snap=await get(ref(db,'rooms/'+code));
   if(!snap.exists()){lerr('Sala "'+code+'" no encontrada');return;}
 
-  const roomData=snap.val();
   myName=name; room=code; isDM=false;
 
-  // Try PIN reclaim
-  if(pin){
-    const pinHash=btoa(code+':'+pin);
-    if(pinHash===roomData.pinHash){
-      isDM=true;
-      myId=roomData.dmId; // restore original DM id
-      try { localStorage.setItem('vtt_dm_'+code, JSON.stringify({id:myId,pin:pinHash})); } catch(e){}
-      toast('🎭 PIN correcto — sesión DM recuperada');
-    } else {
-      lerr('PIN incorrecto'); return;
-    }
-  } else {
-    // Check localStorage auto-reclaim (same browser)
-    let saved=null;
-    try { saved=JSON.parse(localStorage.getItem('vtt_dm_'+code)||'null'); } catch(e){}
-    if(saved && saved.pin===roomData.pinHash){
-      isDM=true; myId=saved.id;
-      toast('🎭 Sesión DM restaurada automáticamente');
-    }
+  // Auto-reclaim if same browser that created the room
+  const roomData=snap.val();
+  let saved=null;
+  try { saved=JSON.parse(localStorage.getItem('vtt_dm_'+code)||'null'); } catch(e){}
+  if(saved && saved.pin===roomData.pinHash){
+    isDM=true; myId=saved.id;
+    toast('🎭 Sesión DM restaurada automáticamente');
   }
 
   enter();
@@ -1280,17 +1267,19 @@ window.applyMap=function(){
 };
 
 function convertDriveUrl(url){
-  // Handle various Drive URL formats
-  // Format 1: https://drive.google.com/file/d/FILE_ID/view
-  // Format 2: https://drive.google.com/open?id=FILE_ID
-  // Format 3: https://drive.google.com/uc?id=FILE_ID (already correct)
+  // Extract Drive file ID from any Drive URL format
+  var id=null;
   var m;
   m=url.match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
-  if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
-  m=url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-  if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
-  m=url.match(/drive\.google\.com\/uc\?id=([^&]+)/);
-  if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
+  if(m) id=m[1];
+  if(!id){ m=url.match(/drive\.google\.com\/open\?id=([^&]+)/); if(m) id=m[1]; }
+  if(!id){ m=url.match(/drive\.google\.com\/uc\?.*id=([^&]+)/); if(m) id=m[1]; }
+  if(!id){ m=url.match(/id=([^&]+)/); if(m&&url.includes('google')) id=m[1]; }
+
+  if(id){
+    // Use thumbnail API which has CORS enabled (sz=s4096 = max quality)
+    return 'https://drive.google.com/thumbnail?id='+id+'&sz=s4096';
+  }
   return url;
 }
 
