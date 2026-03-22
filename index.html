@@ -400,7 +400,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       </div>
       <span style="font-size:.68rem;color:var(--text3);letter-spacing:1px">GROSOR:</span>
       <input type="range" id="draw_size" min="2" max="40" value="6" style="width:70px;accent-color:var(--gold)"
-        oninput="drawSize=parseInt(this.value);document.getElementById('draw_size_val').textContent=this.value">
+        oninput="window._setDrawSize(this.value);document.getElementById('draw_size_val').textContent=this.value">
       <span id="draw_size_val" style="font-size:.72rem;color:var(--gold2);min-width:18px">6</span>
     </div>
 
@@ -680,7 +680,7 @@ let fog=[], fogW=0, fogH=0, fogBrush=3;
 window.fogBrush=3; // exposed for range input
 
 // Measure
-let ms=null, me=null;
+let ms=null, me=null, measureBy='';
 
 // ── UTILS ──────────────────────────────────────────────────
 function r(path){ return ref(db, 'rooms/'+room+'/'+path); }
@@ -851,6 +851,19 @@ function subscribe(){
       }
     }
     draw();
+  });
+
+  // Shared measure line
+  onValue(r('measure'),function(s){
+    const d=s.val();
+    if(d&&d.active){
+      ms={c:d.c1,r:d.r1};
+      me={c:d.c2,r:d.r2};
+      measureBy=d.name||'';
+      draw();
+    } else {
+      ms=null; me=null; draw();
+    }
   });
 
   // Drawing layer + laser
@@ -1165,15 +1178,32 @@ function drawTok(id,t){
 }
 
 function drawMeasure(){
+  if(!ms||!me)return;
   const x1=(ms.c+0.5)*CELL, y1=(ms.r+0.5)*CELL;
   const x2=(me.c+0.5)*CELL, y2=(me.r+0.5)*CELL;
+  const dc=me.c-ms.c, dr=me.r-ms.r;
+  const dist=Math.round(Math.sqrt(dc*dc+dr*dr)*5);
+
   cx.strokeStyle='#c8a84b'; cx.lineWidth=2/scale; cx.setLineDash([7,4]);
   cx.beginPath(); cx.moveTo(x1,y1); cx.lineTo(x2,y2); cx.stroke();
   cx.setLineDash([]);
-  [{x:x1,y:y1},{x:x2,y:y2}].forEach(p=>{
+
+  // End dots
+  [{x:x1,y:y1},{x:x2,y:y2}].forEach(function(p){
     cx.beginPath(); cx.arc(p.x,p.y,5/scale,0,Math.PI*2);
     cx.fillStyle='#c8a84b'; cx.fill();
   });
+
+  // Distance label at midpoint
+  const mx=(x1+x2)/2, my=(y1+y2)/2;
+  const label=dist+'ft'+(measureBy?' ('+measureBy+')':'');
+  cx.font='bold '+(13/scale)+'px sans-serif';
+  cx.fillStyle='rgba(0,0,0,0.7)';
+  cx.fillRect(mx-2/scale, my-14/scale, (label.length*7)/scale, 16/scale);
+  cx.fillStyle='#e8c86a';
+  cx.textAlign='center';
+  cx.textBaseline='middle';
+  cx.fillText(label, mx, my-6/scale);
 }
 
 // ── MOUSE HANDLERS (desktop) ───────────────────────────────
@@ -1259,12 +1289,15 @@ function mmove(e){
     me={c:cl.c,r:cl.r};
     const dc=me.c-ms.c, dr=me.r-ms.r;
     const dist=Math.round(Math.sqrt(dc*dc+dr*dr)*5);
+    // Show tooltip locally
     const tt=document.getElementById('mtip');
-    const rc=cv.getBoundingClientRect();
+    const rc2=cv.getBoundingClientRect();
     tt.style.display='block';
-    tt.style.left=(e.clientX-rc.left+14)+'px';
-    tt.style.top=(e.clientY-rc.top-26)+'px';
-    tt.textContent=dist+' ft. ('+Math.round(dist/5)+' casillas)';
+    tt.style.left=(e.clientX-rc2.left+14)+'px';
+    tt.style.top=(e.clientY-rc2.top-26)+'px';
+    tt.textContent=dist+' ft. ('+Math.round(dist/5)+' casillas) — '+myName;
+    // Push to Firebase so everyone sees it
+    update(r('measure'),{active:true,c1:ms.c,r1:ms.r,c2:me.c,r2:me.r,name:myName,dist:dist});
     draw();
   }
 }
@@ -1291,6 +1324,10 @@ function mup(e){
   }
   dragging=false; dragId=null; panning=false;
   document.getElementById('mtip').style.display='none';
+  // Clear shared measure line when released
+  if(tool==='measure'&&me){
+    setTimeout(function(){ update(r('measure'),{active:false}); },1500);
+  }
 }
 
 function mdbl(e){
@@ -1935,6 +1972,9 @@ let drawStrokes=[];      // [{color,size,points:[{x,y}]}]
 let currentStroke=null;
 let drawColor='#e74c3c';
 let drawSize=6;
+// Expose to window so inline oninput handlers can access them
+window._setDrawSize=function(v){ drawSize=parseInt(v)||6; };
+window._setDrawColor=function(c){ drawColor=c; };
 let isDrawing=false;
 
 // Laser
@@ -1945,6 +1985,7 @@ window.setDrawColor=function(el){
   document.querySelectorAll('.draw-swatch').forEach(s=>s.classList.remove('sel'));
   el.classList.add('sel');
   drawColor=el.dataset.color;
+  window._setDrawColor(el.dataset.color);
 };
 
 window.clearDrawing=function(){
