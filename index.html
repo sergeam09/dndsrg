@@ -4956,25 +4956,6 @@ function loadTokImg(id,url){
 }
 
 // ── TURN BANNER ANIMATION ──────────────────────────────────
-var turnBannerTimer=null;
-
-function showTurnBanner(name,color){
-  const banner=document.getElementById('turn_banner');
-  const nameEl=document.getElementById('turn_name');
-  if(!banner||!nameEl) return;
-  nameEl.textContent=name;
-  nameEl.style.color=color||'var(--gold2)';
-  banner.style.display='block';
-  // Force reflow then animate in
-  banner.offsetHeight;
-  banner.classList.add('show');
-  clearTimeout(turnBannerTimer);
-  turnBannerTimer=setTimeout(function(){
-    banner.classList.remove('show');
-    setTimeout(function(){banner.style.display='none';},400);
-  },2500);
-}
-
 // ── PING SYSTEM ────────────────────────────────────────────
 var pingTimer=null;
 
