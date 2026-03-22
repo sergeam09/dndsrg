@@ -359,6 +359,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <button class="hbtn dm-only" onclick="clearDrawing()" title="Borrar todo el dibujo">🗑 Limpiar</button>
   <button class="hbtn dm-only" onclick="openMapModal()">🗺 Mapa</button>
   <button class="hbtn dm-only" onclick="openAddToken()">＋ Token</button>
+  <button class="hbtn dm-only" onclick="openAddProp()" title="Añadir imagen/prop al mapa">🖼 Prop</button>
+  <button class="hbtn dm-only" onclick="openAddProp()" title="Añadir imagen libre al mapa">🖼 Prop</button>
 
   <!-- DM only — secundarios: visibles en desktop, en hamburguesa en móvil -->
   <button class="hbtn dm-only hbtn-secondary" onclick="clearFog()">☀ Revelar todo</button>
@@ -529,6 +531,68 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <button class="hbtn" onclick="sendChat()">↵</button>
     </div>
   </div>
+</div>
+
+<!-- ADD PROP MODAL -->
+<div class="mbg" id="prop_modal">
+  <div class="mcard">
+    <h2>🖼 AÑADIR IMAGEN (PROP)</h2>
+    <label>URL de la imagen</label>
+    <input id="prop_url" placeholder="Discord, Drive, GitHub..." type="text">
+    <label>Etiqueta (opcional)</label>
+    <input id="prop_label" placeholder="Ej: Dragón, Puerta, Cofre..." maxlength="32">
+    <label>Tamaño inicial (px en el mapa)</label>
+    <input id="prop_size" type="number" value="200" min="40" max="2000">
+    <p style="font-size:.7rem;color:var(--text3);margin:-4px 0 6px">Una vez colocado puedes moverlo, escalarlo y rotarlo directamente en el mapa.</p>
+    <div class="mbtns">
+      <button class="bprimary" onclick="addProp()">＋ Añadir al mapa</button>
+      <button class="bcancel" onclick="closeModal('prop_modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROP MODAL -->
+<div class="mbg" id="prop_modal">
+  <div class="mcard">
+    <h2>🖼 AÑADIR PROP / IMAGEN</h2>
+    <label>URL de la imagen</label>
+    <input id="prop_url" placeholder="https://... (Discord, Drive, GitHub)" style="margin-bottom:4px">
+    <p style="font-size:.68rem;color:var(--text3);margin-bottom:10px">Usa el mismo tipo de link que para los mapas.</p>
+    <label>Nombre / etiqueta</label>
+    <input id="prop_name" placeholder="Ej: Cofre, Goblin Jefe, Carta..." maxlength="24">
+    <label>Tamaño inicial (casillas)</label>
+    <input id="prop_size" type="number" value="2" min="1" max="20">
+    <div class="mbtns">
+      <button class="bprimary" onclick="addProp()">🖼 Añadir al mapa</button>
+      <button class="bcancel" onclick="closeModal('prop_modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROP TRANSFORM PANEL (appears when prop selected) -->
+<div id="prop_ctrl" style="display:none;position:fixed;bottom:48px;left:50%;transform:translateX(-50%);background:rgba(13,15,20,.95);border:1px solid var(--gold);border-radius:8px;padding:10px 16px;z-index:50;display:none;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 4px 20px rgba(0,0,0,.6)">
+  <span id="prop_ctrl_name" style="font-size:.75rem;color:var(--gold2);font-weight:bold"></span>
+  <div style="display:flex;align-items:center;gap:6px">
+    <span style="font-size:.68rem;color:var(--text3)">Escala</span>
+    <button onclick="scaleProp(-0.1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">−</button>
+    <span id="prop_scale_val" style="font-size:.75rem;color:var(--gold2);min-width:36px;text-align:center">1.0×</span>
+    <button onclick="scaleProp(0.1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">＋</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <span style="font-size:.68rem;color:var(--text3)">Rotar</span>
+    <button onclick="rotateProp(-15)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">↺</button>
+    <span id="prop_rot_val" style="font-size:.75rem;color:var(--gold2);min-width:36px;text-align:center">0°</span>
+    <button onclick="rotateProp(15)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">↻</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <span style="font-size:.68rem;color:var(--text3)">Opacidad</span>
+    <input type="range" min="10" max="100" value="100" id="prop_opacity_range"
+      oninput="setPropOpacity(this.value)"
+      style="width:60px;accent-color:var(--gold)">
+  </div>
+  <button onclick="togglePropLock()" id="prop_lock_btn" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">🔓 Libre</button>
+  <button onclick="deleteProp()" style="background:rgba(192,57,43,.15);border:1px solid var(--red);color:var(--red);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">🗑</button>
+  <button onclick="deselectProp()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">✕</button>
 </div>
 
 <!-- NEW SCENE MODAL -->
@@ -899,6 +963,11 @@ function subscribe(){
     }
   });
 
+  // Props (free images)
+
+  // Props (free images)
+  subscribePropList();
+
   // Drawing layer + laser
   subscribeDrawing();
 
@@ -1132,6 +1201,9 @@ function draw(){
   // Measure
   if(tool==='measure'&&ms&&me) drawMeasure();
 
+  // Props (images) — below tokens, above map
+  drawProps();
+
   // Tokens
   Object.entries(tokens).forEach(([id,t])=>drawTok(id,t));
 
@@ -1265,6 +1337,18 @@ function mdown(e){
     pushLaser(sx,sy); resetLaserTimer(); return;
   }
   if(tool==='select'){
+    // Props first (DM only, on top visually)
+    if(isDM){
+      const hp=hitProp(p);
+      if(hp && !props[hp]?.locked){
+        selPropId=hp; selTok=null;
+        propDragging=true;
+        propDragOffX=p.x-props[hp].x*CELL;
+        propDragOffY=p.y-props[hp].y*CELL;
+        updatePropCtrl(); draw(); return;
+      }
+    }
+    // Tokens
     const h=hitTok(p);
     if(h){
       const tok=tokens[h];
@@ -1276,9 +1360,11 @@ function mdown(e){
       } else {
         selTok=h;
       }
+      if(selPropId){ selPropId=null; deselectProp(); }
       draw(); renderToks();
     } else {
       selTok=null;
+      if(selPropId){ selPropId=null; deselectProp(); }
       panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
       draw(); renderToks();
     }
@@ -1290,15 +1376,21 @@ function mdown(e){
 function mmove(e){
   const p=cvPos(e), cl=cellOf(e);
 
+  // Prop drag
+  if(propDragging&&selPropId){
+    if(props[selPropId]){
+      props[selPropId].x=(p.x-propDragOffX)/CELL;
+      props[selPropId].y=(p.y-propDragOffY)/CELL;
+      draw();
+    }
+    return;
+  }
+
   // Drawing
   if(isDrawing&&currentStroke&&(tool==='draw'||tool==='erase')){
     currentStroke.points.push({x:p.x,y:p.y});
-    // Live preview
-    if(tool==='erase'){
-      eraseAt(p);
-    } else {
-      drawLiveStroke();
-    }
+    if(tool==='erase') eraseAt(p);
+    else drawLiveStroke();
     return;
   }
 
@@ -1322,20 +1414,25 @@ function mmove(e){
     me={c:cl.c,r:cl.r};
     const dc=me.c-ms.c, dr=me.r-ms.r;
     const dist=Math.round(Math.sqrt(dc*dc+dr*dr)*5);
-    // Show tooltip locally
     const tt=document.getElementById('mtip');
     const rc2=cv.getBoundingClientRect();
     tt.style.display='block';
     tt.style.left=(e.clientX-rc2.left+14)+'px';
     tt.style.top=(e.clientY-rc2.top-26)+'px';
     tt.textContent=dist+' ft. ('+Math.round(dist/5)+' casillas) — '+myName;
-    // Push to Firebase so everyone sees it
     update(r('measure'),{active:true,c1:ms.c,r1:ms.r,c2:me.c,r2:me.r,name:myName,dist:dist});
     draw();
   }
 }
 
 function mup(e){
+  // Release prop drag
+  if(propDragging&&selPropId){
+    const prop=props[selPropId];
+    if(prop) update(ref(db,'rooms/'+room+'/props/'+selPropId),{x:prop.x,y:prop.y});
+    propDragging=false; return;
+  }
+
   // Finish drawing stroke
   if(isDrawing&&currentStroke){
     isDrawing=false;
@@ -1357,6 +1454,17 @@ function mup(e){
   }
   dragging=false; dragId=null; panning=false;
   document.getElementById('mtip').style.display='none';
+  if(tool==='measure'&&me){
+    setTimeout(function(){ update(r('measure'),{active:false}); },1500);
+  }
+}
+    const p=cvPos(e);
+    const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
+    const nr=Math.max(0,Math.floor((p.y-doy)/CELL));
+    update(r('tokens/'+dragId),{x:nc,y:nr});
+  }
+  dragging=false; dragId=null; panning=false;
+  document.getElementById('mtip').style.display='none';
   // Clear shared measure line when released
   if(tool==='measure'&&me){
     setTimeout(function(){ update(r('measure'),{active:false}); },1500);
@@ -1364,7 +1472,12 @@ function mup(e){
 }
 
 function mdbl(e){
-  const p=cvPos(e); const h=hitTok(p);
+  const p=cvPos(e);
+  if(isDM){
+    const hp=hitTestProp(p);
+    if(hp){openEditProp(hp);return;}
+  }
+  const h=hitTok(p);
   if(h) openEdit(h);
 }
 
@@ -2138,6 +2251,210 @@ function resetLaserTimer(){
   clearTimeout(laserHideTimer);
   laserHideTimer=setTimeout(clearLaser,3000);
 }
+
+// ── PROPS SYSTEM ───────────────────────────────────────────
+// Props = free images on map (PNJs, objects, cards, etc.)
+var props = {};        // id -> {id,name,url,x,y,w,h,rot,opacity,locked}
+var propImgs = {};     // id -> Image (cached)
+var selPropId = null;
+var propDragging = false;
+var propDragOffX = 0, propDragOffY = 0;
+
+window.openAddProp = function(){
+  document.getElementById('prop_url').value='';
+  document.getElementById('prop_name').value='';
+  document.getElementById('prop_size').value='2';
+  document.getElementById('prop_modal').classList.add('open');
+  document.getElementById('prop_url').focus();
+};
+
+window.addProp = function(){
+  var url = document.getElementById('prop_url').value.trim();
+  var name= document.getElementById('prop_name').value.trim()||'Prop';
+  var sz  = parseInt(document.getElementById('prop_size').value)||2;
+  if(!url){toast('Pega una URL de imagen');return;}
+  url = convertDriveUrl(url);
+  var id = 'pr_'+Date.now();
+  var prop = {
+    id:id, name:name, url:url,
+    x: Math.floor((fogW||20)/2) - Math.floor(sz/2),
+    y: Math.floor((fogH||15)/2) - Math.floor(sz/2),
+    w: sz, h: sz,
+    rot: 0, opacity: 1, locked: false
+  };
+  set(ref(db,'rooms/'+room+'/props/'+id), prop);
+  closeModal('prop_modal');
+  toast('🖼 "'+name+'" añadido al mapa');
+};
+
+function subscribePropList(){
+  onChildAdded(ref(db,'rooms/'+room+'/props'), function(s){
+    props[s.key]=s.val(); loadPropImage(s.key,s.val().url); draw();
+  });
+  onChildChanged(ref(db,'rooms/'+room+'/props'), function(s){
+    props[s.key]=s.val(); draw(); updatePropCtrl();
+  });
+  onChildRemoved(ref(db,'rooms/'+room+'/props'), function(s){
+    delete props[s.key]; delete propImgs[s.key];
+    if(selPropId===s.key) deselectProp();
+    draw();
+  });
+}
+
+function loadPropImage(id, url){
+  if(propImgs[id]) return;
+  var img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function(){ propImgs[id]=img; draw(); };
+  img.onerror = function(){
+    // Try without CORS
+    var img2 = new Image();
+    img2.onload = function(){ propImgs[id]=img2; draw(); };
+    img2.src = url;
+  };
+  // Try proxy first for Drive/Discord
+  if(url.indexOf('drive.google')>-1||url.indexOf('discord')>-1){
+    img.src = 'https://corsproxy.io/?'+encodeURIComponent(url);
+  } else {
+    img.src = url;
+  }
+}
+
+function drawProps(){
+  var list = Object.values(props).sort(function(a,b){return (a.zIndex||0)-(b.zIndex||0);});
+  list.forEach(function(prop){
+    var img = propImgs[prop.id];
+    var px = prop.x*CELL, py = prop.y*CELL;
+    var pw = prop.w*CELL, ph = prop.h*CELL;
+    var cx2 = cx;
+
+    cx2.save();
+    cx2.globalAlpha = prop.opacity||1;
+    cx2.translate(px + pw/2, py + ph/2);
+    cx2.rotate((prop.rot||0)*Math.PI/180);
+
+    if(img && img.complete && img.naturalWidth>0){
+      cx2.drawImage(img, -pw/2, -ph/2, pw, ph);
+    } else {
+      // Placeholder while loading
+      cx2.fillStyle='rgba(100,100,100,0.3)';
+      cx2.strokeStyle='rgba(200,168,75,0.5)';
+      cx2.lineWidth=1/scale;
+      cx2.fillRect(-pw/2,-ph/2,pw,ph);
+      cx2.strokeRect(-pw/2,-ph/2,pw,ph);
+      cx2.fillStyle='rgba(200,168,75,0.7)';
+      cx2.font=(Math.min(pw,ph)*0.3)+'px sans-serif';
+      cx2.textAlign='center'; cx2.textBaseline='middle';
+      cx2.fillText('⏳',0,0);
+    }
+
+    // Selection border
+    if(prop.id===selPropId){
+      cx2.strokeStyle='rgba(200,168,75,0.9)';
+      cx2.lineWidth=2/scale;
+      cx2.setLineDash([6/scale,3/scale]);
+      cx2.strokeRect(-pw/2-2/scale,-ph/2-2/scale,pw+4/scale,ph+4/scale);
+      cx2.setLineDash([]);
+      // Corner handles
+      [[-pw/2,-ph/2],[pw/2,-ph/2],[pw/2,ph/2],[-pw/2,ph/2]].forEach(function(h){
+        cx2.beginPath();
+        cx2.arc(h[0],h[1],5/scale,0,Math.PI*2);
+        cx2.fillStyle='#c8a84b'; cx2.fill();
+      });
+    }
+
+    // Name label
+    if(prop.name){
+      cx2.globalAlpha=0.85;
+      cx2.font='bold '+(Math.max(10,CELL*0.15)/scale)+'px sans-serif';
+      cx2.fillStyle='rgba(0,0,0,0.7)';
+      cx2.textAlign='center';
+      cx2.fillText(prop.name,0,ph/2+12/scale);
+      cx2.fillStyle='#e8e0d0';
+      cx2.fillText(prop.name,0,ph/2+11/scale);
+    }
+
+    cx2.globalAlpha=1;
+    cx2.restore();
+  });
+}
+
+// Hit test a point against a prop (accounts for rotation)
+function hitProp(px, py){
+  var list = Object.values(props).reverse();
+  for(var i=0;i<list.length;i++){
+    var prop=list[i];
+    var cx2= prop.x*CELL + prop.w*CELL/2;
+    var cy2= prop.y*CELL + prop.h*CELL/2;
+    var dx = px-cx2, dy = py-cy2;
+    var rot = -(prop.rot||0)*Math.PI/180;
+    var lx = dx*Math.cos(rot)-dy*Math.sin(rot);
+    var ly = dx*Math.sin(rot)+dy*Math.cos(rot);
+    if(Math.abs(lx)<prop.w*CELL/2 && Math.abs(ly)<prop.h*CELL/2){
+      return prop.id;
+    }
+  }
+  return null;
+}
+
+window.selectProp=function(id){
+  selPropId=id;
+  updatePropCtrl();
+  draw();
+};
+
+window.deselectProp=function(){
+  selPropId=null;
+  var pc=document.getElementById('prop_ctrl');
+  if(pc) pc.style.display='none';
+  draw();
+};
+
+function updatePropCtrl(){
+  if(!selPropId) return;
+  var prop=props[selPropId];
+  if(!prop) return;
+  var pc=document.getElementById('prop_ctrl');
+  if(!pc) return;
+  pc.style.display='flex';
+  document.getElementById('prop_ctrl_name').textContent=prop.name||'Prop';
+  document.getElementById('prop_scale_val').textContent=(prop.w||1).toFixed(1)+'c';
+  document.getElementById('prop_rot_val').textContent=(prop.rot||0)+'°';
+  document.getElementById('prop_opacity_range').value=Math.round((prop.opacity||1)*100);
+  document.getElementById('prop_lock_btn').textContent=prop.locked?'🔒 Fijo':'🔓 Libre';
+}
+
+window.scaleProp=function(delta){
+  if(!selPropId) return;
+  var prop=props[selPropId]; if(!prop) return;
+  var nw=Math.max(0.5, Math.round((prop.w+delta)*10)/10);
+  var nh=Math.max(0.5, Math.round((prop.h+delta)*10)/10);
+  update(ref(db,'rooms/'+room+'/props/'+selPropId),{w:nw,h:nh});
+};
+
+window.rotateProp=function(deg){
+  if(!selPropId) return;
+  var prop=props[selPropId]; if(!prop) return;
+  var nr=((prop.rot||0)+deg+360)%360;
+  update(ref(db,'rooms/'+room+'/props/'+selPropId),{rot:nr});
+};
+
+window.setPropOpacity=function(v){
+  if(!selPropId) return;
+  update(ref(db,'rooms/'+room+'/props/'+selPropId),{opacity:parseInt(v)/100});
+};
+
+window.togglePropLock=function(){
+  if(!selPropId) return;
+  var prop=props[selPropId]; if(!prop) return;
+  update(ref(db,'rooms/'+room+'/props/'+selPropId),{locked:!prop.locked});
+};
+
+window.deleteProp=function(){
+  if(!selPropId) return;
+  if(!confirm('¿Eliminar este prop?')) return;
+  remove(ref(db,'rooms/'+room+'/props/'+selPropId));
+};
 
 // ── DROPDOWN MENU ──────────────────────────────────────────
 let menuOpen=false;
