@@ -2,575 +2,193 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>El Cadejo VTT</title>
 <style>
 :root {
-  --bg:      #0d0f14;
-  --bg2:     #13161e;
-  --bg3:     #1a1e29;
-  --bg4:     #222636;
-  --border:  #2e3347;
-  --gold:    #c8a84b;
-  --gold2:   #e8c86a;
-  --red:     #c0392b;
-  --green:   #27ae60;
-  --blue:    #2980b9;
-  --text:    #e8e0d0;
-  --text2:   #a09880;
-  --text3:   #5a5448;
-  --fog:     rgba(10,12,20,0.92);
-  --font:    'Palatino Linotype', Palatino, Georgia, serif;
-  --radius:  6px;
+  --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1e29; --bg4:#222636;
+  --border:#2e3347; --gold:#c8a84b; --gold2:#e8c86a;
+  --red:#c0392b; --green:#27ae60; --blue:#2980b9;
+  --text:#e8e0d0; --text2:#a09880; --text3:#5a5448;
+  --font:'Palatino Linotype',Palatino,Georgia,serif; --radius:6px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-/* ── HEADER ── */
-#header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  z-index: 100;
-}
-#header h1 {
-  font-size: 1rem;
-  color: var(--gold);
-  letter-spacing: 2px;
-  margin-right: 8px;
-}
-.hbtn {
-  padding: 5px 10px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--text2);
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 0.78rem;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.hbtn:hover { border-color: var(--gold); color: var(--gold); }
-.hbtn.active { background: rgba(200,168,75,0.15); border-color: var(--gold); color: var(--gold); }
-.hbtn.danger { border-color: var(--red); color: var(--red); }
-#room_info {
-  margin-left: auto;
-  font-size: 0.75rem;
-  color: var(--text3);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-#room_code_display {
-  font-family: monospace;
-  color: var(--gold2);
-  background: var(--bg4);
-  padding: 3px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 1px solid var(--border);
-}
-#connection_dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: #e74c3c;
-  transition: background 0.3s;
-}
-#connection_dot.connected { background: var(--green); }
+/* HEADER */
+#header{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;z-index:100}
+#header h1{font-size:0.95rem;color:var(--gold);letter-spacing:2px;margin-right:4px;white-space:nowrap}
+.hbtn{padding:4px 9px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:0.75rem;transition:all .15s;white-space:nowrap}
+.hbtn:hover{border-color:var(--gold);color:var(--gold)}
+.hbtn.active{background:rgba(200,168,75,.15);border-color:var(--gold);color:var(--gold)}
+.hbtn.danger{border-color:var(--red);color:var(--red)}
+#room_info{margin-left:auto;font-size:0.72rem;color:var(--text3);display:flex;align-items:center;gap:8px}
+#room_code_display{font-family:monospace;color:var(--gold2);background:var(--bg4);padding:2px 8px;border-radius:4px;cursor:pointer;border:1px solid var(--border);font-size:0.8rem}
+#cdot{width:8px;height:8px;border-radius:50%;background:#e74c3c;transition:background .3s;flex-shrink:0}
+#cdot.on{background:var(--green)}
 
-/* ── MAIN LAYOUT ── */
-#main {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
+/* LAYOUT */
+#main{display:flex;flex:1;overflow:hidden;min-height:0}
 
-/* ── CANVAS AREA ── */
-#canvas_wrap {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  background: #080a0f;
-  cursor: crosshair;
-}
-#vtt_canvas {
-  position: absolute;
-  top: 0; left: 0;
-  image-rendering: pixelated;
-}
-#map_img {
-  position: absolute;
-  top: 0; left: 0;
-  transform-origin: 0 0;
-  pointer-events: none;
-  image-rendering: auto;
-}
+/* CANVAS */
+#cwrap{flex:1;position:relative;overflow:hidden;background:#080a0f;cursor:default}
+#vtt{position:absolute;top:0;left:0;touch-action:none}
 
-/* ── SIDEBAR ── */
-#sidebar {
-  width: 240px;
-  background: var(--bg2);
-  border-left: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.sidebar-section {
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.sidebar-title {
-  padding: 8px 12px;
-  font-size: 0.68rem;
-  letter-spacing: 2px;
-  color: var(--gold2);
-  text-transform: uppercase;
-  font-family: var(--font);
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  user-select: none;
-}
-.sidebar-title:hover { background: var(--bg3); }
-.sidebar-body { padding: 8px; }
+/* SIDEBAR */
+#sidebar{width:230px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.s-title{padding:7px 10px;font-size:0.65rem;letter-spacing:2px;color:var(--gold2);text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);user-select:none}
+.s-title:hover{background:var(--bg3)}
+.s-body{padding:6px 8px}
 
-/* Tokens list */
-.token-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  border: 1px solid transparent;
-  margin-bottom: 3px;
-}
-.token-item:hover { background: var(--bg3); border-color: var(--border); }
-.token-item.selected { background: rgba(200,168,75,0.1); border-color: var(--gold); }
-.token-dot {
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.token-hp {
-  margin-left: auto;
-  font-size: 0.7rem;
-  color: var(--text3);
-}
+/* TOKEN LIST */
+.tok-item{display:flex;align-items:center;gap:5px;padding:3px 5px;border-radius:4px;cursor:pointer;font-size:0.77rem;border:1px solid transparent;margin-bottom:2px}
+.tok-item:hover{background:var(--bg3);border-color:var(--border)}
+.tok-item.sel{background:rgba(200,168,75,.1);border-color:var(--gold)}
+.tok-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
-/* Chat / Dice */
-#chat_log {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-  min-height: 0;
-}
-.chat-msg {
-  font-size: 0.78rem;
-  padding: 4px 6px;
-  border-radius: 4px;
-  margin-bottom: 4px;
-  border-left: 2px solid var(--border);
-  line-height: 1.4;
-}
-.chat-msg.dice { border-left-color: var(--gold); background: rgba(200,168,75,0.05); }
-.chat-msg.crit { border-left-color: #f0ad4e; background: rgba(240,173,78,0.08); }
-.chat-msg.fail { border-left-color: var(--red); background: rgba(192,57,43,0.08); }
-.chat-msg.system { border-left-color: var(--blue); color: var(--text3); font-style: italic; }
-.chat-who { font-weight: bold; color: var(--gold2); font-size: 0.72rem; }
-.chat-result { font-size: 1.1rem; font-weight: bold; }
-#chat_input_area {
-  padding: 8px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-#chat_input {
-  flex: 1;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 4px;
-  padding: 5px 8px;
-  font-family: var(--font);
-  font-size: 0.8rem;
-}
-#chat_input:focus { outline: none; border-color: var(--gold); }
+/* INIT */
+.init-row{display:flex;align-items:center;gap:5px;padding:3px 5px;border-radius:4px;margin-bottom:2px;font-size:0.77rem}
+.init-row.cur{background:rgba(200,168,75,.12);border:1px solid var(--gold)}
+.init-num{font-family:monospace;color:var(--gold2);font-weight:bold;min-width:22px;text-align:right;font-size:0.8rem}
 
-/* Dice bar */
-#dice_bar {
-  padding: 6px 8px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-.dbtn {
-  flex: 1;
-  min-width: 32px;
-  padding: 4px 2px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--gold2);
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 0.72rem;
-  text-align: center;
-  transition: all 0.15s;
-}
-.dbtn:hover { background: rgba(200,168,75,0.15); border-color: var(--gold); }
+/* CHAT */
+#chat_log{flex:1;overflow-y:auto;padding:6px 8px;min-height:0;font-size:0.77rem}
+.cmsg{padding:3px 6px;border-radius:3px;margin-bottom:3px;border-left:2px solid var(--border);line-height:1.4}
+.cmsg.dice{border-left-color:var(--gold);background:rgba(200,168,75,.04)}
+.cmsg.crit{border-left-color:#f0ad4e;background:rgba(240,173,78,.08)}
+.cmsg.fail{border-left-color:var(--red);background:rgba(192,57,43,.08)}
+.cmsg.sys{border-left-color:var(--blue);color:var(--text3);font-style:italic}
+.cwho{font-weight:bold;color:var(--gold2);font-size:0.7rem}
+.cres{font-size:1rem;font-weight:bold}
+#cinput_wrap{padding:6px;border-top:1px solid var(--border);display:flex;gap:4px;flex-shrink:0}
+#cinput{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:4px 7px;font-family:var(--font);font-size:0.77rem}
+#cinput:focus{outline:none;border-color:var(--gold)}
+#dice_bar{padding:5px 6px;border-top:1px solid var(--border);display:flex;gap:3px;flex-wrap:wrap;flex-shrink:0}
+.dbtn{flex:1;min-width:28px;padding:3px 1px;background:var(--bg3);border:1px solid var(--border);color:var(--gold2);border-radius:3px;cursor:pointer;font-family:var(--font);font-size:0.7rem;text-align:center;transition:all .15s}
+.dbtn:hover{background:rgba(200,168,75,.15);border-color:var(--gold)}
 
-/* Initiative tracker */
-.init-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
-  border-radius: 4px;
-  margin-bottom: 2px;
-  font-size: 0.78rem;
-}
-.init-row.active-turn {
-  background: rgba(200,168,75,0.12);
-  border: 1px solid var(--gold);
-}
-.init-num {
-  font-family: monospace;
-  color: var(--gold2);
-  font-weight: bold;
-  min-width: 24px;
-  text-align: right;
-}
+/* MODALS */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:center;justify-content:center}
+.mbg.open{display:flex}
+.mcard{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px;width:340px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.mcard h2{font-size:.9rem;color:var(--gold);letter-spacing:2px;margin-bottom:12px}
+.mcard label{font-size:.75rem;color:var(--text2);display:block;margin-bottom:3px}
+.mcard input,.mcard select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:6px 9px;font-family:var(--font);font-size:.82rem;margin-bottom:8px}
+.mcard input:focus,.mcard select:focus{outline:none;border-color:var(--gold)}
+.mbtns{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.bprimary{flex:1;padding:7px;background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.82rem}
+.bprimary:hover{background:rgba(200,168,75,.25)}
+.bcancel{padding:7px 12px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.82rem}
+.cswatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;flex-shrink:0}
+.cswatch:hover,.cswatch.sel{transform:scale(1.25);border-color:#fff}
+.crow{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
 
-/* ── MODALS ── */
-.modal-bg {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.75);
-  z-index: 500;
-  align-items: center;
-  justify-content: center;
-}
-.modal-bg.open { display: flex; }
-.modal {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 20px;
-  width: 360px;
-  max-width: 95vw;
-}
-.modal h2 {
-  font-size: 1rem;
-  color: var(--gold);
-  letter-spacing: 2px;
-  margin-bottom: 16px;
-  font-family: var(--font);
-}
-.modal label { font-size: 0.78rem; color: var(--text2); display: block; margin-bottom: 4px; }
-.modal input, .modal select {
-  width: 100%;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: var(--radius);
-  padding: 7px 10px;
-  font-family: var(--font);
-  font-size: 0.85rem;
-  margin-bottom: 10px;
-}
-.modal input:focus, .modal select:focus { outline: none; border-color: var(--gold); }
-.modal-btns { display: flex; gap: 8px; margin-top: 6px; }
-.btn-primary {
-  flex: 1;
-  padding: 8px;
-  background: rgba(200,168,75,0.15);
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 0.85rem;
-}
-.btn-primary:hover { background: rgba(200,168,75,0.25); }
-.btn-cancel {
-  padding: 8px 14px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--text2);
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 0.85rem;
-}
+/* LOBBY */
+#lobby{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center}
+#lcard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:28px;width:360px;max-width:94vw;text-align:center}
+#lcard h1{font-size:1.7rem;color:var(--gold);letter-spacing:4px;margin-bottom:4px}
+#lcard p{color:var(--text3);font-size:.82rem;margin-bottom:20px}
+.linput{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:9px 12px;font-family:var(--font);font-size:.88rem;margin-bottom:8px;text-align:center}
+.linput:focus{outline:none;border-color:var(--gold)}
+.ldiv{display:flex;align-items:center;gap:8px;margin:12px 0;color:var(--text3);font-size:.75rem}
+.ldiv::before,.ldiv::after{content:'';flex:1;height:1px;background:var(--border)}
+.blg{width:100%;padding:10px;background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.88rem;letter-spacing:1px;margin-bottom:7px;transition:all .15s}
+.blg:hover{background:rgba(200,168,75,.25)}
+.blg.sec{background:var(--bg3);border-color:var(--border);color:var(--text2)}
+.blg.sec:hover{border-color:var(--gold);color:var(--gold)}
+#lerr{color:#e74c3c;font-size:.75rem;margin-top:6px;display:none}
 
-/* ── TOOL indicator ── */
-#tool_indicator {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  background: rgba(13,15,20,0.85);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  color: var(--text2);
-  pointer-events: none;
-  letter-spacing: 1px;
-}
+/* TOOL INDICATOR */
+#tool_ind{position:absolute;bottom:10px;left:10px;background:rgba(13,15,20,.88);border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-size:.72rem;color:var(--text2);pointer-events:none;letter-spacing:1px}
 
-/* ── LOBBY ── */
-#lobby {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#lobby_card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 32px;
-  width: 380px;
-  max-width: 95vw;
-  text-align: center;
-}
-#lobby_card h1 {
-  font-size: 1.8rem;
-  color: var(--gold);
-  letter-spacing: 4px;
-  margin-bottom: 6px;
-}
-#lobby_card p {
-  color: var(--text3);
-  font-size: 0.85rem;
-  margin-bottom: 24px;
-}
-.lobby-input {
-  width: 100%;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: var(--radius);
-  padding: 10px 14px;
-  font-family: var(--font);
-  font-size: 0.9rem;
-  margin-bottom: 10px;
-  text-align: center;
-}
-.lobby-input:focus { outline: none; border-color: var(--gold); }
-.lobby-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 14px 0;
-  color: var(--text3);
-  font-size: 0.78rem;
-}
-.lobby-divider::before, .lobby-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-.btn-lg {
-  width: 100%;
-  padding: 11px;
-  background: rgba(200,168,75,0.15);
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 0.9rem;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-  transition: all 0.15s;
-}
-.btn-lg:hover { background: rgba(200,168,75,0.25); }
-.btn-lg.secondary {
-  background: var(--bg3);
-  border-color: var(--border);
-  color: var(--text2);
-}
-.btn-lg.secondary:hover { border-color: var(--gold); color: var(--gold); }
+/* MEASURE TOOLTIP */
+#mtip{position:absolute;pointer-events:none;background:rgba(13,15,20,.92);border:1px solid var(--gold);border-radius:4px;padding:2px 8px;font-size:.72rem;color:var(--gold2);display:none;white-space:nowrap}
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--bg2); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* BRUSH SIZE */
+#brush_ctrl{display:none;position:absolute;bottom:10px;right:10px;background:rgba(13,15,20,.88);border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-size:.72rem;color:var(--text2)}
+#brush_ctrl label{display:block;margin-bottom:3px;font-size:.68rem;color:var(--text3)}
 
-/* Color picker row */
-.color-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-.color-swatch {
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 0.1s;
-}
-.color-swatch:hover, .color-swatch.selected { transform: scale(1.2); border-color: white; }
+/* TOAST */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg2);border:1px solid var(--gold);border-radius:6px;padding:7px 14px;font-size:.8rem;color:var(--gold2);opacity:0;transition:all .3s;z-index:999;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* Fog reveal cursor */
-.cursor-fog { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='14' stroke='%23c8a84b' stroke-width='2' fill='none'/%3E%3C/svg%3E") 16 16, crosshair; }
-.cursor-token { cursor: grab; }
-.cursor-measure { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cline x1='4' y1='4' x2='20' y2='20' stroke='%23c8a84b' stroke-width='2'/%3E%3Ccircle cx='4' cy='4' r='3' fill='%23c8a84b'/%3E%3Ccircle cx='20' cy='20' r='3' fill='%23c8a84b'/%3E%3C/svg%3E") 4 4, crosshair; }
+/* MAP URL modal */
+#mapurl_modal .mcard{width:400px}
 
-/* Measure tooltip */
-#measure_tooltip {
-  position: absolute;
-  pointer-events: none;
-  background: rgba(13,15,20,0.9);
-  border: 1px solid var(--gold);
-  border-radius: 4px;
-  padding: 3px 8px;
-  font-size: 0.75rem;
-  color: var(--gold2);
-  display: none;
-}
-
-/* Toast */
-#toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--bg2);
-  border: 1px solid var(--gold);
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 0.82rem;
-  color: var(--gold2);
-  opacity: 0;
-  transition: all 0.3s;
-  z-index: 999;
-  pointer-events: none;
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════
-     LOBBY
-══════════════════════════════════ -->
+<!-- LOBBY -->
 <div id="lobby">
-  <div id="lobby_card">
+  <div id="lcard">
     <h1>⚔ EL CADEJO</h1>
-    <p>Mesa de juego virtual para D&D 5e</p>
-
-    <input class="lobby-input" id="lobby_name" placeholder="Tu nombre (ej: Dungeon Master)" maxlength="24">
-
-    <button class="btn-lg" onclick="createRoom()">✦ Crear sala nueva</button>
-
-    <div class="lobby-divider">o únete a una sala</div>
-
-    <input class="lobby-input" id="lobby_code" placeholder="Código de sala (ej: DRAGON)" maxlength="8" oninput="this.value=this.value.toUpperCase()">
-    <button class="btn-lg secondary" onclick="joinRoom()">→ Unirse a sala</button>
-
-    <div id="lobby_error" style="color:#e74c3c;font-size:0.78rem;margin-top:8px;display:none"></div>
+    <p>Mesa de juego virtual · D&D 5e</p>
+    <input class="linput" id="lname" placeholder="Tu nombre (ej: Dungeon Master)" maxlength="24">
+    <button class="blg" onclick="createRoom()">✦ Crear sala nueva</button>
+    <div class="ldiv">o únete con código</div>
+    <input class="linput" id="lcode" placeholder="Código de sala" maxlength="10" oninput="this.value=this.value.toUpperCase()">
+    <button class="blg sec" onclick="joinRoom()">→ Unirse a sala</button>
+    <div id="lerr"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     HEADER
-══════════════════════════════════ -->
+<!-- HEADER -->
 <div id="header" style="display:none">
   <h1>⚔ EL CADEJO</h1>
-
-  <!-- Tools -->
-  <button class="hbtn active" id="tool_select_btn" onclick="setTool('select')" title="Seleccionar / mover tokens">↖ Mover</button>
-  <button class="hbtn" id="tool_fog_btn"    onclick="setTool('fog')"    title="Revelar niebla de guerra">🌫 Niebla</button>
-  <button class="hbtn" id="tool_measure_btn" onclick="setTool('measure')" title="Medir distancia">📏 Medir</button>
-  <button class="hbtn" id="tool_fogadd_btn"  onclick="setTool('fogadd')"  title="Oscurecer zona">🌑 Oscurecer</button>
-
-  <!-- Map controls -->
-  <button class="hbtn" onclick="document.getElementById('map_file').click()">🗺 Cargar mapa</button>
-  <input type="file" id="map_file" accept="image/*" style="display:none" onchange="loadMapFile(event)">
-  <button class="hbtn" onclick="resetView()">⌂ Centrar</button>
-  <button class="hbtn" onclick="clearFog()" title="Revelar todo el mapa">☀ Revelar todo</button>
-  <button class="hbtn" onclick="fillFog()"  title="Cubrir todo con niebla">🌑 Cubrir todo</button>
-
-  <!-- Token -->
+  <button class="hbtn active" id="tb_select"  onclick="setTool('select')">↖ Mover</button>
+  <button class="hbtn"        id="tb_fog"     onclick="setTool('fog')">🌫 Revelar</button>
+  <button class="hbtn"        id="tb_fogadd"  onclick="setTool('fogadd')">🌑 Oscurecer</button>
+  <button class="hbtn"        id="tb_measure" onclick="setTool('measure')">📏 Medir</button>
+  <button class="hbtn" onclick="openMapModal()">🗺 Mapa</button>
+  <button class="hbtn" onclick="resetView()">⌂ Centro</button>
+  <button class="hbtn" onclick="clearFog()">☀ Revelar todo</button>
+  <button class="hbtn" onclick="fillFog()">🌑 Cubrir todo</button>
   <button class="hbtn" onclick="openAddToken()">+ Token</button>
-
-  <!-- Room info -->
   <div id="room_info">
-    <div id="connection_dot"></div>
-    <span id="player_count" style="color:var(--text2);font-size:0.75rem"></span>
-    <span style="color:var(--text3);font-size:0.72rem">Sala:</span>
-    <span id="room_code_display" onclick="copyRoomLink()" title="Click para copiar link">—</span>
+    <div id="cdot"></div>
+    <span id="pcount" style="color:var(--text2);font-size:.72rem"></span>
+    <span style="color:var(--text3);font-size:.7rem">Sala:</span>
+    <span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     MAIN
-══════════════════════════════════ -->
+<!-- MAIN -->
 <div id="main" style="display:none">
-
-  <!-- Canvas -->
-  <div id="canvas_wrap">
-    <img id="map_img" style="display:none">
-    <canvas id="vtt_canvas"></canvas>
-    <div id="tool_indicator">HERRAMIENTA: MOVER</div>
-    <div id="measure_tooltip"></div>
+  <div id="cwrap">
+    <canvas id="vtt"></canvas>
+    <div id="tool_ind">HERRAMIENTA: MOVER</div>
+    <div id="mtip"></div>
+    <div id="brush_ctrl">
+      <label>Tamaño pincel</label>
+      <input type="range" id="brush_range" min="1" max="8" value="3" oninput="fogBrush=parseInt(this.value);document.getElementById('brush_val').textContent=this.value" style="width:80px">
+      <span id="brush_val">3</span>
+    </div>
   </div>
 
-  <!-- Sidebar -->
   <div id="sidebar">
-
     <!-- Tokens -->
-    <div class="sidebar-section">
-      <div class="sidebar-title" onclick="toggleSection('sec_tokens')">
-        🎭 Tokens <span id="sec_tokens_arrow">▾</span>
-      </div>
-      <div class="sidebar-body" id="sec_tokens">
-        <div id="token_list"><p style="color:var(--text3);font-size:0.78rem">Sin tokens</p></div>
-      </div>
+    <div>
+      <div class="s-title" onclick="toggleSec('st')">🎭 Tokens <span id="st_arr">▾</span></div>
+      <div class="s-body" id="st"><div id="tok_list"><p style="color:var(--text3);font-size:.75rem">Sin tokens</p></div></div>
     </div>
-
     <!-- Initiative -->
-    <div class="sidebar-section">
-      <div class="sidebar-title" onclick="toggleSection('sec_init')">
-        ⚔ Iniciativa <span id="sec_init_arrow">▾</span>
-      </div>
-      <div class="sidebar-body" id="sec_init">
-        <div id="init_list"><p style="color:var(--text3);font-size:0.78rem">Sin iniciativa activa</p></div>
-        <div style="display:flex;gap:4px;margin-top:6px">
-          <button class="hbtn" onclick="rollAllInit()" style="flex:1;font-size:0.7rem">🎲 Tirar todas</button>
-          <button class="hbtn" onclick="nextTurn()"   style="flex:1;font-size:0.7rem">→ Siguiente</button>
-          <button class="hbtn danger" onclick="clearInit()" style="font-size:0.7rem">✕</button>
+    <div style="border-top:1px solid var(--border)">
+      <div class="s-title" onclick="toggleSec('si')">⚔ Iniciativa <span id="si_arr">▾</span></div>
+      <div class="s-body" id="si">
+        <div id="init_list"><p style="color:var(--text3);font-size:.75rem">Sin iniciativa</p></div>
+        <div style="display:flex;gap:4px;margin-top:5px">
+          <button class="hbtn" style="flex:1;font-size:.68rem" onclick="rollAllInit()">🎲 Tirar todas</button>
+          <button class="hbtn" style="flex:1;font-size:.68rem" onclick="nextTurn()">→ Turno</button>
+          <button class="hbtn danger" style="font-size:.68rem" onclick="clearInit()">✕</button>
         </div>
       </div>
     </div>
-
-    <!-- Chat / Dice -->
+    <!-- Chat -->
     <div id="chat_log"></div>
-
     <div id="dice_bar">
       <button class="dbtn" onclick="rollDie(4)">d4</button>
       <button class="dbtn" onclick="rollDie(6)">d6</button>
@@ -578,990 +196,731 @@ body {
       <button class="dbtn" onclick="rollDie(10)">d10</button>
       <button class="dbtn" onclick="rollDie(12)">d12</button>
       <button class="dbtn" onclick="rollDie(20)">d20</button>
-      <button class="dbtn" onclick="rollDie(100)">d100</button>
+      <button class="dbtn" onclick="rollDie(100)">d%</button>
     </div>
-
-    <div id="chat_input_area">
-      <input id="chat_input" placeholder="Mensaje o /r 2d6+3..." onkeydown="chatKeydown(event)">
+    <div id="cinput_wrap">
+      <input id="cinput" placeholder="Mensaje o /r 2d6+3..." onkeydown="if(event.key==='Enter')sendChat()">
       <button class="hbtn" onclick="sendChat()">↵</button>
     </div>
-
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     ADD TOKEN MODAL
-══════════════════════════════════ -->
-<div class="modal-bg" id="token_modal">
-  <div class="modal">
+<!-- MAP MODAL -->
+<div class="mbg" id="map_modal">
+  <div class="mcard" id="mapurl_modal">
+    <h2>🗺 CARGAR MAPA</h2>
+    <label>Subir imagen desde tu dispositivo</label>
+    <input type="file" id="map_file" accept="image/*" onchange="loadMapFile(event)" style="margin-bottom:12px">
+    <div style="text-align:center;color:var(--text3);font-size:.75rem;margin:8px 0">— o —</div>
+    <label>URL de imagen (Imgur, Discord, etc.)</label>
+    <input type="text" id="map_url_input" placeholder="https://i.imgur.com/...">
+    <label>Tamaño de celda (px en la imagen original)</label>
+    <input type="number" id="cell_size_input" value="70" min="20" max="200" placeholder="px por casilla">
+    <p style="font-size:.72rem;color:var(--text3);margin-bottom:10px">Ajusta según el grid de tu mapa. Valor típico: 50-100px</p>
+    <div class="mbtns">
+      <button class="bprimary" onclick="applyMapUrl()">✓ Cargar mapa</button>
+      <button class="bcancel" onclick="closeModal('map_modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TOKEN MODAL -->
+<div class="mbg" id="tok_modal">
+  <div class="mcard">
     <h2>✦ AÑADIR TOKEN</h2>
     <label>Nombre</label>
-    <input id="tok_name" placeholder="ej: Gandalf, Goblin #1" maxlength="24">
+    <input id="tn" placeholder="Gandalf, Goblin #1..." maxlength="24">
     <label>HP Máximo</label>
-    <input id="tok_hp" type="number" value="10" min="1">
+    <input id="thp" type="number" value="10" min="1">
     <label>CA</label>
-    <input id="tok_ac" type="number" value="10" min="0">
+    <input id="tac" type="number" value="10" min="0">
+    <label>Icono (emoji)</label>
+    <input id="tico" placeholder="🧙 🐉 👹 ⚔ 🛡" maxlength="4">
     <label>Color</label>
-    <div class="color-row" id="color_picker">
-      <div class="color-swatch selected" style="background:#e74c3c" data-color="#e74c3c" onclick="selectColor(this)"></div>
-      <div class="color-swatch" style="background:#e67e22" data-color="#e67e22" onclick="selectColor(this)"></div>
-      <div class="color-swatch" style="background:#f1c40f" data-color="#f1c40f" onclick="selectColor(this)"></div>
-      <div class="color-swatch" style="background:#2ecc71" data-color="#2ecc71" onclick="selectColor(this)"></div>
-      <div class="color-swatch" style="background:#3498db" data-color="#3498db" onclick="selectColor(this)"></div>
-      <div class="color-swatch" style="background:#9b59b6" data-color="#9b59b6" onclick="selectColor(this)"></div>
-      <div class="color-swatch" style="background:#1abc9c" data-color="#1abc9c" onclick="selectColor(this)"></div>
-      <div class="color-swatch" style="background:#ecf0f1" data-color="#ecf0f1" onclick="selectColor(this)"></div>
+    <div class="crow" id="cpicker">
+      <div class="cswatch sel" style="background:#e74c3c" data-c="#e74c3c" onclick="pickColor(this)"></div>
+      <div class="cswatch" style="background:#e67e22" data-c="#e67e22" onclick="pickColor(this)"></div>
+      <div class="cswatch" style="background:#f1c40f" data-c="#f1c40f" onclick="pickColor(this)"></div>
+      <div class="cswatch" style="background:#2ecc71" data-c="#2ecc71" onclick="pickColor(this)"></div>
+      <div class="cswatch" style="background:#3498db" data-c="#3498db" onclick="pickColor(this)"></div>
+      <div class="cswatch" style="background:#9b59b6" data-c="#9b59b6" onclick="pickColor(this)"></div>
+      <div class="cswatch" style="background:#1abc9c" data-c="#1abc9c" onclick="pickColor(this)"></div>
+      <div class="cswatch" style="background:#ecf0f1" data-c="#ecf0f1" onclick="pickColor(this)"></div>
     </div>
-    <label>Icono (emoji opcional)</label>
-    <input id="tok_icon" placeholder="ej: 🧙 🐉 👹 ⚔" maxlength="4">
     <label>Tipo</label>
-    <select id="tok_type">
+    <select id="ttype">
       <option value="player">Jugador</option>
       <option value="enemy">Enemigo</option>
       <option value="npc">NPC</option>
     </select>
-    <div class="modal-btns">
-      <button class="btn-primary" onclick="addToken()">+ Añadir al mapa</button>
-      <button class="btn-cancel" onclick="closeModal('token_modal')">Cancelar</button>
+    <div class="mbtns">
+      <button class="bprimary" onclick="addToken()">+ Añadir</button>
+      <button class="bcancel" onclick="closeModal('tok_modal')">Cancelar</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     EDIT TOKEN MODAL
-══════════════════════════════════ -->
-<div class="modal-bg" id="edit_token_modal">
-  <div class="modal">
+<!-- EDIT TOKEN MODAL -->
+<div class="mbg" id="edit_modal">
+  <div class="mcard">
     <h2>✦ EDITAR TOKEN</h2>
-    <input type="hidden" id="edit_tok_id">
-    <label>Nombre</label>
-    <input id="edit_tok_name" maxlength="24">
-    <label>HP Actual / Máximo</label>
-    <div style="display:flex;gap:8px">
-      <input id="edit_tok_hp"     type="number" min="0" placeholder="HP actual">
-      <input id="edit_tok_hp_max" type="number" min="1" placeholder="HP máximo">
-    </div>
-    <label>CA</label>
-    <input id="edit_tok_ac" type="number" min="0">
-    <label>Iniciativa</label>
-    <input id="edit_tok_init" type="number" placeholder="Tirar manualmente">
-    <div class="modal-btns">
-      <button class="btn-primary" onclick="saveEditToken()">💾 Guardar</button>
-      <button class="btn-cancel danger" onclick="deleteToken()" style="border-color:var(--red);color:var(--red)">🗑 Eliminar</button>
-      <button class="btn-cancel" onclick="closeModal('edit_token_modal')">✕</button>
+    <input type="hidden" id="eid">
+    <label>Nombre</label><input id="en" maxlength="24">
+    <label>HP actual</label><input id="ehp" type="number" min="0">
+    <label>HP máximo</label><input id="ehpm" type="number" min="1">
+    <label>CA</label><input id="eac" type="number" min="0">
+    <label>Iniciativa</label><input id="einit" type="number" placeholder="Opcional">
+    <label>Icono</label><input id="eico" maxlength="4">
+    <div class="mbtns">
+      <button class="bprimary" onclick="saveEdit()">💾 Guardar</button>
+      <button class="bcancel" style="border-color:var(--red);color:var(--red)" onclick="delToken()">🗑 Eliminar</button>
+      <button class="bcancel" onclick="closeModal('edit_modal')">✕</button>
     </div>
   </div>
 </div>
 
 <div id="toast"></div>
 
-<!-- ══════════════════════════════════
-     FIREBASE + APP
-══════════════════════════════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, push, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, serverTimestamp }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import {
+  getDatabase, ref, set, get, push, update, remove,
+  onValue, onChildAdded, onChildChanged, onChildRemoved, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// ── Firebase config ────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyDt0zUaLf7jvF5tNKQeThayAhbH0BKRjF8",
-  authDomain: "elcadejo-a2d4a.firebaseapp.com",
-  databaseURL: "https://elcadejo-a2d4a-default-rtdb.firebaseio.com",
-  projectId: "elcadejo-a2d4a",
-  storageBucket: "elcadejo-a2d4a.firebasestorage.app",
-  messagingSenderId: "1077856094915",
-  appId: "1:1077856094915:web:5b0f8edd9493bcaa2ff076"
+// ── CONFIG ─────────────────────────────────────────────────
+const FB = {
+  apiKey:"AIzaSyDt0zUaLf7jvF5tNKQeThayAhbH0BKRjF8",
+  authDomain:"elcadejo-a2d4a.firebaseapp.com",
+  databaseURL:"https://elcadejo-a2d4a-default-rtdb.firebaseio.com",
+  projectId:"elcadejo-a2d4a",
+  storageBucket:"elcadejo-a2d4a.firebasestorage.app",
+  messagingSenderId:"1077856094915",
+  appId:"1:1077856094915:web:5b0f8edd9493bcaa2ff076"
 };
+const app = initializeApp(FB);
+const db  = getDatabase(app);
 
-const fbApp = initializeApp(firebaseConfig);
-const db    = getDatabase(fbApp);
+// ── STATE ──────────────────────────────────────────────────
+let room='', myName='', myId='u_'+Math.random().toString(36).slice(2,9), isDM=false;
+let tool='select', selTok=null, tokens={};
+let currentTurn=0;
 
-// ── State ──────────────────────────────────────────────────
-let roomCode    = '';
-let myName      = '';
-let myId        = 'u_' + Math.random().toString(36).slice(2, 9);
-let isDM        = false;
-let currentTool = 'select';
-let selectedTokenId = null;
-let tokens      = {};   // id -> token data
-let initOrder   = [];   // [{id, name, init}]
-let currentTurn = 0;
+// Canvas
+let cv, cx, mapImg=new Image(), mapOK=false;
+let scale=1, ox=0, oy=0;
+let CELL=70; // configurable px per cell
 
-// Canvas / map
-let canvas, ctx;
-let mapImg    = new Image();
-let mapLoaded = false;
-let mapScale  = 1;
-let mapOffX   = 0, mapOffY = 0;
-let panStartX = 0, panStartY = 0;
-let isPanning = false;
+// Pan/drag
+let panning=false, panX=0, panY=0;
+let dragging=false, dragId=null, dox=0, doy=0;
+let lastDragCol=-1, lastDragRow=-1;
 
-// Grid
-const CELL = 60; // px per cell at scale 1
-
-// Fog of war — 2D array of booleans (true = revealed)
-let fogGrid   = [];
-let fogCols   = 0, fogRows = 0;
-let fogBrush  = 3; // radius in cells
+// Fog — stored as RLE string per row to save Firebase space
+let fog=[], fogW=0, fogH=0, fogBrush=3;
+window.fogBrush=3; // exposed for range input
 
 // Measure
-let measureStart = null;
-let measureEnd   = null;
+let ms=null, me=null;
 
-// Drag
-let dragging    = false;
-let dragTokenId = null;
-let dragOffX    = 0, dragOffY = 0;
+// ── UTILS ──────────────────────────────────────────────────
+function r(path){ return ref(db, 'rooms/'+room+'/'+path); }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
+window.toast=toast;
 
-// ── Lobby ──────────────────────────────────────────────────
-function generateCode() {
-  const words = ['DRAGON','DUNGEON','GOBLIN','WIZARD','KNIGHT','ROGUE','CLERIC','PALADIN','RANGER','BARD'];
-  return words[Math.floor(Math.random() * words.length)] + Math.floor(Math.random() * 90 + 10);
+// ── LOBBY ──────────────────────────────────────────────────
+function genCode(){
+  const w=['AGUILA','DRAGON','GOBLIN','BRUJO','GUERRERO','PALADIN','DRUIDA','PICARO'];
+  return w[Math.floor(Math.random()*w.length)]+Math.floor(Math.random()*90+10);
 }
 
-window.createRoom = async function() {
-  const name = document.getElementById('lobby_name').value.trim();
-  if (!name) { showLobbyError('Escribe tu nombre'); return; }
-  myName  = name;
-  isDM    = true;
-  roomCode = generateCode();
-
-  // Create room in Firebase
-  await set(ref(db, 'rooms/' + roomCode), {
-    created: serverTimestamp(),
-    dm: myId,
-    mapUrl: '',
-    fogGrid: [],
-    fogCols: 0,
-    fogRows: 0
-  });
-
-  enterRoom();
+window.createRoom = async function(){
+  const name=document.getElementById('lname').value.trim();
+  if(!name){lerr('Escribe tu nombre');return;}
+  myName=name; isDM=true; room=genCode();
+  await set(ref(db,'rooms/'+room),{created:serverTimestamp(),dmId:myId,mapUrl:'',cellSize:70,fogW:0,fogH:0});
+  enter();
 };
 
-window.joinRoom = async function() {
-  const name = document.getElementById('lobby_name').value.trim();
-  const code = document.getElementById('lobby_code').value.trim().toUpperCase();
-  if (!name) { showLobbyError('Escribe tu nombre'); return; }
-  if (!code) { showLobbyError('Escribe el código de sala'); return; }
-
-  const snap = await get(ref(db, 'rooms/' + code));
-  if (!snap.exists()) { showLobbyError('Sala no encontrada: ' + code); return; }
-
-  myName   = name;
-  roomCode = code;
-  isDM     = false;
-  enterRoom();
+window.joinRoom = async function(){
+  const name=document.getElementById('lname').value.trim();
+  const code=document.getElementById('lcode').value.trim().toUpperCase();
+  if(!name){lerr('Escribe tu nombre');return;}
+  if(!code){lerr('Escribe el código de sala');return;}
+  const snap=await get(ref(db,'rooms/'+code));
+  if(!snap.exists()){lerr('Sala "'+code+'" no encontrada');return;}
+  myName=name; room=code; isDM=false;
+  enter();
 };
 
-// Check URL for room code (direct link)
-const urlParams = new URLSearchParams(window.location.search);
-const urlRoom   = urlParams.get('room');
-if (urlRoom) {
-  document.getElementById('lobby_code').value = urlRoom.toUpperCase();
-}
+function lerr(m){const e=document.getElementById('lerr');e.textContent=m;e.style.display='block';}
 
-function showLobbyError(msg) {
-  const el = document.getElementById('lobby_error');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
+// Auto-fill from URL
+const qp=new URLSearchParams(location.search);
+if(qp.get('room')) document.getElementById('lcode').value=qp.get('room').toUpperCase();
 
-function enterRoom() {
-  document.getElementById('lobby').style.display = 'none';
-  document.getElementById('header').style.display = 'flex';
-  document.getElementById('main').style.display   = 'flex';
-
-  document.getElementById('room_code_display').textContent = roomCode;
-
+function enter(){
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('header').style.display='flex';
+  document.getElementById('main').style.display='flex';
+  document.getElementById('room_code_display').textContent=room;
   initCanvas();
-  subscribeRoom();
-  announcePresence();
-
-  // Send system message
-  sendSystemMsg(myName + ' entró a la sala' + (isDM ? ' como DM' : ''));
-  showToast('¡Sala ' + roomCode + '! Comparte el link para invitar');
+  subscribe();
+  set(r('players/'+myId),{name:myName,isDM,joined:serverTimestamp()});
+  sysMsg(myName+' entró'+(isDM?' como DM':''));
+  toast('Sala '+room+' — comparte el link para invitar');
 }
 
-// ── Firebase subscriptions ─────────────────────────────────
-function subscribeRoom() {
+// ── SUBSCRIBE ──────────────────────────────────────────────
+function subscribe(){
   // Tokens
-  onChildAdded(ref(db, 'rooms/' + roomCode + '/tokens'), snap => {
-    tokens[snap.key] = snap.val();
-    redraw();
-    renderTokenList();
-    renderInitList();
-  });
-  onChildChanged(ref(db, 'rooms/' + roomCode + '/tokens'), snap => {
-    tokens[snap.key] = snap.val();
-    redraw();
-    renderTokenList();
-    renderInitList();
-  });
-  onChildRemoved(ref(db, 'rooms/' + roomCode + '/tokens'), snap => {
-    delete tokens[snap.key];
-    if (selectedTokenId === snap.key) selectedTokenId = null;
-    redraw();
-    renderTokenList();
-    renderInitList();
-  });
+  onChildAdded(r('tokens'),s=>{tokens[s.key]=s.val();draw();renderToks();renderInit();});
+  onChildChanged(r('tokens'),s=>{tokens[s.key]=s.val();draw();renderToks();renderInit();});
+  onChildRemoved(r('tokens'),s=>{delete tokens[s.key];if(selTok===s.key)selTok=null;draw();renderToks();renderInit();});
 
-  // Chat messages
-  onChildAdded(ref(db, 'rooms/' + roomCode + '/chat'), snap => {
-    const msg = snap.val();
-    appendChatMsg(msg);
-  });
-
-  // Map URL
-  onValue(ref(db, 'rooms/' + roomCode + '/mapUrl'), snap => {
-    const url = snap.val();
-    if (url) loadMapUrl(url);
-  });
+  // Map
+  onValue(r('mapUrl'),s=>{if(s.val())loadMapUrl(s.val());});
+  onValue(r('cellSize'),s=>{if(s.val()){CELL=s.val();draw();}});
 
   // Fog
-  onValue(ref(db, 'rooms/' + roomCode + '/fogGrid'), snap => {
-    const data = snap.val();
-    if (data) {
-      fogGrid = data;
-      fogCols = parseInt(localStorage.getItem('vtt_fogCols') || 0) || data[0]?.length || 0;
-      fogRows = data.length;
-    }
-    redraw();
-  });
-  onValue(ref(db, 'rooms/' + roomCode + '/fogCols'), snap => {
-    if (snap.val()) fogCols = snap.val();
-  });
-  onValue(ref(db, 'rooms/' + roomCode + '/fogRows'), snap => {
-    if (snap.val()) fogRows = snap.val();
+  onValue(r('fog'),s=>{
+    const d=s.val();
+    if(d&&d.rows){fog=d.rows;fogW=d.w||0;fogH=d.h||0;draw();}
   });
 
-  // Presence
-  onValue(ref(db, 'rooms/' + roomCode + '/players'), snap => {
-    const players = snap.val() || {};
-    const count   = Object.keys(players).length;
-    document.getElementById('player_count').textContent = count + ' jugador' + (count !== 1 ? 'es' : '');
-    document.getElementById('connection_dot').className = 'connected';
+  // Players presence
+  onValue(r('players'),s=>{
+    const pl=s.val()||{};
+    const n=Object.keys(pl).length;
+    document.getElementById('pcount').textContent=n+' jugador'+(n!==1?'es':'');
+    document.getElementById('cdot').className=n>0?'on':'';
   });
+
+  // Chat
+  onChildAdded(r('chat'),s=>appendMsg(s.val()));
 }
 
-function announcePresence() {
-  const presRef = ref(db, 'rooms/' + roomCode + '/players/' + myId);
-  set(presRef, { name: myName, isDM, joined: serverTimestamp() });
-  // Cleanup on disconnect would require onDisconnect — skip for simplicity
+// ── CANVAS ─────────────────────────────────────────────────
+function initCanvas(){
+  cv=document.getElementById('vtt');
+  cx=cv.getContext('2d');
+  resize();
+  window.addEventListener('resize',resize);
+  cv.addEventListener('mousedown',mdown);
+  cv.addEventListener('mousemove',mmove);
+  cv.addEventListener('mouseup',mup);
+  cv.addEventListener('dblclick',mdbl);
+  cv.addEventListener('wheel',mwheel,{passive:false});
+  cv.addEventListener('contextmenu',e=>{e.preventDefault();const p=cvPos(e);const h=hitTok(p);if(h)openEdit(h);});
+  cv.addEventListener('touchstart',e=>{e.preventDefault();mdown(e.touches[0]);},{passive:false});
+  cv.addEventListener('touchmove', e=>{e.preventDefault();mmove(e.touches[0]);},{passive:false});
+  cv.addEventListener('touchend',  e=>{e.preventDefault();mup(e.changedTouches[0]);},{passive:false});
+  draw();
 }
 
-// ── Canvas setup ───────────────────────────────────────────
-function initCanvas() {
-  canvas = document.getElementById('vtt_canvas');
-  ctx    = canvas.getContext('2d');
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  // Mouse events
-  canvas.addEventListener('mousedown',  onMouseDown);
-  canvas.addEventListener('mousemove',  onMouseMove);
-  canvas.addEventListener('mouseup',    onMouseUp);
-  canvas.addEventListener('wheel',      onWheel, { passive: false });
-  canvas.addEventListener('contextmenu', onRightClick);
-
-  // Touch events (basic)
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); onMouseDown(e.touches[0]); }, { passive: false });
-  canvas.addEventListener('touchmove',  e => { e.preventDefault(); onMouseMove(e.touches[0]); }, { passive: false });
-  canvas.addEventListener('touchend',   e => { e.preventDefault(); onMouseUp(e.changedTouches[0]); }, { passive: false });
-
-  redraw();
+function resize(){
+  const w=document.getElementById('cwrap');
+  cv.width=w.clientWidth; cv.height=w.clientHeight; draw();
 }
 
-function resizeCanvas() {
-  const wrap = document.getElementById('canvas_wrap');
-  canvas.width  = wrap.clientWidth;
-  canvas.height = wrap.clientHeight;
-  redraw();
-}
+// ── DRAW ───────────────────────────────────────────────────
+function draw(){
+  if(!cx)return;
+  cx.clearRect(0,0,cv.width,cv.height);
+  cx.save();
+  cx.translate(ox,oy);
+  cx.scale(scale,scale);
 
-// ── Draw ───────────────────────────────────────────────────
-function redraw() {
-  if (!canvas) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.save();
-  ctx.translate(mapOffX, mapOffY);
-  ctx.scale(mapScale, mapScale);
-
-  // Map image
-  if (mapLoaded) {
-    ctx.drawImage(mapImg, 0, 0);
+  // Background
+  const mw=mapOK?mapImg.naturalWidth:4000, mh=mapOK?mapImg.naturalHeight:4000;
+  if(!mapOK){
+    cx.fillStyle='#080a0f';
+    cx.fillRect(0,0,mw,mh);
   } else {
-    // Placeholder grid background
-    ctx.fillStyle = '#0a0c12';
-    ctx.fillRect(0, 0, 3000, 3000);
+    cx.drawImage(mapImg,0,0);
   }
 
   // Grid
-  drawGrid();
+  cx.strokeStyle='rgba(200,168,75,0.15)';
+  cx.lineWidth=0.6/scale;
+  for(let x=0;x<=mw;x+=CELL){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,mh);cx.stroke();}
+  for(let y=0;y<=mh;y+=CELL){cx.beginPath();cx.moveTo(0,y);cx.lineTo(mw,y);cx.stroke();}
 
-  // Fog of war
-  drawFog();
+  // Fog
+  drawFogLayer(mw,mh);
 
-  // Measure line
-  if (currentTool === 'measure' && measureStart && measureEnd) {
-    drawMeasure();
-  }
+  // Measure
+  if(tool==='measure'&&ms&&me) drawMeasure();
 
   // Tokens
-  Object.entries(tokens).forEach(([id, tok]) => drawToken(id, tok));
+  Object.entries(tokens).forEach(([id,t])=>drawTok(id,t));
 
-  ctx.restore();
+  cx.restore();
 }
 
-function drawGrid() {
-  const w = mapLoaded ? mapImg.naturalWidth  : 3000;
-  const h = mapLoaded ? mapImg.naturalHeight : 3000;
-
-  ctx.strokeStyle = 'rgba(200,168,75,0.12)';
-  ctx.lineWidth   = 0.5 / mapScale;
-
-  for (let x = 0; x < w; x += CELL) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-  }
-  for (let y = 0; y < h; y += CELL) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-  }
-}
-
-function drawFog() {
-  if (!fogGrid.length || !fogCols) return;
-  for (let row = 0; row < fogGrid.length; row++) {
-    for (let col = 0; col < fogCols; col++) {
-      if (!fogGrid[row] || !fogGrid[row][col]) {
-        ctx.fillStyle = isDM ? 'rgba(10,12,20,0.65)' : 'rgba(10,12,20,0.97)';
-        ctx.fillRect(col * CELL, row * CELL, CELL, CELL);
+function drawFogLayer(mw,mh){
+  if(!fog.length||!fogW)return;
+  for(let row=0;row<fog.length;row++){
+    if(!fog[row])continue;
+    for(let col=0;col<fogW;col++){
+      if(!fog[row][col]){
+        cx.fillStyle=isDM?'rgba(5,7,15,0.60)':'rgba(5,7,15,0.97)';
+        cx.fillRect(col*CELL,row*CELL,CELL+1,CELL+1);
       }
     }
   }
 }
 
-function drawToken(id, tok) {
-  if (!tok || tok.x === undefined) return;
-  const x = tok.x * CELL + CELL / 2;
-  const y = tok.y * CELL + CELL / 2;
-  const r = CELL * 0.42;
+function drawTok(id,t){
+  if(t===null||t.x===undefined)return;
+  const cx2=cx;
+  const x=t.x*CELL+CELL/2, y=t.y*CELL+CELL/2, r2=CELL*0.41;
 
-  // Shadow
-  ctx.shadowColor = tok.color || '#e74c3c';
-  ctx.shadowBlur  = id === selectedTokenId ? 16 : 6;
+  cx2.shadowColor=t.color||'#e74c3c';
+  cx2.shadowBlur=id===selTok?18:7;
+  cx2.beginPath();
+  cx2.arc(x,y,r2,0,Math.PI*2);
+  cx2.fillStyle=t.color||'#e74c3c';
+  cx2.globalAlpha=t.dead?0.3:1;
+  cx2.fill();
+  cx2.shadowBlur=0;
 
-  // Circle
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle   = tok.color || '#e74c3c';
-  ctx.globalAlpha = tok.dead ? 0.35 : 1;
-  ctx.fill();
-
-  // Selected ring
-  if (id === selectedTokenId) {
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 2.5 / mapScale;
-    ctx.stroke();
+  if(id===selTok){
+    cx2.strokeStyle='rgba(255,255,255,0.9)';
+    cx2.lineWidth=2.5/scale;
+    cx2.stroke();
   }
+  cx2.globalAlpha=1;
 
-  ctx.shadowBlur  = 0;
-  ctx.globalAlpha = 1;
+  // Label
+  const lbl=t.icon||t.name.charAt(0).toUpperCase();
+  cx2.font=t.icon?(r2*1.1)+'px serif':'bold '+(r2*0.88)+'px sans-serif';
+  cx2.fillStyle='rgba(0,0,0,0.7)';
+  cx2.textAlign='center';
+  cx2.textBaseline='middle';
+  cx2.fillText(lbl,x,y);
 
-  // Icon or initial
-  const label = tok.icon || tok.name.charAt(0).toUpperCase();
-  ctx.fillStyle   = '#000000aa';
-  ctx.font        = tok.icon ? (r * 1.1) + 'px serif' : 'bold ' + (r * 0.9) + 'px ' + getComputedStyle(document.body).fontFamily;
-  ctx.textAlign   = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(label, x, y);
-
-  // Name
-  ctx.fillStyle   = '#ffffffcc';
-  ctx.font        = 'bold ' + Math.max(9, CELL * 0.18) + 'px sans-serif';
-  ctx.fillText(tok.name.length > 10 ? tok.name.slice(0,9) + '…' : tok.name, x, y + r + 10);
+  // Name below
+  cx2.fillStyle='rgba(255,255,255,0.85)';
+  cx2.font='bold '+Math.max(8,CELL*0.16)+'px sans-serif';
+  const shortName=t.name.length>12?t.name.slice(0,11)+'…':t.name;
+  cx2.fillText(shortName,x,y+r2+11);
 
   // HP bar
-  if (tok.hpMax > 0) {
-    const pct = Math.max(0, Math.min(1, tok.hp / tok.hpMax));
-    const bw  = CELL * 0.8;
-    const bx  = x - bw / 2;
-    const by  = y + r + 14;
-    ctx.fillStyle = '#333';
-    ctx.fillRect(bx, by, bw, 5);
-    ctx.fillStyle = pct > 0.5 ? '#27ae60' : pct > 0.25 ? '#f39c12' : '#e74c3c';
-    ctx.fillRect(bx, by, bw * pct, 5);
+  if(t.hpMax>0){
+    const pct=Math.max(0,Math.min(1,t.hp/t.hpMax));
+    const bw=CELL*0.75, bx=x-bw/2, by=y+r2+16;
+    cx2.fillStyle='#222';
+    cx2.fillRect(bx,by,bw,4);
+    cx2.fillStyle=pct>0.5?'#27ae60':pct>0.25?'#f39c12':'#e74c3c';
+    cx2.fillRect(bx,by,bw*pct,4);
   }
 }
 
-function drawMeasure() {
-  if (!measureStart || !measureEnd) return;
-  const x1 = (measureStart.col + 0.5) * CELL;
-  const y1 = (measureStart.row + 0.5) * CELL;
-  const x2 = (measureEnd.col   + 0.5) * CELL;
-  const y2 = (measureEnd.row   + 0.5) * CELL;
-
-  ctx.strokeStyle = '#c8a84b';
-  ctx.lineWidth   = 2 / mapScale;
-  ctx.setLineDash([6, 4]);
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Dots
-  [{ x: x1, y: y1 }, { x: x2, y: y2 }].forEach(p => {
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 5 / mapScale, 0, Math.PI * 2);
-    ctx.fillStyle = '#c8a84b';
-    ctx.fill();
+function drawMeasure(){
+  const x1=(ms.c+0.5)*CELL, y1=(ms.r+0.5)*CELL;
+  const x2=(me.c+0.5)*CELL, y2=(me.r+0.5)*CELL;
+  cx.strokeStyle='#c8a84b'; cx.lineWidth=2/scale; cx.setLineDash([7,4]);
+  cx.beginPath(); cx.moveTo(x1,y1); cx.lineTo(x2,y2); cx.stroke();
+  cx.setLineDash([]);
+  [{x:x1,y:y1},{x:x2,y:y2}].forEach(p=>{
+    cx.beginPath(); cx.arc(p.x,p.y,5/scale,0,Math.PI*2);
+    cx.fillStyle='#c8a84b'; cx.fill();
   });
 }
 
-// ── Mouse handlers ─────────────────────────────────────────
-function getCanvasPos(e) {
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: (e.clientX - rect.left - mapOffX) / mapScale,
-    y: (e.clientY - rect.top  - mapOffY) / mapScale
-  };
+// ── INPUT ──────────────────────────────────────────────────
+function cvPos(e){
+  const rc=cv.getBoundingClientRect();
+  return {x:(e.clientX-rc.left-ox)/scale, y:(e.clientY-rc.top-oy)/scale};
 }
+function cellOf(e){const p=cvPos(e);return{c:Math.floor(p.x/CELL),r:Math.floor(p.y/CELL),x:p.x,y:p.y};}
 
-function getCell(e) {
-  const p = getCanvasPos(e);
-  return { col: Math.floor(p.x / CELL), row: Math.floor(p.y / CELL), x: p.x, y: p.y };
-}
-
-function onMouseDown(e) {
-  const cell = getCell(e);
-  const pos  = getCanvasPos(e);
-
-  if (currentTool === 'select') {
-    // Check if clicking a token
-    const hit = hitTestToken(pos);
-    if (hit) {
-      selectedTokenId = hit;
-      dragging    = true;
-      dragTokenId = hit;
-      const tok   = tokens[hit];
-      dragOffX    = pos.x - tok.x * CELL;
-      dragOffY    = pos.y - tok.y * CELL;
-      redraw();
+function mdown(e){
+  const p=cvPos(e), cl=cellOf(e);
+  if(tool==='select'){
+    const h=hitTok(p);
+    if(h){
+      selTok=h; dragging=true; dragId=h;
+      dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
+      lastDragCol=tokens[h].x; lastDragRow=tokens[h].y;
+      draw(); renderToks();
     } else {
-      // Pan
-      selectedTokenId = null;
-      isPanning  = true;
-      panStartX  = e.clientX - mapOffX;
-      panStartY  = e.clientY - mapOffY;
-      redraw();
+      selTok=null;
+      panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
+      draw(); renderToks();
     }
-  } else if (currentTool === 'fog') {
-    revealFogAt(cell.col, cell.row);
-  } else if (currentTool === 'fogadd') {
-    hideFogAt(cell.col, cell.row);
-  } else if (currentTool === 'measure') {
-    measureStart = { col: cell.col, row: cell.row };
-    measureEnd   = null;
+  } else if(tool==='fog')   { brushFog(cl,true); }
+  else if(tool==='fogadd')  { brushFog(cl,false); }
+  else if(tool==='measure') { ms={c:cl.c,r:cl.r}; me=null; }
+}
+
+function mmove(e){
+  const p=cvPos(e), cl=cellOf(e);
+  if(dragging&&dragId){
+    const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
+    const nr=Math.max(0,Math.floor((p.y-doy)/CELL));
+    tokens[dragId].x=nc; tokens[dragId].y=nr;
+    draw();
+  } else if(panning){
+    ox=e.clientX-panX; oy=e.clientY-panY; draw();
+  } else if((tool==='fog'||tool==='fogadd')&&e.buttons===1){
+    brushFog(cl,tool==='fog');
+  } else if(tool==='measure'&&ms&&e.buttons===1){
+    me={c:cl.c,r:cl.r};
+    const dc=me.c-ms.c, dr=me.r-ms.r;
+    const dist=Math.round(Math.sqrt(dc*dc+dr*dr)*5);
+    const tt=document.getElementById('mtip');
+    const rc=cv.getBoundingClientRect();
+    tt.style.display='block';
+    tt.style.left=(e.clientX-rc.left+14)+'px';
+    tt.style.top=(e.clientY-rc.top-26)+'px';
+    tt.textContent=dist+' ft. ('+Math.round(dist/5)+' casillas)';
+    draw();
   }
 }
 
-function onMouseMove(e) {
-  const cell = getCell(e);
-  const pos  = getCanvasPos(e);
-
-  if (dragging && dragTokenId) {
-    const newCol = Math.max(0, Math.floor((pos.x - dragOffX) / CELL));
-    const newRow = Math.max(0, Math.floor((pos.y - dragOffY) / CELL));
-    // Optimistic local update
-    if (tokens[dragTokenId]) {
-      tokens[dragTokenId].x = newCol;
-      tokens[dragTokenId].y = newRow;
-      redraw();
-    }
-  } else if (isPanning) {
-    mapOffX = e.clientX - panStartX;
-    mapOffY = e.clientY - panStartY;
-    redraw();
-  } else if (currentTool === 'fog' && e.buttons === 1) {
-    revealFogAt(cell.col, cell.row);
-  } else if (currentTool === 'fogadd' && e.buttons === 1) {
-    hideFogAt(cell.col, cell.row);
-  } else if (currentTool === 'measure' && measureStart) {
-    measureEnd = { col: cell.col, row: cell.row };
-    // Distance in feet (5ft per cell)
-    const dc   = measureEnd.col - measureStart.col;
-    const dr   = measureEnd.row - measureStart.row;
-    const dist = Math.round(Math.sqrt(dc*dc + dr*dr) * 5);
-    const tt   = document.getElementById('measure_tooltip');
-    tt.style.display = 'block';
-    tt.style.left    = (e.clientX - canvas.getBoundingClientRect().left + 12) + 'px';
-    tt.style.top     = (e.clientY - canvas.getBoundingClientRect().top  - 28) + 'px';
-    tt.textContent   = dist + ' ft. (' + (dist/5) + ' casillas)';
-    redraw();
+function mup(e){
+  if(dragging&&dragId){
+    const p=cvPos(e);
+    const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
+    const nr=Math.max(0,Math.floor((p.y-doy)/CELL));
+    update(r('tokens/'+dragId),{x:nc,y:nr});
   }
+  dragging=false; dragId=null; panning=false;
+  document.getElementById('mtip').style.display='none';
 }
 
-function onMouseUp(e) {
-  if (dragging && dragTokenId) {
-    const pos    = getCanvasPos(e);
-    const newCol = Math.max(0, Math.floor((pos.x - dragOffX) / CELL));
-    const newRow = Math.max(0, Math.floor((pos.y - dragOffY) / CELL));
-    // Push to Firebase
-    update(ref(db, 'rooms/' + roomCode + '/tokens/' + dragTokenId), { x: newCol, y: newRow });
-  }
-  dragging    = false;
-  dragTokenId = null;
-  isPanning   = false;
-  document.getElementById('measure_tooltip').style.display = 'none';
+function mdbl(e){
+  const p=cvPos(e); const h=hitTok(p);
+  if(h) openEdit(h);
 }
 
-function onWheel(e) {
+function mwheel(e){
   e.preventDefault();
-  const delta = e.deltaY > 0 ? 0.9 : 1.1;
-  const rect  = canvas.getBoundingClientRect();
-  const mx    = e.clientX - rect.left;
-  const my    = e.clientY - rect.top;
-  mapOffX = mx - (mx - mapOffX) * delta;
-  mapOffY = my - (my - mapOffY) * delta;
-  mapScale = Math.max(0.2, Math.min(4, mapScale * delta));
-  redraw();
+  const d=e.deltaY>0?0.88:1.14;
+  const rc=cv.getBoundingClientRect();
+  const mx=e.clientX-rc.left, my=e.clientY-rc.top;
+  ox=mx-(mx-ox)*d; oy=my-(my-oy)*d;
+  scale=Math.max(0.15,Math.min(5,scale*d));
+  draw();
 }
 
-function onRightClick(e) {
-  e.preventDefault();
-  const pos = getCanvasPos(e);
-  const hit = hitTestToken(pos);
-  if (hit) openEditToken(hit);
-}
-
-function hitTestToken(pos) {
-  for (const [id, tok] of Object.entries(tokens)) {
-    if (tok.x === undefined) continue;
-    const tx = tok.x * CELL + CELL / 2;
-    const ty = tok.y * CELL + CELL / 2;
-    const r  = CELL * 0.42;
-    const dx = pos.x - tx, dy = pos.y - ty;
-    if (dx*dx + dy*dy <= r*r) return id;
+function hitTok(p){
+  for(const [id,t] of Object.entries(tokens)){
+    if(t===null||t.x===undefined)continue;
+    const tx=t.x*CELL+CELL/2, ty=t.y*CELL+CELL/2, r2=CELL*0.41;
+    if((p.x-tx)**2+(p.y-ty)**2<=r2*r2) return id;
   }
   return null;
 }
 
-// ── Fog of war ─────────────────────────────────────────────
-function initFog(cols, rows) {
-  fogCols = cols;
-  fogRows = rows;
-  fogGrid = Array.from({ length: rows }, () => Array(cols).fill(false));
-  pushFog();
+// ── MAP ────────────────────────────────────────────────────
+window.openMapModal=()=>document.getElementById('map_modal').classList.add('open');
+
+window.loadMapFile=function(e){
+  const file=e.target.files[0]; if(!file)return;
+  // Use FileReader to get local URL for preview, but warn about size
+  if(file.size>2*1024*1024){
+    toast('⚠ Imagen grande — considera usar una URL externa (Imgur)');
+  }
+  const url=URL.createObjectURL(file);
+  loadMapUrl(url);
+  // Don't push to Firebase — local only for large files
+  // For sharing, they should use a URL
+  toast('Mapa cargado localmente. Para compartir usa una URL.');
+};
+
+window.applyMapUrl=function(){
+  const url=document.getElementById('map_url_input').value.trim();
+  const cs=parseInt(document.getElementById('cell_size_input').value)||70;
+  if(!url){toast('Escribe una URL');return;}
+  CELL=cs;
+  loadMapUrl(url);
+  // Push to Firebase so all players see it
+  update(r(''),{mapUrl:url,cellSize:cs});
+  closeModal('map_modal');
+  toast('Mapa cargado y compartido');
+};
+
+function loadMapUrl(url){
+  mapImg=new Image();
+  mapImg.crossOrigin='anonymous';
+  mapImg.onload=()=>{
+    mapOK=true;
+    // Init fog if needed
+    const fw=Math.ceil(mapImg.naturalWidth/CELL);
+    const fh=Math.ceil(mapImg.naturalHeight/CELL);
+    if(!fog.length||fogW!==fw||fogH!==fh) initFog(fw,fh);
+    fitMap(); draw();
+    toast('Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
+  };
+  mapImg.onerror=()=>{
+    toast('❌ No se pudo cargar la imagen. Prueba otra URL.');
+    mapOK=false; draw();
+  };
+  mapImg.src=url;
 }
 
-function revealFogAt(col, row) {
-  if (!fogGrid.length) {
-    const w = mapLoaded ? mapImg.naturalWidth  : 3000;
-    const h = mapLoaded ? mapImg.naturalHeight : 3000;
-    initFog(Math.ceil(w / CELL), Math.ceil(h / CELL));
-  }
-  for (let dr = -fogBrush; dr <= fogBrush; dr++) {
-    for (let dc = -fogBrush; dc <= fogBrush; dc++) {
-      if (dr*dr + dc*dc <= fogBrush*fogBrush) {
-        const r = row + dr, c = col + dc;
-        if (r >= 0 && r < fogRows && c >= 0 && c < fogCols) {
-          if (!fogGrid[r]) fogGrid[r] = [];
-          fogGrid[r][c] = true;
+function fitMap(){
+  const cw=document.getElementById('cwrap');
+  const sx=cw.clientWidth/mapImg.naturalWidth;
+  const sy=cw.clientHeight/mapImg.naturalHeight;
+  scale=Math.min(sx,sy,1.5);
+  ox=(cw.clientWidth-mapImg.naturalWidth*scale)/2;
+  oy=(cw.clientHeight-mapImg.naturalHeight*scale)/2;
+}
+
+window.resetView=function(){
+  if(mapOK)fitMap(); else{scale=1;ox=0;oy=0;}
+  draw();
+};
+
+// ── FOG ────────────────────────────────────────────────────
+function initFog(w,h){
+  fogW=w; fogH=h;
+  fog=Array.from({length:h},()=>Array(w).fill(false));
+}
+
+function brushFog(cl,reveal){
+  if(!fog.length) initFog(
+    Math.ceil((mapOK?mapImg.naturalWidth:4000)/CELL),
+    Math.ceil((mapOK?mapImg.naturalHeight:4000)/CELL)
+  );
+  const br=parseInt(document.getElementById('brush_range').value)||fogBrush;
+  let changed=false;
+  for(let dr=-br;dr<=br;dr++){
+    for(let dc=-br;dc<=br;dc++){
+      if(dr*dr+dc*dc<=br*br){
+        const row=cl.r+dr, col=cl.c+dc;
+        if(row>=0&&row<fogH&&col>=0&&col<fogW){
+          if(!fog[row])fog[row]=Array(fogW).fill(false);
+          fog[row][col]=reveal;
+          changed=true;
         }
       }
     }
   }
-  redraw();
-  debouncePushFog();
+  if(changed){draw();debounceFog();}
 }
 
-function hideFogAt(col, row) {
-  if (!fogGrid.length) return;
-  for (let dr = -fogBrush; dr <= fogBrush; dr++) {
-    for (let dc = -fogBrush; dc <= fogBrush; dc++) {
-      if (dr*dr + dc*dc <= fogBrush*fogBrush) {
-        const r = row + dr, c = col + dc;
-        if (r >= 0 && r < fogRows && c >= 0 && c < fogCols && fogGrid[r]) {
-          fogGrid[r][c] = false;
-        }
-      }
-    }
-  }
-  redraw();
-  debouncePushFog();
+let fogTimer=null;
+function debounceFog(){clearTimeout(fogTimer);fogTimer=setTimeout(pushFog,500);}
+
+function pushFog(){
+  if(!fog.length)return;
+  update(r('fog'),{rows:fog,w:fogW,h:fogH});
 }
 
-let fogDebounce = null;
-function debouncePushFog() {
-  clearTimeout(fogDebounce);
-  fogDebounce = setTimeout(pushFog, 400);
+window.clearFog=function(){
+  initFogIfNeeded();
+  fog=fog.map(row=>row.map(()=>true));
+  draw(); pushFog();
+};
+
+window.fillFog=function(){
+  initFogIfNeeded();
+  fog=fog.map(row=>row.map(()=>false));
+  draw(); pushFog();
+};
+
+function initFogIfNeeded(){
+  if(!fog.length) initFog(
+    Math.ceil((mapOK?mapImg.naturalWidth:4000)/CELL),
+    Math.ceil((mapOK?mapImg.naturalHeight:4000)/CELL)
+  );
 }
 
-function pushFog() {
-  if (!fogGrid.length) return;
-  update(ref(db, 'rooms/' + roomCode), {
-    fogGrid: fogGrid,
-    fogCols: fogCols,
-    fogRows: fogRows
+// ── TOKENS ─────────────────────────────────────────────────
+let selColor='#e74c3c';
+window.pickColor=function(el){
+  document.querySelectorAll('.cswatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel'); selColor=el.dataset.c;
+};
+
+window.openAddToken=()=>{
+  document.getElementById('tok_modal').classList.add('open');
+  document.getElementById('tn').focus();
+};
+
+window.addToken=function(){
+  const name=document.getElementById('tn').value.trim();
+  if(!name){toast('Escribe el nombre');return;}
+  const hpMax=parseInt(document.getElementById('thp').value)||10;
+  const ac=parseInt(document.getElementById('tac').value)||10;
+  const icon=document.getElementById('tico').value.trim();
+  const type=document.getElementById('ttype').value;
+  push(r('tokens'),{
+    name,hpMax,hp:hpMax,ac,icon,type,color:selColor,
+    x:1,y:1,init:0,dead:false,addedBy:myName
   });
-}
-
-window.clearFog = function() {
-  if (!fogGrid.length) {
-    const w = mapLoaded ? mapImg.naturalWidth  : 3000;
-    const h = mapLoaded ? mapImg.naturalHeight : 3000;
-    initFog(Math.ceil(w / CELL), Math.ceil(h / CELL));
-  }
-  fogGrid = fogGrid.map(row => row.map(() => true));
-  redraw();
-  pushFog();
+  closeModal('tok_modal');
+  document.getElementById('tn').value='';
+  document.getElementById('tico').value='';
+  toast('Token "'+name+'" añadido');
 };
 
-window.fillFog = function() {
-  if (!fogGrid.length) {
-    const w = mapLoaded ? mapImg.naturalWidth  : 3000;
-    const h = mapLoaded ? mapImg.naturalHeight : 3000;
-    initFog(Math.ceil(w / CELL), Math.ceil(h / CELL));
-  }
-  fogGrid = fogGrid.map(row => row.map(() => false));
-  redraw();
-  pushFog();
+window.openEdit=function(id){
+  const t=tokens[id]; if(!t)return;
+  selTok=id;
+  document.getElementById('eid').value=id;
+  document.getElementById('en').value=t.name;
+  document.getElementById('ehp').value=t.hp;
+  document.getElementById('ehpm').value=t.hpMax;
+  document.getElementById('eac').value=t.ac;
+  document.getElementById('einit').value=t.init||'';
+  document.getElementById('eico').value=t.icon||'';
+  document.getElementById('edit_modal').classList.add('open');
 };
 
-// ── Map loading ────────────────────────────────────────────
-window.loadMapFile = function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const url = ev.target.result;
-    loadMapUrl(url);
-    // Push to Firebase (base64 — ok for small maps; large maps would need Storage)
-    update(ref(db, 'rooms/' + roomCode), { mapUrl: url });
-    // Init fog for new map
-    mapImg.onload = () => {
-      initFog(Math.ceil(mapImg.naturalWidth / CELL), Math.ceil(mapImg.naturalHeight / CELL));
-    };
-  };
-  reader.readAsDataURL(file);
+window.saveEdit=function(){
+  const id=document.getElementById('eid').value;
+  const name=document.getElementById('en').value.trim();
+  if(!name)return;
+  const hp=parseInt(document.getElementById('ehp').value)||0;
+  const hpMax=parseInt(document.getElementById('ehpm').value)||1;
+  const ac=parseInt(document.getElementById('eac').value)||10;
+  const init=parseInt(document.getElementById('einit').value)||0;
+  const icon=document.getElementById('eico').value.trim();
+  update(r('tokens/'+id),{name,hp,hpMax,ac,init,icon});
+  closeModal('edit_modal');
 };
 
-function loadMapUrl(url) {
-  mapImg.onload = () => {
-    mapLoaded = true;
-    document.getElementById('map_img').style.display = 'none'; // using canvas
-    fitMap();
-    redraw();
-  };
-  mapImg.src = url;
-}
-
-function fitMap() {
-  if (!mapLoaded) return;
-  const wrap = document.getElementById('canvas_wrap');
-  const scaleX = wrap.clientWidth  / mapImg.naturalWidth;
-  const scaleY = wrap.clientHeight / mapImg.naturalHeight;
-  mapScale = Math.min(scaleX, scaleY, 1);
-  mapOffX  = (wrap.clientWidth  - mapImg.naturalWidth  * mapScale) / 2;
-  mapOffY  = (wrap.clientHeight - mapImg.naturalHeight * mapScale) / 2;
-}
-
-window.resetView = function() {
-  if (mapLoaded) fitMap();
-  else { mapOffX = 0; mapOffY = 0; mapScale = 1; }
-  redraw();
+window.delToken=function(){
+  const id=document.getElementById('eid').value;
+  remove(r('tokens/'+id));
+  closeModal('edit_modal');
+  toast('Token eliminado');
 };
 
-// ── Tokens ─────────────────────────────────────────────────
-let selectedColor = '#e74c3c';
-
-window.selectColor = function(el) {
-  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedColor = el.dataset.color;
-};
-
-window.openAddToken = function() {
-  document.getElementById('token_modal').classList.add('open');
-  document.getElementById('tok_name').focus();
-};
-
-window.addToken = function() {
-  const name = document.getElementById('tok_name').value.trim();
-  if (!name) { showToast('Escribe el nombre del token'); return; }
-  const hpMax = parseInt(document.getElementById('tok_hp').value) || 10;
-  const ac    = parseInt(document.getElementById('tok_ac').value) || 10;
-  const icon  = document.getElementById('tok_icon').value.trim();
-  const type  = document.getElementById('tok_type').value;
-
-  const newRef = push(ref(db, 'rooms/' + roomCode + '/tokens'));
-  set(newRef, {
-    name, hpMax, hp: hpMax, ac, icon, type,
-    color: selectedColor,
-    x: 2, y: 2,
-    init: 0, dead: false,
-    addedBy: myName
-  });
-
-  closeModal('token_modal');
-  document.getElementById('tok_name').value = '';
-  document.getElementById('tok_icon').value = '';
-  showToast('Token "' + name + '" añadido');
-};
-
-window.openEditToken = function(id) {
-  const tok = tokens[id];
-  if (!tok) return;
-  selectedTokenId = id;
-  document.getElementById('edit_tok_id').value      = id;
-  document.getElementById('edit_tok_name').value    = tok.name;
-  document.getElementById('edit_tok_hp').value      = tok.hp;
-  document.getElementById('edit_tok_hp_max').value  = tok.hpMax;
-  document.getElementById('edit_tok_ac').value      = tok.ac;
-  document.getElementById('edit_tok_init').value    = tok.init || '';
-  document.getElementById('edit_token_modal').classList.add('open');
-};
-
-window.saveEditToken = function() {
-  const id   = document.getElementById('edit_tok_id').value;
-  const name = document.getElementById('edit_tok_name').value.trim();
-  const hp   = parseInt(document.getElementById('edit_tok_hp').value) || 0;
-  const hpMax= parseInt(document.getElementById('edit_tok_hp_max').value) || 1;
-  const ac   = parseInt(document.getElementById('edit_tok_ac').value) || 10;
-  const init = parseInt(document.getElementById('edit_tok_init').value) || 0;
-  if (!name) return;
-  update(ref(db, 'rooms/' + roomCode + '/tokens/' + id), { name, hp, hpMax, ac, init });
-  closeModal('edit_token_modal');
-};
-
-window.deleteToken = function() {
-  const id = document.getElementById('edit_tok_id').value;
-  remove(ref(db, 'rooms/' + roomCode + '/tokens/' + id));
-  closeModal('edit_token_modal');
-  showToast('Token eliminado');
-};
-
-function renderTokenList() {
-  const container = document.getElementById('token_list');
-  const list = Object.entries(tokens);
-  if (!list.length) {
-    container.innerHTML = '<p style="color:var(--text3);font-size:0.78rem">Sin tokens</p>';
-    return;
-  }
-  container.innerHTML = list.map(([id, tok]) => {
-    const hpPct = tok.hpMax > 0 ? Math.round(tok.hp / tok.hpMax * 100) : 100;
-    const hpColor = hpPct > 50 ? '#27ae60' : hpPct > 25 ? '#f39c12' : '#e74c3c';
-    return '<div class="token-item' + (id === selectedTokenId ? ' selected' : '') + '" onclick="selectToken(\'' + id + '\')" ondblclick="openEditToken(\'' + id + '\')">'
-      + '<div class="token-dot" style="background:' + (tok.color||'#e74c3c') + '"></div>'
-      + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (tok.icon||'') + ' ' + tok.name + '</span>'
-      + '<span class="token-hp" style="color:' + hpColor + '">' + tok.hp + '/' + tok.hpMax + '</span>'
-      + '</div>';
+function renderToks(){
+  const c=document.getElementById('tok_list');
+  const list=Object.entries(tokens);
+  if(!list.length){c.innerHTML='<p style="color:var(--text3);font-size:.75rem">Sin tokens</p>';return;}
+  c.innerHTML=list.map(([id,t])=>{
+    const pct=t.hpMax>0?Math.round(t.hp/t.hpMax*100):100;
+    const hc=pct>50?'#27ae60':pct>25?'#f39c12':'#e74c3c';
+    return '<div class="tok-item'+(id===selTok?' sel':'')+'" onclick="selectTok(\''+id+'\')" ondblclick="openEdit(\''+id+'\')">'
+      +'<div class="tok-dot" style="background:'+(t.color||'#e74c3c')+'"></div>'
+      +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(t.icon||'')+' '+t.name+'</span>'
+      +'<span style="font-size:.7rem;color:'+hc+'">'+t.hp+'/'+t.hpMax+'</span>'
+      +'</div>';
   }).join('');
 }
 
-window.selectToken = function(id) {
-  selectedTokenId = id;
-  renderTokenList();
-  redraw();
+window.selectTok=function(id){selTok=id;renderToks();draw();};
+
+// ── INITIATIVE ─────────────────────────────────────────────
+window.rollAllInit=function(){
+  const ups={};
+  Object.keys(tokens).forEach(id=>{ups['rooms/'+room+'/tokens/'+id+'/init']=Math.ceil(Math.random()*20);});
+  // Multi-path update
+  const rootRef=ref(db,'/');
+  update(rootRef,ups);
+  sysMsg('🎲 Iniciativas tiradas para todos');
 };
 
-// ── Initiative ─────────────────────────────────────────────
-window.rollAllInit = function() {
-  const updates = {};
-  Object.entries(tokens).forEach(([id, tok]) => {
-    const roll = Math.ceil(Math.random() * 20);
-    updates['rooms/' + roomCode + '/tokens/' + id + '/init'] = roll;
-  });
-  // Use update with multi-path
-  import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js").then(m => {
-    m.update(ref(db, '/'), updates);
-  });
-  sendSystemMsg('🎲 Iniciativas tiradas para todos los tokens');
+window.nextTurn=function(){
+  const sorted=Object.entries(tokens).filter(([,t])=>!t.dead).sort((a,b)=>(b[1].init||0)-(a[1].init||0));
+  if(!sorted.length)return;
+  currentTurn=(currentTurn+1)%sorted.length;
+  selTok=sorted[currentTurn][0]; draw(); renderToks(); renderInit();
+  sysMsg('⚔ Turno de: '+sorted[currentTurn][1].name);
 };
 
-window.nextTurn = function() {
-  const sorted = Object.entries(tokens)
-    .filter(([,t]) => !t.dead)
-    .sort((a, b) => (b[1].init||0) - (a[1].init||0));
-  if (!sorted.length) return;
-  currentTurn = (currentTurn + 1) % sorted.length;
-  selectedTokenId = sorted[currentTurn][0];
-  redraw();
-  renderInitList();
-  const name = sorted[currentTurn][1].name;
-  sendSystemMsg('⚔ Turno de: ' + name);
-};
+window.clearInit=function(){currentTurn=0;selTok=null;draw();renderToks();renderInit();};
 
-window.clearInit = function() {
-  currentTurn = 0;
-  selectedTokenId = null;
-  redraw();
-  renderInitList();
-};
-
-function renderInitList() {
-  const container = document.getElementById('init_list');
-  const sorted = Object.entries(tokens)
-    .filter(([,t]) => t.init !== undefined)
-    .sort((a, b) => (b[1].init||0) - (a[1].init||0));
-  if (!sorted.length) {
-    container.innerHTML = '<p style="color:var(--text3);font-size:0.78rem">Sin iniciativa activa</p>';
-    return;
-  }
-  container.innerHTML = sorted.map(([id, tok], i) =>
-    '<div class="init-row' + (id === selectedTokenId ? ' active-turn' : '') + '">'
-    + '<div class="token-dot" style="background:' + (tok.color||'#e74c3c') + '"></div>'
-    + '<span style="flex:1;font-size:0.78rem">' + tok.name + '</span>'
-    + '<span class="init-num">' + (tok.init||0) + '</span>'
-    + '</div>'
+function renderInit(){
+  const c=document.getElementById('init_list');
+  const sorted=Object.entries(tokens).filter(([,t])=>t.init!==undefined).sort((a,b)=>(b[1].init||0)-(a[1].init||0));
+  if(!sorted.length){c.innerHTML='<p style="color:var(--text3);font-size:.75rem">Sin iniciativa</p>';return;}
+  c.innerHTML=sorted.map(([id,t])=>
+    '<div class="init-row'+(id===selTok?' cur':'')+'">'
+    +'<div class="tok-dot" style="background:'+(t.color||'#e74c3c')+'"></div>'
+    +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem">'+t.name+'</span>'
+    +'<span class="init-num">'+(t.init||0)+'</span>'
+    +'</div>'
   ).join('');
 }
 
-// ── Chat / Dice ────────────────────────────────────────────
-window.rollDie = function(sides) {
-  const roll   = Math.ceil(Math.random() * sides);
-  const isCrit = sides === 20 && roll === 20;
-  const isFail = sides === 20 && roll === 1;
-  pushChatMsg({
-    who:    myName,
-    text:   (isCrit ? '💥 ¡CRÍTICO! ' : isFail ? '💀 Pifia — ' : '') + 'd' + sides,
-    result: roll,
-    type:   isCrit ? 'crit' : isFail ? 'fail' : 'dice',
-    detail: 'd' + sides + '(' + roll + ')'
-  });
+// ── CHAT / DICE ────────────────────────────────────────────
+window.rollDie=function(s){
+  const roll=Math.ceil(Math.random()*s);
+  const crit=s===20&&roll===20, fail=s===20&&roll===1;
+  pushMsg({who:myName,text:(crit?'💥 ¡CRÍTICO! ':fail?'💀 Pifia — ':'')+' d'+s,result:roll,type:crit?'crit':fail?'fail':'dice',detail:'d'+s+'('+roll+')'});
 };
 
-window.chatKeydown = function(e) {
-  if (e.key === 'Enter') sendChat();
+window.sendChat=function(){
+  const inp=document.getElementById('cinput');
+  const txt=inp.value.trim(); if(!txt)return;
+  inp.value='';
+  const m=txt.match(/^\/r(?:oll)?\s+(.+)/i);
+  if(m){rollFx(m[1].trim());return;}
+  pushMsg({who:myName,text:txt,type:'normal'});
 };
 
-window.sendChat = function() {
-  const input = document.getElementById('chat_input');
-  const text  = input.value.trim();
-  if (!text) return;
-  input.value = '';
-
-  // Check for dice command: /r 2d6+3 or /roll d20
-  const diceMatch = text.match(/^\/r(?:oll)?\s+(.+)/i);
-  if (diceMatch) {
-    rollFormula(diceMatch[1].trim());
-    return;
-  }
-  pushChatMsg({ who: myName, text, type: 'normal' });
-};
-
-function rollFormula(formula) {
-  // Parse XdY+Z
-  const match = formula.match(/^(\d*)d(\d+)([+-]\d+)?$/i);
-  if (!match) { showToast('Formato: 2d6+3 o d20'); return; }
-  const count = parseInt(match[1]) || 1;
-  const sides = parseInt(match[2]);
-  const mod   = parseInt(match[3]) || 0;
-  const rolls = Array.from({ length: count }, () => Math.ceil(Math.random() * sides));
-  const total = rolls.reduce((a,b) => a+b, 0) + mod;
-  const isCrit = count === 1 && sides === 20 && rolls[0] === 20;
-  const isFail = count === 1 && sides === 20 && rolls[0] === 1;
-  pushChatMsg({
-    who:    myName,
-    text:   formula,
-    result: total,
-    type:   isCrit ? 'crit' : isFail ? 'fail' : 'dice',
-    detail: '[' + rolls.join(',') + ']' + (mod ? (mod>0?'+':'')+mod : '')
-  });
+function rollFx(f){
+  const m=f.match(/^(\d*)d(\d+)([+-]\d+)?$/i);
+  if(!m){toast('Formato: 2d6+3 o d20');return;}
+  const n=parseInt(m[1])||1, s=parseInt(m[2]), mod=parseInt(m[3])||0;
+  const rolls=Array.from({length:n},()=>Math.ceil(Math.random()*s));
+  const total=rolls.reduce((a,b)=>a+b,0)+mod;
+  const crit=n===1&&s===20&&rolls[0]===20, fail=n===1&&s===20&&rolls[0]===1;
+  pushMsg({who:myName,text:f,result:total,type:crit?'crit':fail?'fail':'dice',detail:'['+rolls.join(',')+']'+(mod?(mod>0?'+':'')+mod:'')});
 }
 
-function pushChatMsg(msg) {
-  msg.ts = Date.now();
-  push(ref(db, 'rooms/' + roomCode + '/chat'), msg);
+function pushMsg(msg){msg.ts=Date.now();push(r('chat'),msg);}
+function sysMsg(t){pushMsg({who:'Sistema',text:t,type:'sys'});}
+
+function appendMsg(msg){
+  const log=document.getElementById('chat_log');
+  const d=document.createElement('div');
+  d.className='cmsg '+(msg.type||'normal');
+  let h='<span class="cwho">'+(msg.who||'?')+'</span> ';
+  if(msg.result!==undefined){
+    h+=msg.text+' → <span class="cres">'+msg.result+'</span>';
+    if(msg.detail) h+=' <span style="color:var(--text3);font-size:.68rem">('+msg.detail+')</span>';
+  } else { h+=msg.text; }
+  d.innerHTML=h;
+  log.appendChild(d);
+  log.scrollTop=log.scrollHeight;
+  while(log.children.length>120)log.removeChild(log.firstChild);
 }
 
-function sendSystemMsg(text) {
-  pushChatMsg({ who: 'Sistema', text, type: 'system', ts: Date.now() });
-}
-
-function appendChatMsg(msg) {
-  const log  = document.getElementById('chat_log');
-  const div  = document.createElement('div');
-  div.className = 'chat-msg ' + (msg.type || 'normal');
-  let html = '<span class="chat-who">' + (msg.who||'?') + '</span> ';
-  if (msg.result !== undefined) {
-    html += msg.text + ' → <span class="chat-result">' + msg.result + '</span>';
-    if (msg.detail) html += ' <span style="color:var(--text3);font-size:0.7rem">(' + msg.detail + ')</span>';
-  } else {
-    html += msg.text;
-  }
-  div.innerHTML = html;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-
-  // Keep max 100 messages
-  while (log.children.length > 100) log.removeChild(log.firstChild);
-}
-
-// ── Tools ──────────────────────────────────────────────────
-window.setTool = function(tool) {
-  currentTool = tool;
-  document.querySelectorAll('.hbtn[id^="tool_"]').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('tool_' + tool + '_btn');
-  if (btn) btn.classList.add('active');
-
-  const labels = { select:'MOVER TOKENS', fog:'REVELAR NIEBLA', fogadd:'OSCURECER', measure:'MEDIR DISTANCIA' };
-  document.getElementById('tool_indicator').textContent = 'HERRAMIENTA: ' + (labels[tool]||tool.toUpperCase());
-
-  const wrap = document.getElementById('canvas_wrap');
-  wrap.className = '';
-  if (tool === 'fog' || tool === 'fogadd') wrap.classList.add('cursor-fog');
-  else if (tool === 'measure') wrap.classList.add('cursor-measure');
-  else wrap.classList.add('cursor-token');
-
-  measureStart = null;
-  measureEnd   = null;
+// ── TOOLS ──────────────────────────────────────────────────
+window.setTool=function(t){
+  tool=t;
+  document.querySelectorAll('.hbtn[id^="tb_"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('tb_'+t); if(btn)btn.classList.add('active');
+  const labels={select:'MOVER TOKENS',fog:'REVELAR NIEBLA (arrastra)',fogadd:'OSCURECER (arrastra)',measure:'MEDIR DISTANCIA'};
+  document.getElementById('tool_ind').textContent='HERRAMIENTA: '+(labels[t]||t.toUpperCase());
+  document.getElementById('brush_ctrl').style.display=(t==='fog'||t==='fogadd')?'block':'none';
+  ms=null; me=null;
+  document.getElementById('mtip').style.display='none';
 };
 
-// ── Sidebar collapse ───────────────────────────────────────
-window.toggleSection = function(id) {
-  const el = document.getElementById(id);
-  const arrow = document.getElementById(id + '_arrow');
-  if (el.style.display === 'none') {
-    el.style.display = 'block';
-    if (arrow) arrow.textContent = '▾';
-  } else {
-    el.style.display = 'none';
-    if (arrow) arrow.textContent = '▸';
-  }
+// ── SIDEBAR COLLAPSE ───────────────────────────────────────
+window.toggleSec=function(id){
+  const el=document.getElementById(id), ar=document.getElementById(id+'_arr');
+  const hidden=el.style.display==='none';
+  el.style.display=hidden?'block':'none';
+  if(ar)ar.textContent=hidden?'▾':'▸';
 };
 
-// ── Room link ──────────────────────────────────────────────
-window.copyRoomLink = function() {
-  const link = window.location.origin + window.location.pathname + '?room=' + roomCode;
-  navigator.clipboard.writeText(link).then(() => showToast('🔗 Link copiado: ' + link));
+// ── LINK ───────────────────────────────────────────────────
+window.copyLink=function(){
+  const link=location.origin+location.pathname+'?room='+room;
+  navigator.clipboard.writeText(link).then(()=>toast('🔗 Link copiado — compártelo con los jugadores'));
 };
 
-// ── Modal ──────────────────────────────────────────────────
-window.closeModal = function(id) {
-  document.getElementById(id).classList.remove('open');
-};
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-bg.open').forEach(m => m.classList.remove('open'));
-  }
+// ── MODAL ──────────────────────────────────────────────────
+window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'));
 });
 
-// ── Toast ──────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-window.showToast = showToast;
-
-// Check URL params on load
-if (urlRoom) {
-  document.getElementById('lobby_code').value = urlRoom;
-}
+// Check URL on init
+if(qp.get('room')) document.getElementById('lcode').value=qp.get('room').toUpperCase();
 
 </script>
 </body>
