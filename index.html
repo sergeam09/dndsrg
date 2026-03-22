@@ -2104,6 +2104,10 @@ function switchTab(tab){
   var first=document.querySelector('#panel_'+tab+' .linput');
   if(first) setTimeout(function(){first.focus();},60);
 }
+// These are defined in the module but called from HTML — proxy via window
+function createRoom(){ if(window.doCreateRoom) window.doCreateRoom(); }
+function joinRoom(){   if(window.doJoinRoom)   window.doJoinRoom();   }
+function reclaimRoom(){ if(window.doReclaimRoom) window.doReclaimRoom(); }
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -2168,8 +2172,7 @@ function lerr(m){
   setTimeout(()=>e.style.display='none', 4000);
 }
 
-window.reclaimRoom = async function(){
-  const name=document.getElementById('reclaim_name').value.trim();
+window.doReclaimRoom = async function(){  const name=document.getElementById('reclaim_name').value.trim();
   const code=document.getElementById('reclaim_code').value.trim().toUpperCase();
   const pin =document.getElementById('reclaim_pin').value.trim();
   if(!name){lerr('Escribe tu nombre');return;}
@@ -2192,7 +2195,7 @@ window.reclaimRoom = async function(){
   enter();
 };
 
-window.createRoom = async function(){
+window.doCreateRoom = async function(){
   const name=document.getElementById('dm_name').value.trim();
   const pin =document.getElementById('dm_pin').value.trim();
   if(!name){lerr('Escribe tu nombre como DM');return;}
@@ -2214,7 +2217,7 @@ window.createRoom = async function(){
   enter();
 };
 
-window.joinRoom = async function(){
+window.doJoinRoom = async function(){
   const name=document.getElementById('player_name').value.trim();
   const code=document.getElementById('lcode').value.trim().toUpperCase();
   if(!name){lerr('Escribe tu nombre');return;}
@@ -2581,8 +2584,6 @@ function tend(e){
   }
   dragging=false; dragId=null; panning=false;
   touch1=null; touch2=null;
-  document.getElementById('mtip').style.display='none';
-}
   document.getElementById('mtip').style.display='none';
 }
 
