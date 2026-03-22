@@ -230,7 +230,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
           <label style="font-size:.7rem;color:var(--text3)">Tu nombre</label>
           <input class="linput" id="dm_name" placeholder="Nombre del DM" maxlength="24">
         </div>
-        <p class="l-hint">Crea una sala nueva y obtén un código para compartir con tus jugadores.</p>
+        <div>
+          <label style="font-size:.7rem;color:var(--text3)">PIN de sala (4 dígitos)</label>
+          <input class="linput" id="dm_pin" placeholder="Ej: 1234" maxlength="4" type="password"
+            style="letter-spacing:4px;text-align:center">
+        </div>
+        <p class="l-hint">El PIN te permite recuperar tu rol de DM si recargas o cambias de dispositivo.</p>
         <button class="blg" onclick="createRoom()">✦ Crear sala</button>
       </div>
 
@@ -247,6 +252,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
             oninput="this.value=this.value.toUpperCase()"
             style="text-align:center;letter-spacing:3px;font-weight:bold">
         </div>
+        <div id="pin_reclaim_row" style="display:none">
+          <label style="font-size:.7rem;color:var(--gold2)">PIN del DM (para recuperar sala)</label>
+          <input class="linput" id="player_pin" placeholder="PIN de 4 dígitos" maxlength="4" type="password"
+            style="letter-spacing:4px;text-align:center">
+        </div>
+        <p style="font-size:.68rem;color:var(--text3);margin-top:-4px">
+          ¿Eres el DM? <span style="color:var(--gold2);cursor:pointer;text-decoration:underline" onclick="toggleReclaimPin()">Recuperar sala con PIN</span>
+        </p>
         <button class="blg blue" onclick="joinRoom()">→ Unirse a la partida</button>
       </div>
 
@@ -256,6 +269,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <p style="font-size:.68rem;color:var(--text3);text-align:center">
         Si tienes un link de invitación, ábrelo directamente — el código se rellenará solo.
       </p>
+      <div style="text-align:center;margin-top:10px">
+        <a href="https://ko-fi.com/srg954078" target="_blank"
+          style="display:inline-flex;align-items:center;gap:5px;background:#c8a84b;color:#1a1208;font-weight:bold;font-size:.75rem;padding:6px 14px;border-radius:5px;text-decoration:none;letter-spacing:1px">
+          ☕ Apóyame en Ko-fi
+        </a>
+      </div>
     </div>
   </div>
 </div>
@@ -587,49 +606,65 @@ function lerr(m){
   setTimeout(()=>e.style.display='none', 4000);
 }
 
+window.toggleReclaimPin=function(){
+  const row=document.getElementById('pin_reclaim_row');
+  row.style.display=row.style.display==='none'?'block':'none';
+};
+
 window.createRoom = async function(){
   const name=document.getElementById('dm_name').value.trim();
+  const pin =document.getElementById('dm_pin').value.trim();
   if(!name){lerr('Escribe tu nombre como DM');return;}
+  if(!pin||pin.length<4){lerr('Elige un PIN de 4 dígitos');return;}
   myName=name; isDM=true; room=genCode();
 
-  // Save DM identity in localStorage so they can reclaim the room
-  try { localStorage.setItem('vtt_dm_'+room, myId); } catch(e){}
+  // Store PIN hash in Firebase (simple — not cryptographic but sufficient)
+  const pinHash=btoa(room+':'+pin);
 
   await set(ref(db,'rooms/'+room),{
     created:serverTimestamp(),
-    dmId:myId,
-    dmName:myName,
-    mapUrl:'',
-    cellSize:70,
-    fogW:0, fogH:0
+    dmId:myId, dmName:myName,
+    pinHash:pinHash,
+    mapUrl:'', cellSize:70, fogW:0, fogH:0
   });
+
+  // Save locally too for auto-reclaim
+  try { localStorage.setItem('vtt_dm_'+room, JSON.stringify({id:myId,pin:pinHash})); } catch(e){}
   enter();
 };
 
 window.joinRoom = async function(){
   const name=document.getElementById('player_name').value.trim();
   const code=document.getElementById('lcode').value.trim().toUpperCase();
-  if(!name){lerr('Escribe tu nombre de personaje');return;}
+  const pin =document.getElementById('player_pin').value.trim();
+  if(!name){lerr('Escribe tu nombre');return;}
   if(!code){lerr('Escribe el código de sala');return;}
 
-  // Check room exists
   const snap=await get(ref(db,'rooms/'+code));
-  if(!snap.exists()){lerr('Sala "'+code+'" no encontrada. Verifica el código.');return;}
+  if(!snap.exists()){lerr('Sala "'+code+'" no encontrada');return;}
 
   const roomData=snap.val();
-
-  // DM protection: check if someone is trying to join as DM
-  // (joinRoom is always player — only createRoom gives DM role)
   myName=name; room=code; isDM=false;
 
-  // Check if this user was previously the DM (reclaim)
-  let savedDmId=null;
-  try { savedDmId=localStorage.getItem('vtt_dm_'+code); } catch(e){}
-  if(savedDmId && savedDmId===roomData.dmId){
-    // Same browser that created the room — restore DM
-    myId=savedDmId;
-    isDM=true;
-    toast('🎭 Sala retomada como DM');
+  // Try PIN reclaim
+  if(pin){
+    const pinHash=btoa(code+':'+pin);
+    if(pinHash===roomData.pinHash){
+      isDM=true;
+      myId=roomData.dmId; // restore original DM id
+      try { localStorage.setItem('vtt_dm_'+code, JSON.stringify({id:myId,pin:pinHash})); } catch(e){}
+      toast('🎭 PIN correcto — sesión DM recuperada');
+    } else {
+      lerr('PIN incorrecto'); return;
+    }
+  } else {
+    // Check localStorage auto-reclaim (same browser)
+    let saved=null;
+    try { saved=JSON.parse(localStorage.getItem('vtt_dm_'+code)||'null'); } catch(e){}
+    if(saved && saved.pin===roomData.pinHash){
+      isDM=true; myId=saved.id;
+      toast('🎭 Sesión DM restaurada automáticamente');
+    }
   }
 
   enter();
@@ -697,10 +732,23 @@ function subscribe(){
   onValue(r('mapOffY2'),s=>{if(s.val()!==null){mapOffY2=s.val();draw();}});
   onValue(r('mapScaleAdj'),s=>{if(s.val()){mapScaleAdj=s.val();draw();}});
 
-  // Fog
+  // Fog — Firebase converts arrays to objects, need to convert back
   onValue(r('fog'),s=>{
     const d=s.val();
-    if(d&&d.rows){fog=d.rows;fogW=d.w||0;fogH=d.h||0;draw();}
+    if(!d||!d.rows) return;
+    fogW=d.w||0; fogH=d.h||0;
+    // Convert Firebase object-of-objects back to array-of-arrays
+    const rawRows=d.rows;
+    fog=[];
+    for(let row=0;row<fogH;row++){
+      fog[row]=[];
+      const rawRow=rawRows[row]||{};
+      for(let col=0;col<fogW;col++){
+        // Firebase stores 1=revealed, 0=hidden (false was being dropped)
+        fog[row][col] = rawRow[col]===1 ? true : false;
+      }
+    }
+    draw();
   });
 
   // Players presence
@@ -1284,7 +1332,15 @@ function debounceFog(){clearTimeout(fogTimer);fogTimer=setTimeout(pushFog,500);}
 
 function pushFog(){
   if(!fog.length)return;
-  update(r('fog'),{rows:fog,w:fogW,h:fogH});
+  // Convert to 1/0 — Firebase drops false/null values
+  const rows={};
+  for(let r2=0;r2<fogH;r2++){
+    rows[r2]={};
+    for(let c=0;c<fogW;c++){
+      rows[r2][c]=fog[r2]&&fog[r2][c]?1:0;
+    }
+  }
+  update(r('fog'),{rows:rows,w:fogW,h:fogH});
 }
 
 window.clearFog=function(){
