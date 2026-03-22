@@ -147,6 +147,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <button class="hbtn" onclick="resetView()">⌂ Centro</button>
   <button class="hbtn" onclick="clearFog()">☀ Revelar todo</button>
   <button class="hbtn" onclick="fillFog()">🌑 Cubrir todo</button>
+  <button class="hbtn" onclick="togglePlayerView()" id="btn_playerview" title="Alterna entre vista DM y vista jugador">👁 Vista DM</button>
   <button class="hbtn" onclick="openAddToken()">+ Token</button>
   <div id="room_info">
     <div id="cdot"></div>
@@ -324,6 +325,7 @@ const db  = getDatabase(app);
 let room='', myName='', myId='u_'+Math.random().toString(36).slice(2,9), isDM=false;
 let tool='select', selTok=null, tokens={};
 let currentTurn=0;
+let playerViewMode=false; // DM can preview what players see
 
 // Canvas
 let cv, cx, mapImg=new Image(), mapOK=false;
@@ -479,11 +481,14 @@ function draw(){
 
 function drawFogLayer(mw,mh){
   if(!fog.length||!fogW)return;
+  // In DM mode: fog is semitransparent (DM sees through)
+  // In player mode OR actual player: fog is opaque
+  const opaque = playerViewMode || !isDM;
   for(let row=0;row<fog.length;row++){
     if(!fog[row])continue;
     for(let col=0;col<fogW;col++){
       if(!fog[row][col]){
-        cx.fillStyle=isDM?'rgba(5,7,15,0.60)':'rgba(5,7,15,0.97)';
+        cx.fillStyle=opaque?'rgba(5,7,15,0.97)':'rgba(5,7,15,0.60)';
         cx.fillRect(col*CELL,row*CELL,CELL+1,CELL+1);
       }
     }
@@ -952,6 +957,22 @@ function appendMsg(msg){
   log.scrollTop=log.scrollHeight;
   while(log.children.length>120)log.removeChild(log.firstChild);
 }
+
+// ── PLAYER VIEW TOGGLE ────────────────────────────────────
+window.togglePlayerView=function(){
+  playerViewMode=!playerViewMode;
+  const btn=document.getElementById('btn_playerview');
+  if(playerViewMode){
+    btn.textContent='👤 Vista jugador';
+    btn.classList.add('active');
+    toast('👤 Modo vista jugador — así lo ven los jugadores');
+  } else {
+    btn.textContent='👁 Vista DM';
+    btn.classList.remove('active');
+    toast('🎭 Modo DM — ves a través de la niebla');
+  }
+  draw();
+};
 
 // ── TOOLS ──────────────────────────────────────────────────
 window.setTool=function(t){
