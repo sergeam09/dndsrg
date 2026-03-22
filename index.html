@@ -15,16 +15,24 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-/* HEADER */
-#header{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;z-index:100}
-#header h1{font-size:0.95rem;color:var(--gold);letter-spacing:2px;margin-right:4px;white-space:nowrap}
-.hbtn{padding:4px 9px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:0.75rem;transition:all .15s;white-space:nowrap}
+/* DROPDOWN MENU */
+.drop-item{padding:9px 14px;font-size:.8rem;color:var(--text2);cursor:pointer;transition:background .1s;white-space:nowrap}
+.drop-item:hover{background:var(--bg3);color:var(--text)}
+.drop-item.danger-item{color:var(--red)}
+.drop-item.danger-item:hover{background:rgba(192,57,43,.1)}
+.drop-divider{height:1px;background:var(--border);margin:3px 0}
+
+/* HEADER responsive */
+#header{display:flex;align-items:center;gap:4px;padding:5px 8px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;z-index:100}
+#header::-webkit-scrollbar{display:none}
+#header h1{font-size:.95rem;color:var(--gold);letter-spacing:2px;margin-right:2px;white-space:nowrap;flex-shrink:0}
+.hbtn{padding:5px 9px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-size:.78rem;transition:all .15s;white-space:nowrap;flex-shrink:0;min-height:30px;-webkit-tap-highlight-color:transparent}
 .hbtn:hover{border-color:var(--gold);color:var(--gold)}
 .hbtn.active{background:rgba(200,168,75,.15);border-color:var(--gold);color:var(--gold)}
 .hbtn.danger{border-color:var(--red);color:var(--red)}
-#room_info{margin-left:auto;font-size:0.72rem;color:var(--text3);display:flex;align-items:center;gap:8px}
-#room_code_display{font-family:monospace;color:var(--gold2);background:var(--bg4);padding:2px 8px;border-radius:4px;cursor:pointer;border:1px solid var(--border);font-size:0.8rem}
-#cdot{width:8px;height:8px;border-radius:50%;background:#e74c3c;transition:background .3s;flex-shrink:0}
+#room_info{margin-left:auto;font-size:.7rem;color:var(--text3);display:flex;align-items:center;gap:6px;flex-shrink:0}
+#room_code_display{font-family:monospace;color:var(--gold2);background:var(--bg4);padding:2px 7px;border-radius:4px;cursor:pointer;border:1px solid var(--border);font-size:.78rem;letter-spacing:1px}
+#cdot{width:7px;height:7px;border-radius:50%;background:#e74c3c;transition:background .3s;flex-shrink:0}
 #cdot.on{background:var(--green)}
 
 /* LAYOUT */
@@ -35,10 +43,48 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 #vtt{position:absolute;top:0;left:0;touch-action:none}
 
 /* SIDEBAR */
-#sidebar{width:230px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
-.s-title{padding:7px 10px;font-size:0.65rem;letter-spacing:2px;color:var(--gold2);text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);user-select:none}
+#sidebar{width:220px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width .2s}
+.s-title{padding:7px 10px;font-size:.65rem;letter-spacing:2px;color:var(--gold2);text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);user-select:none;-webkit-tap-highlight-color:transparent}
 .s-title:hover{background:var(--bg3)}
 .s-body{padding:6px 8px}
+
+/* MOBILE ≤640px — sidebar narrows */
+@media(max-width:640px){
+  #sidebar{width:180px}
+  #header h1{display:none}
+}
+
+/* MOBILE ≤480px — sidebar slides over canvas */
+@media(max-width:480px){
+  #sidebar{
+    display:none;
+    position:absolute;right:0;top:0;bottom:0;
+    z-index:50;width:220px;
+    box-shadow:-4px 0 24px rgba(0,0,0,.7);
+  }
+  #sidebar.show{display:flex}
+  #main{position:relative}
+}
+
+/* Sidebar toggle (mobile) */
+#sb_toggle{
+  display:none;
+  position:absolute;bottom:48px;right:0;
+  background:var(--bg2);border:1px solid var(--border);border-right:none;
+  border-radius:6px 0 0 6px;padding:10px 6px;cursor:pointer;z-index:40;
+  color:var(--text2);font-size:.75rem;writing-mode:vertical-rl;
+  -webkit-tap-highlight-color:transparent;line-height:1.4;text-align:center;
+}
+@media(max-width:480px){#sb_toggle{display:block}}
+
+/* Bigger touch targets */
+@media(max-width:768px){
+  .dbtn{min-height:38px;font-size:.78rem}
+  .tok-item{min-height:32px;font-size:.8rem}
+  .init-row{min-height:30px}
+  #cinput{font-size:16px}
+  .hbtn{min-height:32px}
+}
 
 /* TOKEN LIST */
 .tok-item{display:flex;align-items:center;gap:5px;padding:3px 5px;border-radius:4px;cursor:pointer;font-size:0.77rem;border:1px solid transparent;margin-bottom:2px}
@@ -156,40 +202,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-
-/* ── MOBILE ─────────────────────────────────────── */
-@media (max-width:640px){
-  #header{padding:4px 6px;gap:4px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
-  #header::-webkit-scrollbar{display:none}
-  #header h1{display:none}
-  .hbtn{font-size:.7rem;padding:4px 7px;flex-shrink:0}
-  #room_info{flex-shrink:0}
-  #sidebar{width:180px}
-}
-@media (max-width:480px){
-  #sidebar{display:none}
-  #sidebar.show{display:flex;position:absolute;right:0;top:0;bottom:0;z-index:50;box-shadow:-4px 0 20px rgba(0,0,0,.6)}
-}
-/* Sidebar toggle button (mobile) */
-#sb_toggle{
-  display:none;
-  position:absolute;
-  bottom:70px;right:0;
-  background:var(--bg2);border:1px solid var(--border);border-right:none;
-  border-radius:6px 0 0 6px;padding:10px 5px;cursor:pointer;z-index:40;
-  color:var(--text2);font-size:.8rem;writing-mode:vertical-rl;
-  -webkit-tap-highlight-color:transparent;
-}
-@media (max-width:480px){#sb_toggle{display:block}}
-
-/* Bigger tap targets on mobile */
-@media (max-width:768px){
-  .dbtn{min-height:38px;font-size:.78rem}
-  .tok-item{min-height:34px}
-  .init-row{min-height:30px}
-  #cinput{font-size:16px} /* prevent iOS zoom */
-  .hbtn{min-height:30px}
-}
 </style>
 </head>
 <body>
@@ -242,29 +254,40 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 
 <!-- HEADER -->
 <div id="header" style="display:none">
-  <h1>⚔ EL CADEJO</h1>
+  <h1>⚔</h1>
 
-  <!-- Siempre visible -->
-  <button class="hbtn active" id="tb_select" onclick="setTool('select')">↖ Mover</button>
-  <button class="hbtn" id="tb_measure" onclick="setTool('measure')">📏 Medir</button>
+  <!-- Herramientas siempre visibles -->
+  <button class="hbtn active" id="tb_select" onclick="setTool('select')" title="Mover tokens">↖</button>
+  <button class="hbtn" id="tb_measure" onclick="setTool('measure')" title="Medir distancia">📏</button>
 
-  <!-- Solo DM -->
-  <button class="hbtn dm-only" id="tb_fog"    onclick="setTool('fog')"   >🌫 Revelar</button>
-  <button class="hbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')">🌑 Oscurecer</button>
-  <button class="hbtn dm-only" onclick="openMapModal()">🗺 Mapa</button>
-  <button class="hbtn dm-only" onclick="clearFog()">☀ Todo revelado</button>
-  <button class="hbtn dm-only" onclick="fillFog()">🌑 Todo cubierto</button>
-  <button class="hbtn dm-only" onclick="togglePlayerView()" id="btn_playerview">👁 Vista DM</button>
-  <button class="hbtn dm-only" onclick="openAddToken()">+ Token</button>
+  <!-- DM only -->
+  <button class="hbtn dm-only" id="tb_fog"    onclick="setTool('fog')"    title="Revelar niebla">🌫</button>
+  <button class="hbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')" title="Oscurecer">🌑</button>
+  <button class="hbtn dm-only" onclick="openMapModal()" title="Cargar mapa">🗺</button>
+  <button class="hbtn dm-only" onclick="openAddToken()" title="Añadir token">＋</button>
 
-  <button class="hbtn" onclick="resetView()">⌂ Centro</button>
+  <!-- Menú desplegable para opciones secundarias -->
+  <div style="position:relative">
+    <button class="hbtn" onclick="toggleMenu()" id="menu_btn" title="Más opciones">☰</button>
+    <div id="dropdown_menu" style="display:none;position:absolute;top:110%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:180px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.5)">
+      <div class="drop-item dm-only" onclick="clearFog();closeMenu()">☀ Revelar todo el mapa</div>
+      <div class="drop-item dm-only" onclick="fillFog();closeMenu()">🌑 Cubrir todo el mapa</div>
+      <div class="drop-item dm-only" onclick="togglePlayerView();closeMenu()" id="mi_playerview">👁 Vista jugador</div>
+      <div class="drop-divider dm-only"></div>
+      <div class="drop-item" onclick="resetView();closeMenu()">⌂ Centrar vista</div>
+      <div class="drop-item" onclick="copyLink();closeMenu()">🔗 Copiar link de sala</div>
+      <div class="drop-item danger-item" onclick="confirmLeave();closeMenu()">✕ Salir de la sala</div>
+    </div>
+  </div>
 
+  <button class="hbtn" onclick="resetView()" title="Centrar">⌂</button>
+
+  <!-- Room info -->
   <div id="room_info">
     <div id="cdot"></div>
-    <span id="role_badge" style="font-size:.7rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
-    <span id="pcount" style="color:var(--text2);font-size:.72rem"></span>
-    <span style="color:var(--text3);font-size:.7rem">Sala:</span>
-    <span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
+    <span id="role_badge" style="font-size:.68rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
+    <span id="pcount" style="color:var(--text2);font-size:.7rem"></span>
+    <span id="room_code_display" onclick="copyLink()" title="Copiar link">—</span>
   </div>
 </div>
 
@@ -1310,26 +1333,49 @@ function appendMsg(msg){
   while(log.children.length>120)log.removeChild(log.firstChild);
 }
 
+// ── DROPDOWN MENU ──────────────────────────────────────────
+window.toggleMenu=function(){
+  const m=document.getElementById('dropdown_menu');
+  m.style.display=m.style.display==='none'?'block':'none';
+};
+window.closeMenu=function(){
+  const m=document.getElementById('dropdown_menu');
+  if(m) m.style.display='none';
+};
+// Close menu when clicking outside
+document.addEventListener('click',function(e){
+  const btn=document.getElementById('menu_btn');
+  const menu=document.getElementById('dropdown_menu');
+  if(menu&&btn&&!btn.contains(e.target)&&!menu.contains(e.target)){
+    menu.style.display='none';
+  }
+});
+
+window.confirmLeave=function(){
+  if(confirm('¿Salir de la sala? Se recargará la página.')){
+    location.reload();
+  }
+};
+
 // ── PLAYER VIEW TOGGLE (DM only) ──────────────────────────
 window.togglePlayerView=function(){
   if(!isDM)return;
   playerViewMode=!playerViewMode;
-  const btn=document.getElementById('btn_playerview');
+  const mi=document.getElementById('mi_playerview');
   const banner=document.getElementById('player_view_banner');
+  const tfog=document.getElementById('tb_fog');
+  const tfogg=document.getElementById('tb_fogadd');
   if(playerViewMode){
-    btn.textContent='🎭 Volver a DM';
-    btn.classList.add('active');
-    banner.style.display='block';
-    // Disable fog tools while in player view
-    document.getElementById('tb_fog').disabled=true;
-    document.getElementById('tb_fogadd').disabled=true;
+    if(mi) mi.textContent='🎭 Volver a vista DM';
+    if(banner) banner.style.display='block';
+    if(tfog) tfog.disabled=true;
+    if(tfogg) tfogg.disabled=true;
     toast('👤 Vista jugador — así lo ven tus jugadores');
   } else {
-    btn.textContent='👁 Vista DM';
-    btn.classList.remove('active');
-    banner.style.display='none';
-    document.getElementById('tb_fog').disabled=false;
-    document.getElementById('tb_fogadd').disabled=false;
+    if(mi) mi.textContent='👁 Vista jugador';
+    if(banner) banner.style.display='none';
+    if(tfog) tfog.disabled=false;
+    if(tfogg) tfogg.disabled=false;
     toast('🎭 Vista DM restaurada');
   }
   draw();
