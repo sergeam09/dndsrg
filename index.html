@@ -98,7 +98,27 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .blg.sec:hover{border-color:var(--gold);color:var(--gold)}
 #lerr{color:#e74c3c;font-size:.75rem;margin-top:6px;display:none}
 
-/* TOOL INDICATOR */
+/* ROLES */
+.dm-only { display:none } /* hidden until isDM confirmed */
+.role-dm { background:rgba(200,168,75,.15); color:var(--gold); border:1px solid var(--gold); }
+.role-player { background:rgba(41,128,185,.15); color:#5bb3e8; border:1px solid #5bb3e8; }
+
+/* PLAYER VIEW banner */
+#player_view_banner {
+  display:none;
+  position:absolute;
+  top:8px; left:50%;
+  transform:translateX(-50%);
+  background:rgba(41,128,185,.2);
+  border:1px solid #5bb3e8;
+  border-radius:5px;
+  padding:3px 12px;
+  font-size:.72rem;
+  color:#5bb3e8;
+  pointer-events:none;
+  z-index:10;
+  letter-spacing:1px;
+}
 #tool_ind{position:absolute;bottom:10px;left:10px;background:rgba(13,15,20,.88);border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-size:.72rem;color:var(--text2);pointer-events:none;letter-spacing:1px}
 
 /* MEASURE TOOLTIP */
@@ -127,11 +147,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <div id="lcard">
     <h1>⚔ EL CADEJO</h1>
     <p>Mesa de juego virtual · D&D 5e</p>
-    <input class="linput" id="lname" placeholder="Tu nombre (ej: Dungeon Master)" maxlength="24">
-    <button class="blg" onclick="createRoom()">✦ Crear sala nueva</button>
-    <div class="ldiv">o únete con código</div>
-    <input class="linput" id="lcode" placeholder="Código de sala" maxlength="10" oninput="this.value=this.value.toUpperCase()">
-    <button class="blg sec" onclick="joinRoom()">→ Unirse a sala</button>
+    <input class="linput" id="lname" placeholder="Tu nombre" maxlength="24">
+
+    <button class="blg" onclick="createRoom()">🎭 Crear sala como DM</button>
+
+    <div class="ldiv">¿tienes un link o código?</div>
+
+    <input class="linput" id="lcode" placeholder="Código de sala (ej: DRAGON42)" maxlength="10" oninput="this.value=this.value.toUpperCase()">
+    <button class="blg sec" onclick="joinRoom()">👤 Unirse como jugador</button>
     <div id="lerr"></div>
   </div>
 </div>
@@ -139,18 +162,25 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 <!-- HEADER -->
 <div id="header" style="display:none">
   <h1>⚔ EL CADEJO</h1>
-  <button class="hbtn active" id="tb_select"  onclick="setTool('select')">↖ Mover</button>
-  <button class="hbtn"        id="tb_fog"     onclick="setTool('fog')">🌫 Revelar</button>
-  <button class="hbtn"        id="tb_fogadd"  onclick="setTool('fogadd')">🌑 Oscurecer</button>
-  <button class="hbtn"        id="tb_measure" onclick="setTool('measure')">📏 Medir</button>
-  <button class="hbtn" onclick="openMapModal()">🗺 Mapa</button>
+
+  <!-- Siempre visible -->
+  <button class="hbtn active" id="tb_select" onclick="setTool('select')">↖ Mover</button>
+  <button class="hbtn" id="tb_measure" onclick="setTool('measure')">📏 Medir</button>
+
+  <!-- Solo DM -->
+  <button class="hbtn dm-only" id="tb_fog"    onclick="setTool('fog')"   >🌫 Revelar</button>
+  <button class="hbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')">🌑 Oscurecer</button>
+  <button class="hbtn dm-only" onclick="openMapModal()">🗺 Mapa</button>
+  <button class="hbtn dm-only" onclick="clearFog()">☀ Todo revelado</button>
+  <button class="hbtn dm-only" onclick="fillFog()">🌑 Todo cubierto</button>
+  <button class="hbtn dm-only" onclick="togglePlayerView()" id="btn_playerview">👁 Vista DM</button>
+  <button class="hbtn dm-only" onclick="openAddToken()">+ Token</button>
+
   <button class="hbtn" onclick="resetView()">⌂ Centro</button>
-  <button class="hbtn" onclick="clearFog()">☀ Revelar todo</button>
-  <button class="hbtn" onclick="fillFog()">🌑 Cubrir todo</button>
-  <button class="hbtn" onclick="togglePlayerView()" id="btn_playerview" title="Alterna entre vista DM y vista jugador">👁 Vista DM</button>
-  <button class="hbtn" onclick="openAddToken()">+ Token</button>
+
   <div id="room_info">
     <div id="cdot"></div>
+    <span id="role_badge" style="font-size:.7rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
     <span id="pcount" style="color:var(--text2);font-size:.72rem"></span>
     <span style="color:var(--text3);font-size:.7rem">Sala:</span>
     <span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
@@ -161,6 +191,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 <div id="main" style="display:none">
   <div id="cwrap">
     <canvas id="vtt"></canvas>
+    <div id="player_view_banner">👤 VISTA JUGADOR</div>
     <div id="tool_ind">HERRAMIENTA: MOVER</div>
     <div id="mtip"></div>
     <div id="brush_ctrl">
@@ -385,11 +416,33 @@ function enter(){
   document.getElementById('header').style.display='flex';
   document.getElementById('main').style.display='flex';
   document.getElementById('room_code_display').textContent=room;
+  applyRole();
   initCanvas();
   subscribe();
   set(r('players/'+myId),{name:myName,isDM,joined:serverTimestamp()});
-  sysMsg(myName+' entró'+(isDM?' como DM':''));
-  toast('Sala '+room+' — comparte el link para invitar');
+  sysMsg(myName+' entró'+(isDM?' como DM 🎭':' como jugador 👤'));
+  toast('Sala '+room+(isDM?' — eres el DM':' — conectado como jugador'));
+}
+
+function applyRole(){
+  // Show/hide DM controls
+  document.querySelectorAll('.dm-only').forEach(el=>{
+    el.style.display=isDM?'':'none';
+  });
+
+  // Role badge
+  const badge=document.getElementById('role_badge');
+  if(isDM){
+    badge.textContent='🎭 DM';
+    badge.className='role-dm';
+  } else {
+    badge.textContent='👤 Jugador';
+    badge.className='role-player';
+  }
+
+  // Players can't drag tokens they don't own (handled in mdown)
+  // Players start in player view mode (opaque fog)
+  if(!isDM) playerViewMode=true;
 }
 
 // ── SUBSCRIBE ──────────────────────────────────────────────
@@ -497,6 +550,14 @@ function drawFogLayer(mw,mh){
 
 function drawTok(id,t){
   if(t===null||t.x===undefined)return;
+
+  // Players can't see tokens inside fog
+  const opaque=playerViewMode||!isDM;
+  if(opaque&&fog.length&&fogW){
+    const row=Math.floor(t.y), col=Math.floor(t.x);
+    if(fog[row]&&fog[row][col]===false) return; // hidden in fog
+  }
+
   const cx2=cx;
   const x=t.x*CELL+CELL/2, y=t.y*CELL+CELL/2, r2=CELL*0.41;
 
@@ -565,17 +626,24 @@ function mdown(e){
   if(tool==='select'){
     const h=hitTok(p);
     if(h){
-      selTok=h; dragging=true; dragId=h;
-      dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
-      lastDragCol=tokens[h].x; lastDragRow=tokens[h].y;
+      const tok=tokens[h];
+      // Players can only move their own token (matched by name)
+      const canMove=isDM||(tok&&tok.addedBy===myName)||false;
+      if(canMove){
+        selTok=h; dragging=true; dragId=h;
+        dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
+        lastDragCol=tokens[h].x; lastDragRow=tokens[h].y;
+      } else {
+        selTok=h; // can still select/view
+      }
       draw(); renderToks();
     } else {
       selTok=null;
       panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
       draw(); renderToks();
     }
-  } else if(tool==='fog')   { brushFog(cl,true); }
-  else if(tool==='fogadd')  { brushFog(cl,false); }
+  } else if(tool==='fog'&&isDM)   { brushFog(cl,true); }
+  else if(tool==='fogadd'&&isDM)  { brushFog(cl,false); }
   else if(tool==='measure') { ms={c:cl.c,r:cl.r}; me=null; }
 }
 
@@ -958,18 +1026,27 @@ function appendMsg(msg){
   while(log.children.length>120)log.removeChild(log.firstChild);
 }
 
-// ── PLAYER VIEW TOGGLE ────────────────────────────────────
+// ── PLAYER VIEW TOGGLE (DM only) ──────────────────────────
 window.togglePlayerView=function(){
+  if(!isDM)return;
   playerViewMode=!playerViewMode;
   const btn=document.getElementById('btn_playerview');
+  const banner=document.getElementById('player_view_banner');
   if(playerViewMode){
-    btn.textContent='👤 Vista jugador';
+    btn.textContent='🎭 Volver a DM';
     btn.classList.add('active');
-    toast('👤 Modo vista jugador — así lo ven los jugadores');
+    banner.style.display='block';
+    // Disable fog tools while in player view
+    document.getElementById('tb_fog').disabled=true;
+    document.getElementById('tb_fogadd').disabled=true;
+    toast('👤 Vista jugador — así lo ven tus jugadores');
   } else {
     btn.textContent='👁 Vista DM';
     btn.classList.remove('active');
-    toast('🎭 Modo DM — ves a través de la niebla');
+    banner.style.display='none';
+    document.getElementById('tb_fog').disabled=false;
+    document.getElementById('tb_fogadd').disabled=false;
+    toast('🎭 Vista DM restaurada');
   }
   draw();
 };
