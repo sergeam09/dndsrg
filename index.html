@@ -77,6 +77,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 }
 @media(max-width:480px){#sb_toggle{display:block}}
 
+/* ── Hamburger: solo móvil ── */
+#menu_btn { display:none }
+@media(max-width:640px){ #menu_btn { display:inline-block } }
+
+/* ── Desktop: mostrar botones secundarios directamente ── */
+.hbtn-secondary { display:inline-block }
+@media(max-width:640px){ .hbtn-secondary { display:none } }
+
 /* Bigger touch targets */
 @media(max-width:768px){
   .dbtn{min-height:38px;font-size:.78rem}
@@ -256,34 +264,43 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 <div id="header" style="display:none">
   <h1>⚔</h1>
 
-  <!-- Herramientas siempre visibles -->
-  <button class="hbtn active" id="tb_select" onclick="setTool('select')" title="Mover tokens">↖</button>
-  <button class="hbtn" id="tb_measure" onclick="setTool('measure')" title="Medir distancia">📏</button>
+  <!-- Herramientas principales — siempre visibles -->
+  <button class="hbtn active" id="tb_select" onclick="setTool('select')" title="Mover tokens">↖ Mover</button>
+  <button class="hbtn" id="tb_measure" onclick="setTool('measure')" title="Medir distancia">📏 Medir</button>
 
-  <!-- DM only -->
-  <button class="hbtn dm-only" id="tb_fog"    onclick="setTool('fog')"    title="Revelar niebla">🌫</button>
-  <button class="hbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')" title="Oscurecer">🌑</button>
-  <button class="hbtn dm-only" onclick="openMapModal()" title="Cargar mapa">🗺</button>
-  <button class="hbtn dm-only" onclick="openAddToken()" title="Añadir token">＋</button>
+  <!-- DM only — herramientas de uso frecuente -->
+  <button class="hbtn dm-only" id="tb_fog"    onclick="setTool('fog')"    title="Revelar niebla">🌫 Revelar</button>
+  <button class="hbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')" title="Oscurecer">🌑 Oscu.</button>
+  <button class="hbtn dm-only" onclick="openMapModal()">🗺 Mapa</button>
+  <button class="hbtn dm-only" onclick="openAddToken()">＋ Token</button>
 
-  <!-- Menú desplegable para opciones secundarias -->
+  <!-- DM only — secundarios: visibles en desktop, en hamburguesa en móvil -->
+  <button class="hbtn dm-only hbtn-secondary" onclick="clearFog()">☀ Revelar todo</button>
+  <button class="hbtn dm-only hbtn-secondary" onclick="fillFog()">🌑 Cubrir todo</button>
+  <button class="hbtn dm-only hbtn-secondary" id="btn_playerview" onclick="togglePlayerView()">👁 Vista jugador</button>
+  <button class="hbtn dm-only hbtn-secondary" onclick="toggleMapAdj()">⚙ Ajustar mapa</button>
+
+  <!-- Siempre visibles en desktop, en hamburguesa en móvil -->
+  <button class="hbtn hbtn-secondary" onclick="resetView()">⌂ Centrar</button>
+  <button class="hbtn hbtn-secondary" onclick="copyLink()">🔗 Link</button>
+
+  <!-- Hamburguesa — SOLO MÓVIL -->
   <div style="position:relative">
     <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" title="Más opciones">☰</button>
-    <div id="dropdown_menu" style="display:none;position:fixed;top:42px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:190px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
-      <div class="drop-item" id="dmi_fog1"  onclick="clearFog();closeMenu()">☀ Revelar todo el mapa</div>
-      <div class="drop-item" id="dmi_fog2"  onclick="fillFog();closeMenu()">🌑 Cubrir todo el mapa</div>
-      <div class="drop-item" id="dmi_view"  onclick="togglePlayerView();closeMenu()" id="mi_playerview">👁 Vista jugador</div>
-      <div class="drop-item" id="dmi_adj"   onclick="toggleMapAdj();closeMenu()">⚙ Ajustar mapa</div>
+    <div id="dropdown_menu" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:190px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
+      <!-- En móvil muestra lo que el header no puede -->
+      <div class="drop-item dm-only" id="dmi_fog1" onclick="clearFog();closeMenu()">☀ Revelar todo</div>
+      <div class="drop-item dm-only" id="dmi_fog2" onclick="fillFog();closeMenu()">🌑 Cubrir todo</div>
+      <div class="drop-item dm-only" id="dmi_view" onclick="togglePlayerView();closeMenu()">👁 Vista jugador</div>
+      <div class="drop-item dm-only" id="dmi_adj"  onclick="toggleMapAdj();closeMenu()">⚙ Ajustar mapa</div>
       <div class="drop-divider" id="dmi_div"></div>
       <div class="drop-item" onclick="resetView();closeMenu()">⌂ Centrar vista</div>
-      <div class="drop-item" onclick="copyLink();closeMenu()">🔗 Copiar link de sala</div>
-      <div class="drop-item danger-item" onclick="confirmLeave();closeMenu()">✕ Salir de la sala</div>
+      <div class="drop-item" onclick="copyLink();closeMenu()">🔗 Copiar link</div>
+      <div class="drop-item danger-item" onclick="confirmLeave();closeMenu()">✕ Salir</div>
     </div>
   </div>
 
-  <button class="hbtn" onclick="resetView()" title="Centrar">⌂</button>
-
-  <!-- Room info -->
+  <!-- Room info — siempre visible -->
   <div id="room_info">
     <div id="cdot"></div>
     <span id="role_badge" style="font-size:.68rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
@@ -401,34 +418,52 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <div class="mcard" id="mapurl_modal">
     <h2>🗺 CARGAR MAPA</h2>
 
-    <!-- PRIMARY: File upload -->
-    <label>📁 Subir imagen desde tu dispositivo</label>
-    <div id="drop_zone" style="border:2px dashed var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:12px;cursor:pointer;transition:border-color .2s"
-      onclick="document.getElementById('map_file').click()"
-      ondragover="event.preventDefault();this.style.borderColor='var(--gold)'"
-      ondragleave="this.style.borderColor='var(--border)'"
-      ondrop="handleMapDrop(event)">
-      <div style="font-size:1.5rem;margin-bottom:6px">🖼</div>
-      <div style="font-size:.8rem;color:var(--text2)">Click para seleccionar imagen</div>
-      <div style="font-size:.72rem;color:var(--text3);margin-top:3px">o arrastra aquí · JPG, PNG, WebP</div>
-      <div id="drop_filename" style="font-size:.75rem;color:var(--gold2);margin-top:6px"></div>
-    </div>
-    <input type="file" id="map_file" accept="image/*" style="display:none" onchange="loadMapFile(event)">
+    <!-- URL INPUT — principal -->
+    <label>URL de la imagen del mapa</label>
+    <input type="text" id="map_url_input" placeholder="https://cdn.discordapp.com/attachments/...">
 
-    <!-- SECONDARY: URL -->
-    <div style="display:flex;align-items:center;gap:8px;margin:8px 0;color:var(--text3);font-size:.72rem">
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-      o usa una URL externa (Imgur, Discord...)
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-    </div>
-    <input type="text" id="map_url_input" placeholder="https://i.imgur.com/...">
+    <!-- Instrucciones por servicio -->
+    <div style="background:var(--bg3);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;font-size:.78rem">
+      <div style="color:var(--gold2);font-size:.7rem;letter-spacing:1px;margin-bottom:8px">📋 CÓMO OBTENER EL LINK</div>
 
-    <label style="margin-top:4px">Tamaño de celda en la imagen (px)</label>
-    <input type="number" id="cell_size_input" value="70" min="20" max="300" placeholder="px por casilla">
-    <p style="font-size:.7rem;color:var(--text3);margin-bottom:10px">Si tu mapa ya tiene grid, ajusta este valor al tamaño de cada casilla en píxeles.</p>
+      <div style="margin-bottom:8px">
+        <div style="color:var(--text);font-weight:bold;margin-bottom:2px">🎮 Discord (recomendado)</div>
+        <div style="color:var(--text3);line-height:1.5">
+          1. Sube la imagen a cualquier canal<br>
+          2. Click en la imagen → abre en el navegador<br>
+          3. Copia la URL de la barra de direcciones<br>
+          <span style="color:var(--gold2)">✓ Debe terminar en .jpg .png o .webp</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:8px;padding-top:8px;border-top:1px solid var(--border)">
+        <div style="color:var(--text);font-weight:bold;margin-bottom:2px">📁 Google Drive</div>
+        <div style="color:var(--text3);line-height:1.5">
+          1. Sube la imagen → click derecho → <em>Compartir</em><br>
+          2. Cambia a "Cualquier persona con el enlace"<br>
+          3. Copia el ID del link (entre /d/ y /view)<br>
+          4. Usa: <span style="font-family:monospace;color:var(--gold2);font-size:.72rem">https://drive.google.com/uc?id=TU_ID</span>
+        </div>
+      </div>
+
+      <div style="padding-top:8px;border-top:1px solid var(--border)">
+        <div style="color:var(--text);font-weight:bold;margin-bottom:2px">🐙 GitHub</div>
+        <div style="color:var(--text3);line-height:1.5">
+          Sube la imagen a tu repo → click en ella →<br>
+          botón <em>Raw</em> → copia esa URL
+        </div>
+      </div>
+    </div>
+
+    <label>Tamaño de celda en la imagen (px)</label>
+    <input type="number" id="cell_size_input" value="70" min="20" max="300">
+    <p style="font-size:.7rem;color:var(--text3);margin-bottom:10px">
+      Ajusta hasta que el grid coincida con el mapa. Típico: 70-140px.<br>
+      Puedes cambiarlo después con <strong>⚙ Ajustar mapa</strong>.
+    </p>
 
     <div class="mbtns">
-      <button class="bprimary" onclick="applyMap()">✓ Cargar</button>
+      <button class="bprimary" onclick="applyMap()">✓ Cargar y compartir</button>
       <button class="bcancel" onclick="closeModal('map_modal')">Cancelar</button>
     </div>
   </div>
@@ -626,22 +661,20 @@ function enter(){
 }
 
 function applyRole(){
-  // Show/hide DM-only header buttons
-  document.querySelectorAll('.dm-only').forEach(el=>{
-    el.style.display=isDM?'inline-block':'none';
-  });
-
-  // Show/hide DM-only dropdown items
-  ['dmi_fog1','dmi_fog2','dmi_view','dmi_adj','dmi_div'].forEach(function(id){
-    const el=document.getElementById(id);
-    if(el) el.style.display=isDM?'block':'none';
+  // Show/hide all dm-only elements uniformly
+  document.querySelectorAll('.dm-only').forEach(function(el){
+    if(isDM){
+      el.style.display = el.tagName==='BUTTON' ? 'inline-block' : 'block';
+    } else {
+      el.style.display = 'none';
+    }
   });
 
   // Role badge
   const badge=document.getElementById('role_badge');
   if(badge){
-    if(isDM){ badge.textContent='🎭 DM'; badge.className='role-dm'; }
-    else     { badge.textContent='👤 Jugador'; badge.className='role-player'; }
+    badge.textContent = isDM ? '🎭 DM' : '👤 Jugador';
+    badge.className   = isDM ? 'role-dm' : 'role-player';
   }
 
   if(!isDM) playerViewMode=true;
@@ -1089,36 +1122,68 @@ window.loadMapFile=function(e){
 function readMapFile(file){
   const reader=new FileReader();
   reader.onload=function(ev){
-    pendingMapData=ev.target.result; // base64 data URL
+    pendingMapData=ev.target.result;
     const fn=document.getElementById('drop_filename');
     if(fn) fn.textContent='✓ '+file.name;
     document.getElementById('drop_zone').style.borderColor='var(--gold)';
-    // Clear URL field since we have a file
     document.getElementById('map_url_input').value='';
+    // Show upload button
+    const row=document.getElementById('upload_share_row');
+    if(row) row.style.display='block';
   };
   reader.onerror=function(){ toast('❌ Error leyendo el archivo'); };
   reader.readAsDataURL(file);
 }
 
-window.applyMap=function(){
-  const cs=parseInt(document.getElementById('cell_size_input').value)||70;
-  CELL=cs;
+// Upload to Imgur (anonymous, no key needed for base64)
+window.uploadToImgur=function(){
+  if(!pendingMapData){ toast('Selecciona una imagen primero'); return; }
+  const btn=document.getElementById('imgur_btn');
+  btn.textContent='⏳ Subiendo...';
+  btn.disabled=true;
 
-  // Priority: file > URL
-  if(pendingMapData){
-    applyMapData(pendingMapData, false);
-    pendingMapData=null;
-  } else {
-    const url=document.getElementById('map_url_input').value.trim();
-    if(!url){toast('Selecciona una imagen o escribe una URL');return;}
-    applyMapData(url, true);
-  }
+  // Extract base64 data
+  const base64=pendingMapData.split(',')[1];
+
+  fetch('https://api.imgur.com/3/image',{
+    method:'POST',
+    headers:{
+      'Authorization':'Client-ID 546c25a59c58ad7',
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({ image: base64, type: 'base64' })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.success){
+      const url=data.data.link;
+      document.getElementById('map_url_input').value=url;
+      btn.textContent='✓ Subido — ahora toca "Cargar"';
+      btn.style.borderColor='var(--gold)';
+      btn.style.color='var(--gold)';
+      toast('✓ Imagen subida. Toca "Cargar" para aplicar.');
+    } else {
+      btn.textContent='❌ Error al subir. Usa URL manual.';
+      btn.disabled=false;
+    }
+  })
+  .catch(()=>{
+    btn.textContent='❌ Sin conexión. Usa URL manual.';
+    btn.disabled=false;
+  });
+};
+
+window.applyMap=function(){
+  const url=document.getElementById('map_url_input').value.trim();
+  const cs=parseInt(document.getElementById('cell_size_input').value)||70;
+  if(!url){ toast('Pega una URL de imagen (Discord, Drive, GitHub)'); return; }
+  CELL=cs;
+  applyMapData(url, true);
   closeModal('map_modal');
 };
 
 function applyMapData(src, isExternal){
   mapImg=new Image();
-  if(isExternal) mapImg.crossOrigin='anonymous';
 
   mapImg.onload=function(){
     mapOK=true;
@@ -1127,39 +1192,42 @@ function applyMapData(src, isExternal){
     initFog(fw,fh);
     fitMap(); draw();
     toast('✓ Mapa cargado — '+mapImg.naturalWidth+'×'+mapImg.naturalHeight+'px');
-
-    // Share via Firebase if external URL (base64 too large for Firebase)
     if(isExternal){
       update(r(''),{mapUrl:src,cellSize:CELL});
       toast('✓ Mapa compartido con todos los jugadores');
-    } else {
-      // Local only — notify DM
-      toast('✓ Mapa cargado localmente (solo tú lo ves). Para compartir usa una URL.');
     }
   };
 
   mapImg.onerror=function(){
-    if(isExternal){
-      // Try without crossOrigin as fallback
+    // Try without crossOrigin as fallback (some CDNs block CORS headers)
+    if(mapImg.crossOrigin){
       const img2=new Image();
       img2.onload=function(){
         mapImg=img2; mapOK=true;
         const fw=Math.ceil(mapImg.naturalWidth/CELL);
         const fh=Math.ceil(mapImg.naturalHeight/CELL);
         initFog(fw,fh); fitMap(); draw();
-        toast('✓ Mapa cargado (sin CORS)');
+        // Note: without crossOrigin we can't use fog on this image
+        // but it still displays
+        if(isExternal) update(r(''),{mapUrl:src,cellSize:CELL});
+        toast('✓ Mapa cargado (modo compatibilidad)');
       };
-      img2.onerror=function(){ toast('❌ No se pudo cargar. Prueba Imgur.'); mapOK=false; draw(); };
+      img2.onerror=function(){
+        toast('❌ No se pudo cargar. Verifica que la URL sea directa a la imagen (.jpg/.png/.webp)');
+        mapOK=false; draw();
+      };
       img2.src=src;
     } else {
-      toast('❌ Error cargando la imagen'); mapOK=false; draw();
+      toast('❌ Error cargando la imagen');
+      mapOK=false; draw();
     }
   };
 
+  // Set crossOrigin for fog to work
+  if(isExternal) mapImg.crossOrigin='anonymous';
   mapImg.src=src;
 }
 
-// Keep applyMapUrl as alias just in case
 window.applyMapUrl=window.applyMap;
 
 function fitMap(){
