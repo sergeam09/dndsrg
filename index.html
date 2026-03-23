@@ -2598,6 +2598,7 @@ let playerViewMode=false; // DM can preview what players see
 
 // Canvas
 let cv, cx, mapImg=new Image(), mapOK=false, mapWasFit=false;
+var enterTs=0; // timestamp when this client connected — ignore older events
 let scale=1, ox=0, oy=0;
 let CELL=70; // configurable px per cell
 let mapOffX2=0, mapOffY2=0, mapScaleAdj=1; // map adjustment panel values
@@ -2706,6 +2707,7 @@ const qp=new URLSearchParams(location.search);
 if(qp.get('room')){var rc2=qp.get('room').toUpperCase();var lc=document.getElementById('lcode');var rcc=document.getElementById('reclaim_code');if(lc)lc.value=rc2;if(rcc)rcc.value=rc2;window.switchTab('player');setTimeout(function(){var pn=document.getElementById('player_name');if(pn)pn.focus();},100);}
 
 function enter(){
+  enterTs=Date.now();
   document.getElementById('lobby').style.display='none';
   document.getElementById('header').style.display='flex';
   document.getElementById('toolbar').style.display='flex';
@@ -2864,6 +2866,7 @@ function subscribeDiceRolls(){
     var d=s.val(); if(!d||!d.ts) return;
     if(d.ts===lastTs) return;
     lastTs=d.ts;
+    if(d.ts < enterTs) return; // ignore events before we joined
     showDiceOverlay(d.who,d.die,d.result,d.crit,d.fail);
   });
 }
@@ -5313,9 +5316,11 @@ function subscribeAudio(){
   onValue(r('audio'), function(s){
     var d = s.val(); if(!d) return;
     if(isDM) return; // DM controls directly
-    if(d.amb && d.amb.url && d.amb.url !== audioState.amb.url)
+    // Audio IS intentionally replayed for new joiners (ambient/music should continue)
+    // But only if DM marked it as currently playing
+    if(d.amb && d.amb.url && d.amb.playing && d.amb.url !== audioState.amb.url)
       playAudioUrl('amb', d.amb.url, d.amb.title||'', false);
-    if(d.mus && d.mus.url && d.mus.url !== audioState.mus.url)
+    if(d.mus && d.mus.url && d.mus.playing && d.mus.url !== audioState.mus.url)
       playAudioUrl('mus', d.mus.url, d.mus.title||'', false);
     if(d.amb && d.amb.playing===false && audioState.amb.playing) pauseAudioLocal('amb');
     if(d.mus && d.mus.playing===false && audioState.mus.playing) pauseAudioLocal('mus');
@@ -5486,8 +5491,9 @@ function subscribeSfx(){
   onValue(r('sfx'), function(s){
     var d = s.val(); if(!d||!d.url) return;
     if(isDM) return; // DM already played it
-    if(d.ts === lastSfxTs) return; // ignore duplicate
+    if(d.ts === lastSfxTs) return;
     lastSfxTs = d.ts;
+    if(d.ts < enterTs) return; // ignore events before we joined
     var sfxEl = new Audio(d.url);
     sfxEl.volume = sfxVolume;
     sfxEl.play().catch(function(){});
