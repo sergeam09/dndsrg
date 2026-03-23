@@ -262,6 +262,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .dbtn{flex:1;min-width:28px;padding:3px 1px;background:var(--bg3);border:1px solid var(--border);color:var(--gold2);border-radius:3px;cursor:pointer;font-family:var(--font);font-size:0.7rem;text-align:center;transition:all .15s}
 .dbtn:hover{background:rgba(200,168,75,.15);border-color:var(--gold)}
 
+/* MOBILE: compact dice bar */
+@media(max-width:640px){
+  #dice_bar{display:none;padding:4px 6px}
+  #dice_bar.open{display:flex}
+  #dice_toggle{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;border-top:1px solid var(--border);cursor:pointer;flex-shrink:0;font-size:.72rem;color:var(--gold2);background:var(--bg3);-webkit-tap-highlight-color:transparent}
+  #dice_toggle:active{background:rgba(200,168,75,.1)}
+}
+@media(min-width:641px){
+  #dice_toggle{display:none}
+  #dice_bar{display:flex !important}
+}
+
 /* MODALS */
 .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:center;justify-content:center}
 .mbg.open{display:flex}
@@ -842,6 +854,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <!-- Dice history -->
     <div id="dice_history_log" style="display:none;flex:1;overflow-y:auto;padding:6px 8px;font-size:.75rem"></div>
 
+    <!-- Dice toggle (mobile only) -->
+    <div id="dice_toggle" onclick="toggleDiceBar()">
+      <span>🎲 Dados</span>
+      <span id="dice_toggle_arr">▾</span>
+    </div>
     <div id="dice_bar">
       <button class="dbtn" onclick="rollDie(4)">d4</button>
       <button class="dbtn" onclick="rollDie(6)">d6</button>
@@ -5793,6 +5810,13 @@ function closeSidebar(){
   if(overlay) overlay.style.display='none';
 }
 window.closeSidebar=closeSidebar;
+
+window.toggleDiceBar=function(){
+  var bar=document.getElementById('dice_bar');
+  var arr=document.getElementById('dice_toggle_arr');
+  var open=bar.classList.toggle('open');
+  if(arr) arr.textContent=open?'▴':'▾';
+};
 
 // ── LINK ───────────────────────────────────────────────────
 window.copyLink=function(){
