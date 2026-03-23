@@ -597,33 +597,33 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <div id="toolbar" style="display:none">
 
     <!-- GRUPO: Navegación -->
-    <button class="tbtn active" id="tb_select" onclick="setTool('select')" title="Mover tokens y props">
+    <button class="tbtn active" id="tb_select" onclick="setTool("select")" title="Mover tokens y props">
       ↖<div class="tlabel">Mover</div>
     </button>
-    <button class="tbtn" id="tb_measure" onclick="setTool('measure')" title="Medir distancia">
+    <button class="tbtn" id="tb_measure" onclick="setTool("measure")" title="Medir distancia">
       📏<div class="tlabel">Medir</div>
     </button>
-    <button class="tbtn" id="tb_laser" onclick="setTool('laser')" title="Apuntador láser">
+    <button class="tbtn" id="tb_laser" onclick="setTool("laser")" title="Apuntador láser">
       🔴<div class="tlabel">Láser</div>
     </button>
 
     <div class="tb-sep dm-only"></div>
 
     <!-- GRUPO: Fog (DM) -->
-    <button class="tbtn dm-only" id="tb_fog" onclick="setTool('fog')" title="Revelar niebla de guerra">
+    <button class="tbtn dm-only" id="tb_fog" onclick="setTool("fog")" title="Revelar niebla de guerra">
       🌫<div class="tlabel">Revelar</div>
     </button>
-    <button class="tbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')" title="Oscurecer zona">
+    <button class="tbtn dm-only" id="tb_fogadd" onclick="setTool("fogadd")" title="Oscurecer zona">
       🌑<div class="tlabel">Cubrir</div>
     </button>
 
     <div class="tb-sep dm-only"></div>
 
     <!-- GRUPO: Dibujo (DM) -->
-    <button class="tbtn dm-only" id="tb_draw" onclick="setTool('draw')" title="Dibujar sobre el mapa">
+    <button class="tbtn dm-only" id="tb_draw" onclick="setTool("draw")" title="Dibujar sobre el mapa">
       ✏<div class="tlabel">Dibujar</div>
     </button>
-    <button class="tbtn dm-only" id="tb_erase" onclick="setTool('erase')" title="Borrar trazos">
+    <button class="tbtn dm-only" id="tb_erase" onclick="setTool("erase")" title="Borrar trazos">
       ⬜<div class="tlabel">Borrar</div>
     </button>
     <button class="tbtn dm-only" onclick="clearDrawing()" title="Limpiar todo el dibujo">
@@ -819,12 +819,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         <div style="margin-bottom:6px">
           <div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:3px">🌲 AMBIENTE</div>
           <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px" id="amb_presets">
-            <button class="audio-preset" onclick="searchAudio('amb','tavern ambience')">🍺 Taberna</button>
-            <button class="audio-preset" onclick="searchAudio('amb','dungeon ambience')">🏰 Mazorra</button>
-            <button class="audio-preset" onclick="searchAudio('amb','forest nature')">🌲 Bosque</button>
-            <button class="audio-preset" onclick="searchAudio('amb','rain storm')">🌧 Lluvia</button>
-            <button class="audio-preset" onclick="searchAudio('amb','cave dripping')">🕳 Cueva</button>
-            <button class="audio-preset" onclick="searchAudio('amb','ocean waves')">🌊 Mar</button>
+            <button class="audio-preset" onclick="searchAudio("amb","tavern ambience")">🍺 Taberna</button>
+            <button class="audio-preset" onclick="searchAudio("amb","dungeon ambience")">🏰 Mazorra</button>
+            <button class="audio-preset" onclick="searchAudio("amb","forest nature")">🌲 Bosque</button>
+            <button class="audio-preset" onclick="searchAudio("amb","rain storm")">🌧 Lluvia</button>
+            <button class="audio-preset" onclick="searchAudio("amb","cave dripping")">🕳 Cueva</button>
+            <button class="audio-preset" onclick="searchAudio("amb","ocean waves")">🌊 Mar</button>
           </div>
           <div style="display:flex;gap:3px;align-items:center">
             <input id="amb_search" placeholder="Buscar..." style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:.72rem;font-family:var(--font)" onkeydown="if(event.key==='Enter')searchAudio('amb',this.value)">
@@ -845,11 +845,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         <div style="border-top:1px solid var(--border);padding-top:6px">
           <div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:3px">🎶 MÚSICA</div>
           <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px">
-            <button class="audio-preset" onclick="searchAudio('mus','epic battle music')">⚔ Batalla</button>
-            <button class="audio-preset" onclick="searchAudio('mus','fantasy rpg music')">🏰 Épica</button>
-            <button class="audio-preset" onclick="searchAudio('mus','mysterious ambient music')">🌙 Misterio</button>
-            <button class="audio-preset" onclick="searchAudio('mus','sad emotional music')">😢 Drama</button>
-            <button class="audio-preset" onclick="searchAudio('mus','tavern folk music')">🎻 Festiva</button>
+            <button class="audio-preset" onclick="searchAudio("mus","epic battle music")">⚔ Batalla</button>
+            <button class="audio-preset" onclick="searchAudio("mus","fantasy rpg music")">🏰 Épica</button>
+            <button class="audio-preset" onclick="searchAudio("mus","mysterious ambient music")">🌙 Misterio</button>
+            <button class="audio-preset" onclick="searchAudio("mus","sad emotional music")">😢 Drama</button>
+            <button class="audio-preset" onclick="searchAudio("mus","tavern folk music")">🎻 Festiva</button>
           </div>
           <div style="display:flex;gap:3px;align-items:center">
             <input id="mus_search" placeholder="Buscar..." style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:.72rem;font-family:var(--font)" onkeydown="if(event.key==='Enter')searchAudio('mus',this.value)">
@@ -5991,13 +5991,13 @@ var mobileTabContent = {
     return '<div style="padding:8px">'
       +'<div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:6px">🛠 HERRAMIENTAS</div>'
       +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">'
-      +'<button class="tbtn active" id="mob_tb_select" onclick="setTool('select');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">↖<div class="tlabel">Mover</div></button>'
-      +'<button class="tbtn" id="mob_tb_measure" onclick="setTool('measure');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">📏<div class="tlabel">Medir</div></button>'
-      +'<button class="tbtn" id="mob_tb_laser" onclick="setTool('laser');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🔴<div class="tlabel">Láser</div></button>'
-      +'<button class="tbtn" id="mob_tb_fog" onclick="setTool('fog');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌫<div class="tlabel">Revelar</div></button>'
-      +'<button class="tbtn" id="mob_tb_fogadd" onclick="setTool('fogadd');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌑<div class="tlabel">Cubrir</div></button>'
-      +'<button class="tbtn" id="mob_tb_draw" onclick="setTool('draw');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">✏<div class="tlabel">Dibujar</div></button>'
-      +'<button class="tbtn" id="mob_tb_erase" onclick="setTool('erase');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">⬜<div class="tlabel">Borrar</div></button>'
+      +'<button class="tbtn active" id="mob_tb_select" onclick="setTool("select");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">↖<div class="tlabel">Mover</div></button>'
+      +'<button class="tbtn" id="mob_tb_measure" onclick="setTool("measure");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">📏<div class="tlabel">Medir</div></button>'
+      +'<button class="tbtn" id="mob_tb_laser" onclick="setTool("laser");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🔴<div class="tlabel">Láser</div></button>'
+      +'<button class="tbtn" id="mob_tb_fog" onclick="setTool("fog");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌫<div class="tlabel">Revelar</div></button>'
+      +'<button class="tbtn" id="mob_tb_fogadd" onclick="setTool("fogadd");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌑<div class="tlabel">Cubrir</div></button>'
+      +'<button class="tbtn" id="mob_tb_draw" onclick="setTool("draw");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">✏<div class="tlabel">Dibujar</div></button>'
+      +'<button class="tbtn" id="mob_tb_erase" onclick="setTool("erase");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">⬜<div class="tlabel">Borrar</div></button>'
       +'<button class="tbtn" onclick="clearDrawing();closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🗑<div class="tlabel">Limpiar</div></button>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
