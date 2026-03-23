@@ -173,6 +173,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .tok-img-swatch{width:100%;height:60px;border:2px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:.78rem;background:var(--bg3);overflow:hidden;margin-bottom:8px}
 .tok-img-swatch img{width:100%;height:100%;object-fit:cover;border-radius:4px}
 
+/* Dice drum roller */
+@keyframes drum-crit{0%,100%{transform:scale(1)}25%{transform:scale(1.15)}50%{transform:scale(0.95)}75%{transform:scale(1.1)}}
+@keyframes drum-fail{0%{opacity:1}50%{opacity:.4}100%{opacity:1}}
+@keyframes overlay-in{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes overlay-out{from{opacity:1;transform:translate(-50%,-50%) scale(1)}to{opacity:0;transform:translate(-50%,-50%) scale(.85)}}
+#dice_overlay.show{animation:overlay-in .2s ease-out forwards}
+#dice_overlay.hide{animation:overlay-out .25s ease-in forwards}
+.drum-num{height:64px;line-height:64px;font-size:2.2rem;font-weight:900;font-family:var(--font);color:var(--text)}
+.drum-num.crit{color:#f0ad4e;text-shadow:0 0 20px rgba(240,173,78,.6)}
+.drum-num.fail{color:var(--red);text-shadow:0 0 20px rgba(192,57,43,.5)}
+
+.sfx-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 2px;cursor:pointer;font-size:.62rem;transition:all .1s;font-family:var(--font);text-align:center}
+.sfx-btn:hover{border-color:var(--gold);color:var(--gold);transform:scale(1.05)}
+.sfx-btn:active{background:rgba(200,168,75,.2);transform:scale(0.97)}
+
 /* Audio */
 .audio-preset{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:2px 5px;cursor:pointer;font-size:.65rem;transition:all .1s;font-family:var(--font)}
 .audio-preset:hover{border-color:var(--gold);color:var(--gold)}
@@ -551,6 +566,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div id="player_view_banner">👤 VISTA JUGADOR</div>
     <div id="tool_ind">HERRAMIENTA: MOVER</div>
     <div id="mtip"></div>
+
+    <!-- Dice Roll Overlay -->
+    <div id="dice_overlay" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:40;pointer-events:none">
+      <div id="dice_overlay_inner" style="background:rgba(13,15,20,.92);border:1px solid var(--gold);border-radius:12px;padding:16px 24px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.8);min-width:140px">
+        <div id="dice_roller_who" style="font-size:.7rem;color:var(--text3);letter-spacing:1px;margin-bottom:6px"></div>
+        <div id="dice_roller_die" style="font-size:.75rem;color:var(--gold2);margin-bottom:8px"></div>
+        <div id="dice_roller_drum" style="height:64px;overflow:hidden;position:relative;border-radius:6px;background:var(--bg3);border:1px solid var(--border)">
+          <div id="dice_roller_strip" style="position:absolute;width:100%;transition:none;text-align:center"></div>
+        </div>
+        <div id="dice_roller_label" style="font-size:.68rem;color:var(--text3);margin-top:6px;min-height:16px"></div>
+      </div>
+    </div>
     <div id="brush_ctrl">
       <label>Tamaño pincel</label>
       <input type="range" id="brush_range" min="1" max="8" value="3" oninput="fogBrush=parseInt(this.value);document.getElementById('brush_val').textContent=this.value" style="width:80px">
@@ -729,6 +756,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
               <input type="range" id="mus_vol" min="0" max="100" value="30" oninput="setVolume('mus',this.value)" style="flex:1;accent-color:var(--gold)">
               <button onclick="stopAudio('mus')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem">⏹</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Effects layer -->
+        <div style="border-top:1px solid var(--border);padding-top:6px">
+          <div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:5px">⚡ EFECTOS</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px">
+            <button class="sfx-btn" onclick="playSfx('sword clash')">⚔ Espada</button>
+            <button class="sfx-btn" onclick="playSfx('magic spell whoosh')">✨ Magia</button>
+            <button class="sfx-btn" onclick="playSfx('thunder lightning')">⚡ Trueno</button>
+            <button class="sfx-btn" onclick="playSfx('wooden door creak open')">🚪 Puerta</button>
+            <button class="sfx-btn" onclick="playSfx('arrow whoosh hit')">🏹 Flecha</button>
+            <button class="sfx-btn" onclick="playSfx('fire burning crackling')">🔥 Fuego</button>
+            <button class="sfx-btn" onclick="playSfx('monster growl roar')">👹 Rugido</button>
+            <button class="sfx-btn" onclick="playSfx('explosion boom')">💥 Explosión</button>
+            <button class="sfx-btn" onclick="playSfx('coin gold drop')">💰 Monedas</button>
+            <button class="sfx-btn" onclick="playSfx('bell chime')">🔔 Campana</button>
+            <button class="sfx-btn" onclick="playSfx('horse gallop')">🐴 Caballo</button>
+            <button class="sfx-btn" onclick="playSfx('wolf howl')">🐺 Lobo</button>
+          </div>
+          <div style="display:flex;gap:3px;margin-top:5px;align-items:center">
+            <input id="sfx_search" placeholder="Buscar efecto..." style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:.72rem;font-family:var(--font)" onkeydown="if(event.key==='Enter')playSfx(this.value)">
+            <button class="hbtn" style="font-size:.65rem;padding:3px 6px" onclick="playSfx(document.getElementById('sfx_search').value)">▶</button>
+          </div>
+          <div id="sfx_results" style="max-height:70px;overflow-y:auto;margin-top:3px"></div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+            <span style="font-size:.65rem;color:var(--text3)">Vol</span>
+            <input type="range" id="sfx_vol" min="0" max="100" value="70" oninput="sfxVolume=parseInt(this.value)/100" style="flex:1;accent-color:var(--gold)">
           </div>
         </div>
 
@@ -2726,6 +2781,10 @@ function subscribe(){
 
   // Audio (all clients hear what DM plays)
   subscribeAudio();
+  subscribeSfx();
+
+  // Dice roll overlay (all clients see rolls)
+  subscribeDiceRolls();
 
   // Props (free images)
   subscribePropList();
@@ -3803,9 +3862,13 @@ window.openEdit=function(id){
   document.getElementById('eac').value=t.ac;
   document.getElementById('einit').value=t.init||'';
   document.getElementById('eico').value=t.icon||'';
+  // Token image
+  const imgInput=document.getElementById('eimg');
+  if(imgInput) imgInput.value=t.imgUrl||'';
+  window.previewTokImg(t.imgUrl||'');
   // Aura
   document.getElementById('eaura').value=t.aura||0;
-  var auraCol=(t.auraColor||'#ff0000').slice(0,7); // strip alpha if present
+  var auraCol=(t.auraColor||'#ff0000').slice(0,7);
   document.getElementById('eaura_color').value=auraCol;
   document.getElementById('eaura_opacity').value=t.auraOpacity!==undefined?Math.round(t.auraOpacity*100):20;
   // Conditions
@@ -3822,12 +3885,17 @@ window.saveEdit=function(){
   const ac=parseInt(document.getElementById('eac').value)||10;
   const init=parseInt(document.getElementById('einit').value)||0;
   const icon=document.getElementById('eico').value.trim();
+  const imgUrl=(document.getElementById('eimg')?.value||'').trim();
   const aura=parseInt(document.getElementById('eaura').value)||0;
   const auraColor=(document.getElementById('eaura_color').value||'#ff0000').slice(0,7);
   const auraOpacity=parseInt(document.getElementById('eaura_opacity').value)/100;
-  // Get conditions from current token state (toggled in place)
   const conditions=tokens[id]?.conditions||[];
-  update(r('tokens/'+id),{name,hp,hpMax,ac,init,icon,aura,auraColor,auraOpacity,conditions});
+  // If image changed, preload it
+  if(imgUrl && imgUrl!==tokens[id]?.imgUrl){
+    delete tokImgCache[id];
+    loadTokImg(id, imgUrl);
+  }
+  update(r('tokens/'+id),{name,hp,hpMax,ac,init,icon,imgUrl,aura,auraColor,auraOpacity,conditions});
   closeModal('edit_modal');
 };
 
@@ -3944,6 +4012,7 @@ window.rollDie=function(s){
   const crit=s===20&&roll===20, fail=s===20&&roll===1;
   const entry={who:myName,die:'d'+s,result:roll,ts:Date.now(),crit,fail};
   addToDiceHistory(entry);
+  update(r('diceRoll'),{who:myName,die:'d'+s,result:roll,crit,fail,ts:Date.now()});
   pushMsg({who:myName,text:(crit?'💥 ¡CRÍTICO! ':fail?'💀 Pifia — ':'')+' d'+s,result:roll,type:crit?'crit':fail?'fail':'dice',detail:'d'+s+'('+roll+')'});
 };
 
@@ -3965,6 +4034,7 @@ function rollFx(f){
   const crit=n===1&&s===20&&rolls[0]===20, fail=n===1&&s===20&&rolls[0]===1;
   const entry={who:myName,die:f,result:total,ts:Date.now(),crit,fail};
   addToDiceHistory(entry);
+  update(r('diceRoll'),{who:myName,die:f,result:total,crit,fail,ts:Date.now()});
   pushMsg({who:myName,text:f,result:total,type:crit?'crit':fail?'fail':'dice',detail:'['+rolls.join(',')+']'+(mod?(mod>0?'+':'')+mod:'')});
 }
 
@@ -4915,6 +4985,13 @@ document.addEventListener('click',function(e){
 // ── TOKEN IMAGE ─────────────────────────────────────────────
 var tokImgCache={}; // id -> Image
 
+window.previewTokImg=function(url){
+  const preview=document.getElementById('eimg_preview');
+  if(!preview) return;
+  if(!url){ preview.innerHTML='<span>Sin imagen — pega URL</span>'; return; }
+  preview.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span style=color:var(--red)>❌ URL inválida</span>'">';
+};
+
 window.openTokenImage=function(id){
   const tok=tokens[id]; if(!tok)return;
   document.getElementById('tokimg_id').value=id;
@@ -5056,35 +5133,7 @@ function showTurnBanner(name,hp,hpMax){
   },2500);
 }
 
-// ── TOKEN IMAGE ────────────────────────────────────────────
-var tokImgCache={}; // id -> HTMLImageElement
-
-window.previewTokImg=function(url){
-  const preview=document.getElementById('eimg_preview');
-  if(!preview) return;
-  if(!url){
-    preview.innerHTML='<span>Sin imagen — pega URL</span>';
-    return;
-  }
-  preview.innerHTML='<img src="'+url+'" onerror="this.parentElement.innerHTML=\'<span>❌ URL inválida</span>\'">';
-};
-
-function loadTokImage(id, url){
-  if(!url||tokImgCache[id+'_'+url]) return;
-  var img=new Image();
-  img.crossOrigin='anonymous';
-  img.onload=function(){ tokImgCache[id+'_'+url]=img; draw(); };
-  img.onerror=function(){
-    var img2=new Image();
-    img2.onload=function(){ tokImgCache[id+'_'+url]=img2; draw(); };
-    img2.src=url;
-  };
-  img.src=url;
-}
-
 // ── CONNECT PING TO DOUBLE-CLICK ON EMPTY SPACE ─────────────
-// (triple-click or Ctrl+click = ping)
-
 
 // ── AUDIO SYSTEM ───────────────────────────────────────────
 const FREESOUND_KEY = 'XBDThQ5eS1uK8gELrpV09EVszEpDGewCD7s25Ddq';
@@ -5210,6 +5259,85 @@ window.stopAudio = function(layer){
 window.setVolume = function(layer, val){
   audioEls[layer].volume=parseInt(val)/100;
 };
+
+// ── SOUND EFFECTS ──────────────────────────────────────────
+var sfxVolume = 0.7;
+var sfxCache = {}; // query -> preview url (cache to avoid repeated API calls)
+
+window.playSfx = async function(query){
+  if(!query||!query.trim()) return;
+  query = query.trim();
+
+  // Use cached URL if available
+  if(sfxCache[query]){
+    fireSfx(sfxCache[query], query);
+    return;
+  }
+
+  // Search Freesound for short sound effect
+  try {
+    var url = 'https://freesound.org/apiv2/search/text/'
+      +'?query='+encodeURIComponent(query)
+      +'&fields=id,name,previews,duration'
+      +'&filter=duration:[0.5+TO+8]'  // short sounds only
+      +'&sort=rating_desc'
+      +'&page_size=4&token='+FREESOUND_KEY;
+    var res = await fetch(url);
+    var data = await res.json();
+
+    if(!data.results||!data.results.length){
+      // Show search results for manual pick
+      toast('Sin resultados para "'+query+'"');
+      return;
+    }
+
+    // Auto-play best result, show alternatives
+    var best = data.results[0];
+    var previewUrl = best.previews['preview-hq-mp3']||best.previews['preview-lq-mp3'];
+    sfxCache[query] = previewUrl;
+    fireSfx(previewUrl, best.name);
+
+    // Show alternatives in results div
+    var resultsEl = document.getElementById('sfx_results');
+    if(resultsEl && data.results.length>1){
+      resultsEl.innerHTML = data.results.slice(1).map(function(s){
+        var pu = s.previews['preview-hq-mp3']||s.previews['preview-lq-mp3'];
+        return '<div class="audio-result" onclick="fireSfx(\''+pu+'\',\''+s.name.replace(/'/g,"&#39;")+'\')">'
+          +'<span style="font-size:.7rem">▶</span>'
+          +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem">'+s.name+'</span>'
+          +'</div>';
+      }).join('');
+      setTimeout(function(){ if(resultsEl) resultsEl.innerHTML=''; }, 5000);
+    }
+  } catch(err){
+    toast('Error buscando efecto: '+err.message);
+  }
+};
+
+function fireSfx(url, name){
+  // Play locally
+  var sfxEl = new Audio(url);
+  sfxEl.volume = sfxVolume;
+  sfxEl.play().catch(function(){});
+  // Sync to all clients via Firebase
+  update(r('sfx'), {url:url, name:name, ts:Date.now()});
+  // Visual feedback
+  toast('⚡ '+name.substring(0,30));
+}
+
+// Subscribe to SFX (all clients play when DM fires)
+function subscribeSfx(){
+  var lastSfxTs = 0;
+  onValue(r('sfx'), function(s){
+    var d = s.val(); if(!d||!d.url) return;
+    if(isDM) return; // DM already played it
+    if(d.ts === lastSfxTs) return; // ignore duplicate
+    lastSfxTs = d.ts;
+    var sfxEl = new Audio(d.url);
+    sfxEl.volume = sfxVolume;
+    sfxEl.play().catch(function(){});
+  });
+}
 
 // ── DROPDOWN MENU ──────────────────────────────────────────
 let menuOpen=false;
