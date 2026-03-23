@@ -1075,78 +1075,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 </div>
 
 <!-- AUDIO PANEL (DM only, floating) -->
-<div id="audio_panel" style="display:none;position:fixed;bottom:50px;left:60px;width:300px;background:rgba(13,15,20,.97);border:1px solid var(--border);border-radius:10px;z-index:200;box-shadow:0 4px 24px rgba(0,0,0,.7);overflow:hidden">
-
-  <!-- Header -->
-  <div style="display:flex;align-items:center;padding:10px 12px;background:var(--bg3);border-bottom:1px solid var(--border)">
-    <span style="font-size:.7rem;color:var(--gold2);letter-spacing:2px;flex:1">🎵 AUDIO</span>
-    <button onclick="closeAudioPanel()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.9rem">✕</button>
-  </div>
-
-  <!-- Now playing -->
-  <div id="audio_nowplaying" style="padding:8px 12px;border-bottom:1px solid var(--border);display:none">
-    <div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:3px">▶ REPRODUCIENDO</div>
-    <div id="audio_track_name" style="font-size:.78rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-      <button onclick="audioToggle()" id="audio_play_btn" style="background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:3px 10px;cursor:pointer;font-size:.8rem">⏸</button>
-      <button onclick="audioStop()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.8rem">⏹</button>
-      <input type="range" id="audio_vol" min="0" max="100" value="60"
-        oninput="setAudioVol(this.value)"
-        style="flex:1;accent-color:var(--gold)">
-      <span id="audio_vol_val" style="font-size:.68rem;color:var(--text3);min-width:28px">60%</span>
-    </div>
-    <!-- Loop toggle -->
-    <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:.72rem;color:var(--text3);cursor:pointer">
-      <input type="checkbox" id="audio_loop" onchange="setAudioLoop(this.checked)" style="accent-color:var(--gold)">
-      Repetir en bucle
-    </label>
-  </div>
-
-  <!-- Tabs -->
-  <div style="display:flex;border-bottom:1px solid var(--border)">
-    <div class="audio-tab active" id="atab_url" onclick="switchAudioTab('url')" style="flex:1;padding:7px;text-align:center;font-size:.72rem;cursor:pointer;color:var(--gold2);border-bottom:2px solid var(--gold)">🔗 URL directa</div>
-    <div class="audio-tab" id="atab_search" onclick="switchAudioTab('search')" style="flex:1;padding:7px;text-align:center;font-size:.72rem;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">🔍 Freesound</div>
-    <div class="audio-tab" id="atab_presets" onclick="switchAudioTab('presets')" style="flex:1;padding:7px;text-align:center;font-size:.72rem;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent">⭐ Favoritos</div>
-  </div>
-
-  <!-- Tab: URL directa -->
-  <div id="audio_tab_url" style="padding:10px 12px">
-    <label style="font-size:.7rem;color:var(--text3);display:block;margin-bottom:4px">URL de audio (mp3, ogg, wav)</label>
-    <input id="audio_url_input" placeholder="https://... .mp3"
-      style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:6px 8px;font-size:.8rem;margin-bottom:6px">
-    <input id="audio_url_name" placeholder="Nombre (ej: Música de taberna)"
-      style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:6px 8px;font-size:.8rem;margin-bottom:8px">
-    <div style="display:flex;gap:6px">
-      <button onclick="playFromUrl()" style="flex:1;background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:7px;cursor:pointer;font-size:.78rem">▶ Reproducir para todos</button>
-      <button onclick="saveAudioPreset()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:7px 8px;cursor:pointer;font-size:.78rem" title="Guardar como favorito">⭐</button>
-    </div>
-    <p style="font-size:.65rem;color:var(--text3);margin-top:6px;line-height:1.4">
-      Usa archivos de GitHub raw, Archive.org, o cualquier URL directa a un mp3/ogg.
-    </p>
-  </div>
-
-  <!-- Tab: Freesound search -->
-  <div id="audio_tab_search" style="display:none;padding:10px 12px">
-    <div style="display:flex;gap:6px;margin-bottom:8px">
-      <input id="fs_query" placeholder="taberna, lluvia, combate..."
-        style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:6px 8px;font-size:.8rem"
-        onkeydown="if(event.key==='Enter') searchFreesound()">
-      <button onclick="searchFreesound()" style="background:rgba(200,168,75,.15);border:1px solid var(--gold);color:var(--gold);border-radius:4px;padding:6px 10px;cursor:pointer;font-size:.8rem">🔍</button>
-    </div>
-    <div id="fs_results" style="max-height:200px;overflow-y:auto">
-      <p style="color:var(--text3);font-size:.75rem;font-style:italic">Busca efectos de sonido gratuitos...</p>
-    </div>
-    <div id="fs_status" style="font-size:.68rem;color:var(--text3);margin-top:4px"></div>
-  </div>
-
-  <!-- Tab: Presets/Favoritos -->
-  <div id="audio_tab_presets" style="display:none;padding:10px 12px">
-    <div id="audio_presets_list">
-      <p style="color:var(--text3);font-size:.75rem;font-style:italic">Sin favoritos aún. Guarda tracks desde URL.</p>
-    </div>
-  </div>
-
-</div>
 
 <!-- Audio button in toolbar (injected by JS) -->
 
@@ -5176,7 +5104,112 @@ var audioState = {
   mus: {playing:false, url:'', title:''}
 };
 
-// Subscribe to Firebase audio state
+// Subscribe to Firebase audio state (all clients)
+function subscribeAudio(){
+  onValue(r('audio'), function(s){
+    var d = s.val(); if(!d) return;
+    if(isDM) return; // DM controls directly
+    if(d.amb && d.amb.url && d.amb.url !== audioState.amb.url)
+      playAudioUrl('amb', d.amb.url, d.amb.title||'', false);
+    if(d.mus && d.mus.url && d.mus.url !== audioState.mus.url)
+      playAudioUrl('mus', d.mus.url, d.mus.title||'', false);
+    if(d.amb && d.amb.playing===false && audioState.amb.playing) pauseAudioLocal('amb');
+    if(d.mus && d.mus.playing===false && audioState.mus.playing) pauseAudioLocal('mus');
+  });
+}
+
+// Search Freesound API
+window.searchAudio = async function(layer, query){
+  if(!query||!query.trim()) return;
+  var resultsEl = document.getElementById(layer+'_results');
+  if(!resultsEl) return;
+  resultsEl.innerHTML = '<div style="font-size:.68rem;color:var(--text3);padding:4px">Buscando...</div>';
+  try {
+    var url = 'https://freesound.org/apiv2/search/text/'
+      +'?query='+encodeURIComponent(query)
+      +'&fields=id,name,duration,previews'
+      +'&filter=duration:[10+TO+600]'
+      +'&page_size=6&token='+FREESOUND_KEY;
+    var res = await fetch(url);
+    var data = await res.json();
+    if(!data.results||!data.results.length){
+      resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--text3);padding:4px">Sin resultados</div>';
+      return;
+    }
+    resultsEl.innerHTML = data.results.map(function(s){
+      var dur=Math.round(s.duration);
+      var durStr=Math.floor(dur/60)+':'+(dur%60<10?'0':'')+dur%60;
+      var previewUrl=s.previews['preview-hq-mp3']||s.previews['preview-lq-mp3'];
+      var safeName=s.name.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+      return '<div class="audio-result" onclick="selectAudio(\''+layer+'\',\''+previewUrl+'\',\''+safeName+'\')">'
+        +'<span>▶</span>'
+        +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>'
+        +'<span class="ar-dur">'+durStr+'</span>'
+        +'</div>';
+    }).join('');
+  } catch(err){
+    resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--red);padding:4px">Error: '+err.message+'</div>';
+  }
+};
+
+window.selectAudio = function(layer, url, title){
+  playAudioUrl(layer, url, title, true);
+  var d={}; d[layer]={url:url,title:title,playing:true,ts:Date.now()};
+  update(r('audio'), d);
+  var resultsEl=document.getElementById(layer+'_results');
+  if(resultsEl) resultsEl.innerHTML='';
+};
+
+function playAudioUrl(layer, url, title, isLocal){
+  var el=audioEls[layer];
+  el.src=url; el.load();
+  el.play().catch(function(){ updateAudioUI(layer,title,false); });
+  audioState[layer]={playing:true,url:url,title:title};
+  updateAudioUI(layer,title,true);
+}
+
+function pauseAudioLocal(layer){
+  audioEls[layer].pause();
+  audioState[layer].playing=false;
+  var btn=document.getElementById(layer+'_playbtn');
+  if(btn) btn.textContent='▶';
+}
+
+function updateAudioUI(layer, title, playing){
+  var nowEl=document.getElementById(layer+'_now');
+  var titleEl=document.getElementById(layer+'_title');
+  var btn=document.getElementById(layer+'_playbtn');
+  if(nowEl) nowEl.style.display='block';
+  if(titleEl) titleEl.textContent=title;
+  if(btn) btn.textContent=playing?'⏸':'▶';
+}
+
+window.toggleAudio = function(layer){
+  var el=audioEls[layer];
+  var btn=document.getElementById(layer+'_playbtn');
+  if(el.paused){
+    el.play(); audioState[layer].playing=true;
+    if(btn) btn.textContent='⏸';
+    if(isDM){ var d={}; d[layer]={playing:true}; update(r('audio'),d); }
+  } else {
+    el.pause(); audioState[layer].playing=false;
+    if(btn) btn.textContent='▶';
+    if(isDM){ var d={}; d[layer]={playing:false}; update(r('audio'),d); }
+  }
+};
+
+window.stopAudio = function(layer){
+  var el=audioEls[layer];
+  el.pause(); el.src='';
+  audioState[layer]={playing:false,url:'',title:''};
+  var nowEl=document.getElementById(layer+'_now');
+  if(nowEl) nowEl.style.display='none';
+  if(isDM){ var d={}; d[layer]={url:'',playing:false}; update(r('audio'),d); }
+};
+
+window.setVolume = function(layer, val){
+  audioEls[layer].volume=parseInt(val)/100;
+};
 
 // ── DROPDOWN MENU ──────────────────────────────────────────
 let menuOpen=false;
