@@ -3265,8 +3265,14 @@ function drawTok(id,t){
   if(t===null||t.x===undefined)return;
 
   // Players can't see tokens inside fog
+  // EXCEPT: a player always sees their own token
   const opaque=playerViewMode||!isDM;
-  if(opaque&&fog.length&&fogW){
+  const isMyToken=!isDM&&(
+    t.playerOwner===myName ||
+    t.addedBy===myName ||
+    (myCharId && id===myCharId)
+  );
+  if(opaque&&!isMyToken&&fog.length&&fogW){
     const row=Math.floor(t.y), col=Math.floor(t.x);
     if(fog[row]&&fog[row][col]===false) return;
   }
@@ -5507,41 +5513,57 @@ var myCharColor = '#3498db';
 // Show button for players, prompt on enter
 function initPlayerChar(){
   if(isDM) return;
-  // Show Mi PJ button
-  var btn = document.getElementById('btn_mychar');
+  var btn=document.getElementById('btn_mychar');
   if(btn) btn.style.display='flex';
-  // Check if player already has a token
-  var saved = null;
+
+  var saved=null;
   try{ saved=JSON.parse(localStorage.getItem('vtt_mychar_'+room)||'null'); }catch(e){}
+
   if(saved && saved.id){
-    myCharId = saved.id;
-    // Verify it still exists in Firebase
+    myCharId=saved.id;
+    // Token exists — wait for onChildAdded to populate tokens, then draw
+    // Also do a direct get to ensure it's in local cache ASAP
     get(ref(db,'rooms/'+room+'/tokens/'+saved.id)).then(function(s){
-      if(!s.exists()){
+      if(s.exists()){
+        tokens[myCharId]=s.val();
+        draw(); // redraw so token is visible immediately
+      } else {
+        // Token was deleted
         myCharId=null;
         localStorage.removeItem('vtt_mychar_'+room);
-        setTimeout(openMyChar, 800); // token gone, re-create
+        setTimeout(openMyChar, 800);
       }
+    }).catch(function(){
+      // Network issue — myCharId is set, onChildAdded will handle it
     });
   } else {
-    // First time — show modal after a short delay
-    setTimeout(openMyChar, 1000);
+    setTimeout(openMyChar, 1200);
   }
 }
 
 window.openMyChar = function(){
   // If player already has token, pre-fill from it
-  if(myCharId && tokens[myCharId]){
-    var t = tokens[myCharId];
+  var prefill = function(t){
+    if(!t) return;
     document.getElementById('mc_charname').value = t.name||'';
     document.getElementById('mc_classrace').value = t.classrace||'';
     document.getElementById('mc_hp').value = t.hpMax||10;
     document.getElementById('mc_icon').value = t.icon||'';
     myCharColor = t.color||'#3498db';
-    // Update color picker
     document.querySelectorAll('#mc_cpicker .cswatch').forEach(function(s){
       s.classList.toggle('sel', s.dataset.c===myCharColor);
     });
+  };
+
+  if(myCharId){
+    if(tokens[myCharId]){
+      prefill(tokens[myCharId]);
+    } else {
+      // Fetch directly from Firebase
+      get(ref(db,'rooms/'+room+'/tokens/'+myCharId)).then(function(s){
+        if(s.exists()) prefill(s.val());
+      });
+    }
   }
   document.getElementById('mychar_modal').classList.add('open');
   setTimeout(function(){ document.getElementById('mc_charname').focus(); },100);
@@ -5561,41 +5583,63 @@ window.saveMyChar = function(){
 
   if(!charname){ toast('Escribe el nombre de tu personaje'); return; }
 
-  var tokenData = {
-    name: charname,
-    classrace: classrace,
-    hp: hpMax,
-    hpMax: hpMax,
-    ac: 10,
-    init: 0,
-    icon: icon,
-    color: myCharColor,
-    type: 'player',
-    addedBy: myName,
-    playerOwner: myName, // for move permissions
-    dead: false,
-    x: Math.floor((fogW||20)/2),
-    y: Math.floor((fogH||15)/2)
-  };
-
   if(myCharId && tokens[myCharId]){
-    // Update existing token
-    update(ref(db,'rooms/'+room+'/tokens/'+myCharId), tokenData);
+    // Update existing — preserve current HP and position
+    var existing = tokens[myCharId];
+    var updateData = {
+      name: charname,
+      classrace: classrace,
+      hpMax: hpMax,
+      hp: Math.min(existing.hp||hpMax, hpMax), // don't exceed new max
+      icon: icon,
+      color: myCharColor,
+      addedBy: myName,
+      playerOwner: myName
+    };
+    update(ref(db,'rooms/'+room+'/tokens/'+myCharId), updateData);
     toast('✓ Personaje actualizado');
+  } else if(myCharId){
+    // myCharId exists but not in local cache yet — fetch and update
+    get(ref(db,'rooms/'+room+'/tokens/'+myCharId)).then(function(s){
+      if(s.exists()){
+        var existing=s.val();
+        update(ref(db,'rooms/'+room+'/tokens/'+myCharId),{
+          name:charname, classrace:classrace, hpMax:hpMax,
+          hp:Math.min(existing.hp||hpMax,hpMax),
+          icon:icon, color:myCharColor,
+          addedBy:myName, playerOwner:myName
+        });
+        toast('✓ Personaje actualizado');
+      } else {
+        // Token truly gone — create new
+        createNewPlayerToken(charname,classrace,hpMax,icon);
+      }
+    });
   } else {
-    // Create new token
-    var newRef = push(ref(db,'rooms/'+room+'/tokens'));
-    myCharId = newRef.key;
-    set(newRef, tokenData);
-    // Save to localStorage so player can reclaim on refresh
-    try{ localStorage.setItem('vtt_mychar_'+room, JSON.stringify({id:myCharId})); }catch(e){}
-    var classStr = classrace ? ' ('+classrace+')' : '';
-    sysMsg('🧙 '+charname+classStr+' entró a la partida');
-    toast('✓ '+charname+' añadido al mapa');
+    createNewPlayerToken(charname,classrace,hpMax,icon);
   }
 
   closeModal('mychar_modal');
 };
+
+function createNewPlayerToken(charname,classrace,hpMax,icon){
+  var tokenData = {
+    name: charname, classrace: classrace,
+    hp: hpMax, hpMax: hpMax, ac: 10, init: 0,
+    icon: icon, color: myCharColor,
+    type: 'player', addedBy: myName, playerOwner: myName,
+    dead: false,
+    x: Math.floor((fogW||20)/2),
+    y: Math.floor((fogH||15)/2)
+  };
+  var newRef = push(ref(db,'rooms/'+room+'/tokens'));
+  myCharId = newRef.key;
+  set(newRef, tokenData);
+  try{ localStorage.setItem('vtt_mychar_'+room, JSON.stringify({id:myCharId})); }catch(e){}
+  var classStr = classrace ? ' ('+classrace+')' : '';
+  sysMsg('🧙 '+charname+classStr+' entró a la partida');
+  toast('✓ '+charname+' añadido al mapa');
+}
 
 // Show in applyRole
 function showPlayerCharBtn(){
