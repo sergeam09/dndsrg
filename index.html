@@ -35,7 +35,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 #toolbar{
   width:52px;background:var(--bg2);border-right:1px solid var(--border);
   display:flex;flex-direction:column;align-items:center;
-  padding:6px 0;gap:2px;overflow-y:auto;overflow-x:hidden;
+  padding:6px 0;gap:2px;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
   flex-shrink:0;z-index:100;
 }
 #toolbar::-webkit-scrollbar{display:none}
@@ -113,9 +115,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 #menu_btn { display:inline-block }
 
 /* ── Toolbar mobile ── */
-@media(max-width:480px){
-  #toolbar{width:44px}
-  .tbtn{width:36px;height:36px;font-size:.95rem}
+@media(max-width:640px){
+  #toolbar{width:44px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #toolbar::-webkit-scrollbar{display:none}
+  .tbtn{width:36px;height:36px;font-size:.9rem;min-height:36px}
+  .tbtn .tlabel{font-size:.45rem}
+  .tb-sep{margin:1px 0}
 }
 
 /* Ping animation */
@@ -735,7 +740,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
             <div style="font-size:.65rem;color:var(--text3);margin-bottom:2px">▶ <span id="amb_title" style="color:var(--text2)"></span></div>
             <div style="display:flex;gap:4px;align-items:center">
               <button onclick="toggleAudio('amb')" id="amb_playbtn" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:.9rem">⏸</button>
-              <input type="range" id="amb_vol" min="0" max="100" value="40" oninput="setVolume('amb',this.value)" style="flex:1;accent-color:var(--gold)">
+              <input type="range" id="amb_vol" min="0" max="100" value="40" oninput="setVolume('amb',this.value)" onchange="setVolume('amb',this.value)" style="flex:1;accent-color:var(--gold)">
               <button onclick="stopAudio('amb')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem">⏹</button>
             </div>
           </div>
@@ -760,7 +765,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
             <div style="font-size:.65rem;color:var(--text3);margin-bottom:2px">▶ <span id="mus_title" style="color:var(--text2)"></span></div>
             <div style="display:flex;gap:4px;align-items:center">
               <button onclick="toggleAudio('mus')" id="mus_playbtn" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:.9rem">⏸</button>
-              <input type="range" id="mus_vol" min="0" max="100" value="30" oninput="setVolume('mus',this.value)" style="flex:1;accent-color:var(--gold)">
+              <input type="range" id="mus_vol" min="0" max="100" value="30" oninput="setVolume('mus',this.value)" onchange="setVolume('mus',this.value)" style="flex:1;accent-color:var(--gold)">
               <button onclick="stopAudio('mus')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem">⏹</button>
             </div>
           </div>
@@ -790,7 +795,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
           <div id="sfx_results" style="max-height:70px;overflow-y:auto;margin-top:3px"></div>
           <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
             <span style="font-size:.65rem;color:var(--text3)">Vol</span>
-            <input type="range" id="sfx_vol" min="0" max="100" value="70" oninput="sfxVolume=parseInt(this.value)/100" style="flex:1;accent-color:var(--gold)">
+            <input type="range" id="sfx_vol" min="0" max="100" value="70" oninput="setSfxVolume(this.value)" onchange="setSfxVolume(this.value)" style="flex:1;accent-color:var(--gold)">
           </div>
         </div>
 
@@ -5426,7 +5431,12 @@ window.stopAudio = function(layer){
 };
 
 window.setVolume = function(layer, val){
-  audioEls[layer].volume=parseInt(val)/100;
+  var v = parseInt(val)/100;
+  if(audioEls[layer]) audioEls[layer].volume = v;
+};
+
+window.setSfxVolume = function(val){
+  sfxVolume = parseInt(val)/100;
 };
 
 // ── SOUND EFFECTS ──────────────────────────────────────────
