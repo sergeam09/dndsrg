@@ -384,6 +384,65 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ═══════════════════════════════════════════════
+   BOTTOM TABS (portrait / mobile ≤640px)
+   ═══════════════════════════════════════════════ */
+@media(max-width:640px) and (orientation:portrait),
+(max-width:480px){
+
+  /* Hide classic sidebar */
+  #sidebar{display:none !important}
+  #sb_toggle{display:none !important}
+  #sb_overlay{display:none !important}
+
+  /* Main fills all height minus top bar and bottom tabs */
+  #main{flex-direction:column}
+
+  /* Bottom tab bar */
+  #bottom_tabs{
+    display:flex !important;
+    flex-shrink:0;
+    background:var(--bg2);
+    border-top:1px solid var(--border);
+    z-index:60;
+  }
+  .btab{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:6px 2px;cursor:pointer;
+    font-size:.65rem;color:var(--text3);gap:2px;
+    border-top:2px solid transparent;
+    -webkit-tap-highlight-color:transparent;
+    transition:color .15s;
+  }
+  .btab .btab-icon{font-size:1.1rem;line-height:1}
+  .btab.active{color:var(--gold2);border-top-color:var(--gold)}
+
+  /* Panel that slides up from bottom tabs */
+  #mobile_panel{
+    display:none;
+    position:absolute;bottom:48px;left:0;right:0;
+    background:var(--bg2);border-top:1px solid var(--border);
+    z-index:55;max-height:55vh;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    box-shadow:0 -4px 20px rgba(0,0,0,.5);
+  }
+  #mobile_panel.open{display:block}
+
+  /* Close handle */
+  #mobile_panel_handle{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 12px;border-bottom:1px solid var(--border);
+    font-size:.72rem;color:var(--gold2);letter-spacing:1px;
+    cursor:pointer;
+  }
+  #main{position:relative}
+}
+
+@media(min-width:641px),(orientation:landscape){
+  #bottom_tabs{display:none !important}
+  #mobile_panel{display:none !important}
+}
 </style>
 </head>
 <body>
@@ -874,6 +933,35 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <button class="hbtn" onclick="sendChat()">↵</button>
     </div>
   </div>
+
+  <!-- MOBILE PANEL (slides up from bottom tabs) -->
+  <div id="mobile_panel">
+    <div id="mobile_panel_handle" onclick="closeMobilePanel()">
+      <span id="mobile_panel_title">Panel</span>
+      <span>✕</span>
+    </div>
+    <div id="mobile_panel_content"></div>
+  </div>
+
+  <!-- BOTTOM TAB BAR (mobile portrait only) -->
+  <div id="bottom_tabs" style="display:none">
+    <div class="btab active" id="btab_chat" onclick="switchBottomTab('chat')">
+      <div class="btab-icon">💬</div><div>Chat</div>
+    </div>
+    <div class="btab" id="btab_tokens" onclick="switchBottomTab('tokens')">
+      <div class="btab-icon">🎭</div><div>Tokens</div>
+    </div>
+    <div class="btab" id="btab_init" onclick="switchBottomTab('init')">
+      <div class="btab-icon">⚔</div><div>Turno</div>
+    </div>
+    <div class="btab dm-only" id="btab_scenes" onclick="switchBottomTab('scenes')" style="display:none">
+      <div class="btab-icon">🗺</div><div>Escenas</div>
+    </div>
+    <div class="btab dm-only" id="btab_audio" onclick="switchBottomTab('audio')" style="display:none">
+      <div class="btab-icon">🎵</div><div>Audio</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ADD PROP MODAL -->
@@ -2756,6 +2844,8 @@ function enter(){
   }
   // On mobile: collapse sidebar sections so chat is visible
   setTimeout(collapseForMobile, 400);
+  // On mobile: init bottom tabs
+  setTimeout(initMobileTabs, 500);
   // On mobile: auto-request fullscreen for better experience
   if(window.innerWidth<=640){
     setTimeout(function(){
@@ -4249,6 +4339,8 @@ function appendMsg(msg){
   log.appendChild(d);
   log.scrollTop=log.scrollHeight;
   while(log.children.length>120)log.removeChild(log.firstChild);
+  // Sync mobile chat panel
+  if(isMobileMode) updateMobileChat();
 }
 
 // ── MAP ADJUSTMENTS ────────────────────────────────────────
@@ -5833,6 +5925,213 @@ window.setTool=function(t){
 };
 
 // ── SIDEBAR COLLAPSE ───────────────────────────────────────
+// ── BOTTOM TABS (mobile) ───────────────────────────────────
+var activeBTab = 'chat';
+
+// Content generators for each tab
+var mobileTabContent = {
+  chat: function(){
+    return '<div style="display:flex;flex-direction:column;height:100%">'
+      +'<div id="mobile_chat_log" style="flex:1;overflow-y:auto;padding:6px 8px;font-size:.77rem;min-height:120px;max-height:220px"></div>'
+      +'<div id="mobile_dice_bar" style="padding:4px 6px;border-top:1px solid var(--border);display:flex;gap:3px;flex-wrap:wrap">'
+      +'<button class="dbtn" onclick="rollDie(4)">d4</button>'
+      +'<button class="dbtn" onclick="rollDie(6)">d6</button>'
+      +'<button class="dbtn" onclick="rollDie(8)">d8</button>'
+      +'<button class="dbtn" onclick="rollDie(10)">d10</button>'
+      +'<button class="dbtn" onclick="rollDie(12)">d12</button>'
+      +'<button class="dbtn" onclick="rollDie(20)">d20</button>'
+      +'<button class="dbtn" onclick="rollDie(100)">d%</button>'
+      +'</div>'
+      +'<div style="padding:6px;border-top:1px solid var(--border);display:flex;gap:4px">'
+      +'<input id="mobile_cinput" placeholder="Mensaje o /r 2d6+3..." style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:4px 7px;font-family:var(--font);font-size:16px" onkeydown="if(event.key===\'Enter\')mobileSendChat()">'
+      +'<button class="hbtn" onclick="mobileSendChat()">↵</button>'
+      +'</div>'
+      +'</div>';
+  },
+  tokens: function(){
+    var html='<div style="padding:6px 8px;font-size:.77rem" id="mobile_tok_list"></div>';
+    return html;
+  },
+  init: function(){
+    return '<div style="padding:6px 8px">'
+      +'<div id="mobile_init_list" style="font-size:.77rem;margin-bottom:6px"></div>'
+      +'<div style="display:flex;gap:4px">'
+      +'<button class="hbtn" style="flex:1;font-size:.68rem" onclick="rollAllInit()">🎲 Tirar todas</button>'
+      +'<button class="hbtn" style="flex:1;font-size:.68rem" onclick="nextTurn()">→ Turno</button>'
+      +'<button class="hbtn danger" style="font-size:.68rem" onclick="clearInit()">✕</button>'
+      +'</div></div>';
+  },
+  scenes: function(){
+    return '<div style="padding:6px 8px">'
+      +'<div id="mobile_scene_list" style="margin-bottom:6px;font-size:.77rem"></div>'
+      +'<div style="display:flex;gap:4px">'
+      +'<button class="hbtn" style="flex:1;font-size:.7rem" onclick="openNewScene()">＋ Nueva escena</button>'
+      +'<button class="hbtn" style="font-size:.7rem" onclick="openCurrentSceneNotes()">📝</button>'
+      +'</div></div>';
+  },
+  audio: function(){
+    return '<div style="padding:6px 8px">'
+      +'<div style="font-size:.65rem;color:var(--text3);margin-bottom:6px">🌲 AMBIENTE</div>'
+      +'<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px">'
+      +'<button class="audio-preset" onclick="searchAudio(\'amb\',\'tavern ambience\')">🍺 Taberna</button>'
+      +'<button class="audio-preset" onclick="searchAudio(\'amb\',\'dungeon ambience\')">🏰 Mazorra</button>'
+      +'<button class="audio-preset" onclick="searchAudio(\'amb\',\'forest nature\')">🌲 Bosque</button>'
+      +'<button class="audio-preset" onclick="searchAudio(\'amb\',\'rain storm\')">🌧 Lluvia</button>'
+      +'</div>'
+      +'<div id="mob_amb_now" style="margin-bottom:8px"></div>'
+      +'<div style="font-size:.65rem;color:var(--text3);margin-bottom:6px">🎶 MÚSICA</div>'
+      +'<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px">'
+      +'<button class="audio-preset" onclick="searchAudio(\'mus\',\'epic battle music\')">⚔ Batalla</button>'
+      +'<button class="audio-preset" onclick="searchAudio(\'mus\',\'fantasy rpg music\')">🏰 Épica</button>'
+      +'<button class="audio-preset" onclick="searchAudio(\'mus\',\'mysterious ambient music\')">🌙 Misterio</button>'
+      +'<button class="audio-preset" onclick="searchAudio(\'mus\',\'tavern folk music\')">🎻 Festiva</button>'
+      +'</div>'
+      +'<div id="mob_mus_now" style="margin-bottom:8px"></div>'
+      +'<div style="font-size:.65rem;color:var(--text3);margin-bottom:4px">⚡ EFECTOS</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px">'
+      +'<button class="sfx-btn" onclick="playSfx(\'sword clash\')">⚔ Espada</button>'
+      +'<button class="sfx-btn" onclick="playSfx(\'magic spell\')">✨ Magia</button>'
+      +'<button class="sfx-btn" onclick="playSfx(\'thunder\')">⚡ Trueno</button>'
+      +'<button class="sfx-btn" onclick="playSfx(\'door creak\')">🚪 Puerta</button>'
+      +'<button class="sfx-btn" onclick="playSfx(\'explosion\')">💥 Explosión</button>'
+      +'<button class="sfx-btn" onclick="playSfx(\'monster growl\')">👹 Rugido</button>'
+      +'<button class="sfx-btn" onclick="playSfx(\'arrow\')">🏹 Flecha</button>'
+      +'<button class="sfx-btn" onclick="playSfx(\'wolf howl\')">🐺 Lobo</button>'
+      +'</div></div>';
+  }
+};
+
+var mobileTabTitles = {
+  chat:'💬 Chat',tokens:'🎭 Tokens',init:'⚔ Iniciativa',
+  scenes:'🗺 Escenas',audio:'🎵 Audio'
+};
+
+window.switchBottomTab = function(tab){
+  var panel = document.getElementById('mobile_panel');
+  var content = document.getElementById('mobile_panel_content');
+  var title = document.getElementById('mobile_panel_title');
+
+  // If same tab and panel open → close
+  if(activeBTab === tab && panel.classList.contains('open')){
+    closeMobilePanel(); return;
+  }
+
+  activeBTab = tab;
+
+  // Update tab highlights
+  document.querySelectorAll('.btab').forEach(function(b){
+    b.classList.remove('active');
+  });
+  var activeBtn = document.getElementById('btab_'+tab);
+  if(activeBtn) activeBtn.classList.add('active');
+
+  // Chat tab = show inline, no panel
+  if(tab === 'chat'){
+    closeMobilePanel();
+    showMobileChatInline();
+    return;
+  }
+
+  // Other tabs open the panel
+  if(title) title.textContent = mobileTabTitles[tab]||tab;
+  if(content && mobileTabContent[tab]){
+    content.innerHTML = mobileTabContent[tab]();
+    // Sync dynamic content
+    syncMobileTab(tab);
+  }
+  panel.classList.add('open');
+};
+
+function closeMobilePanel(){
+  var panel = document.getElementById('mobile_panel');
+  if(panel) panel.classList.remove('open');
+}
+window.closeMobilePanel = closeMobilePanel;
+
+function showMobileChatInline(){
+  // The chat content is always in the panel for mobile
+  var panel = document.getElementById('mobile_panel');
+  var content = document.getElementById('mobile_panel_content');
+  var title = document.getElementById('mobile_panel_title');
+  if(title) title.textContent = '💬 Chat';
+  if(content) content.innerHTML = mobileTabContent.chat();
+  panel.classList.add('open');
+  syncMobileChatLog();
+}
+
+function syncMobileTab(tab){
+  if(tab==='tokens'){
+    var el=document.getElementById('mobile_tok_list');
+    var src=document.getElementById('tok_list');
+    if(el&&src) el.innerHTML=src.innerHTML;
+  }
+  if(tab==='init'){
+    var el=document.getElementById('mobile_init_list');
+    var src=document.getElementById('init_list');
+    if(el&&src) el.innerHTML=src.innerHTML;
+  }
+  if(tab==='scenes'){
+    var el=document.getElementById('mobile_scene_list');
+    var src=document.getElementById('scene_list');
+    if(el&&src) el.innerHTML=src.innerHTML;
+  }
+}
+
+function syncMobileChatLog(){
+  var el=document.getElementById('mobile_chat_log');
+  var src=document.getElementById('chat_log');
+  if(el&&src){
+    el.innerHTML=src.innerHTML;
+    el.scrollTop=el.scrollHeight;
+  }
+}
+
+window.mobileSendChat = function(){
+  var inp=document.getElementById('mobile_cinput');
+  if(!inp) return;
+  var txt=inp.value.trim(); if(!txt) return;
+  inp.value='';
+  var m=txt.match(/^\/r(?:oll)?\s+(.+)/i);
+  if(m){ rollFx(m[1].trim()); return; }
+  pushMsg({who:myName,text:txt,type:'normal'});
+};
+
+// Keep mobile chat in sync when new messages arrive
+function updateMobileChat(){
+  if(activeBTab==='chat'){
+    var el=document.getElementById('mobile_chat_log');
+    var src=document.getElementById('chat_log');
+    if(el&&src){
+      el.innerHTML=src.innerHTML;
+      el.scrollTop=el.scrollHeight;
+    }
+  }
+  if(activeBTab==='tokens') syncMobileTab('tokens');
+  if(activeBTab==='init') syncMobileTab('init');
+}
+
+// Check if mobile mode is active
+function isMobileMode(){
+  return window.innerWidth<=640 ||
+    (window.innerWidth<=768 && window.innerHeight>window.innerWidth);
+}
+
+// Show bottom tabs on enter for mobile
+function initMobileTabs(){
+  if(!isMobileMode()) return;
+  var tabs=document.getElementById('bottom_tabs');
+  if(tabs) tabs.style.display='flex';
+  // Show DM-only tabs
+  if(isDM){
+    var sc=document.getElementById('btab_scenes');
+    var au=document.getElementById('btab_audio');
+    if(sc) sc.style.display='flex';
+    if(au) au.style.display='flex';
+  }
+  // Open chat by default
+  setTimeout(function(){ switchBottomTab('chat'); }, 500);
+}
+
 // ── FULLSCREEN ─────────────────────────────────────────────
 window.toggleFullscreen=function(){
   var btn=document.getElementById('btn_fullscreen');
