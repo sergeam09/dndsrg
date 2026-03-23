@@ -558,6 +558,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <button class="tbtn dm-only" onclick="toggleSec('sau')" title="Panel de audio y música">
       🎵<div class="tlabel">Audio</div>
     </button>
+    <!-- Mi personaje (jugadores) -->
+    <button class="tbtn" id="btn_mychar" onclick="openMyChar()" title="Mi personaje" style="display:none">
+      🧙<div class="tlabel">Mi PJ</div>
+    </button>
 
   </div>
 
@@ -1045,6 +1049,45 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div class="mbtns">
       <button class="bprimary" onclick="applyMap()">✓ Cargar y compartir</button>
       <button class="bcancel" onclick="closeModal('map_modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYER CHARACTER MODAL -->
+<div class="mbg" id="mychar_modal">
+  <div class="mcard" style="width:360px">
+    <h2>🧙 MI PERSONAJE</h2>
+    <p style="font-size:.72rem;color:var(--text3);margin-bottom:10px">
+      Crea tu token — aparecerá en el mapa para todos.
+    </p>
+
+    <label>Nombre del personaje</label>
+    <input id="mc_charname" placeholder="Ej: Thorin, Lyra, Zara..." maxlength="24">
+
+    <label>Clase y raza <span style="color:var(--text3);font-size:.68rem">(opcional, aparece en el chat)</span></label>
+    <input id="mc_classrace" placeholder="Ej: Guerrero Enano, Mago Elfo..." maxlength="32">
+
+    <label>HP máximo</label>
+    <input id="mc_hp" type="number" value="10" min="1" max="999">
+
+    <label>Icono emoji</label>
+    <input id="mc_icon" maxlength="4" placeholder="🧙 🗡 🏹 🛡 ✨">
+
+    <label>Color</label>
+    <div class="crow" id="mc_cpicker">
+      <div class="cswatch sel" style="background:#3498db" data-c="#3498db" onclick="mcPickColor(this)"></div>
+      <div class="cswatch" style="background:#2ecc71" data-c="#2ecc71" onclick="mcPickColor(this)"></div>
+      <div class="cswatch" style="background:#9b59b6" data-c="#9b59b6" onclick="mcPickColor(this)"></div>
+      <div class="cswatch" style="background:#1abc9c" data-c="#1abc9c" onclick="mcPickColor(this)"></div>
+      <div class="cswatch" style="background:#e67e22" data-c="#e67e22" onclick="mcPickColor(this)"></div>
+      <div class="cswatch" style="background:#f1c40f" data-c="#f1c40f" onclick="mcPickColor(this)"></div>
+      <div class="cswatch" style="background:#ecf0f1" data-c="#ecf0f1" onclick="mcPickColor(this)"></div>
+      <div class="cswatch" style="background:#e74c3c" data-c="#e74c3c" onclick="mcPickColor(this)"></div>
+    </div>
+
+    <div class="mbtns" style="margin-top:12px">
+      <button class="bprimary" onclick="saveMyChar()">🧙 Colocar en el mapa</button>
+      <button class="bcancel" onclick="closeModal('mychar_modal')">Después</button>
     </div>
   </div>
 </div>
@@ -2681,6 +2724,8 @@ function enter(){
     toast('🎭 Sala '+room+' creada — toca el código para copiar el link');
   } else {
     toast('👤 Conectado a sala '+room+' como '+myName);
+    // Prompt player to create their character
+    initPlayerChar();
   }
 }
 
@@ -3018,7 +3063,7 @@ function tstart(e){
     const h=hitTok({x:p.x,y:p.y});
     if(h){
       const tok=tokens[h];
-      const canMove=isDM||(tok&&tok.addedBy===myName);
+      const canMove=isDM||(tok&&(tok.addedBy===myName||tok.playerOwner===myName));
       selTok=h;
       if(canMove){
         dragging=true; dragId=h;
@@ -3420,7 +3465,7 @@ function mdown(e){
     const h=hitTok(p);
     if(h){
       const tok=tokens[h];
-      const canMove=isDM||(tok&&tok.addedBy===myName)||false;
+      const canMove=isDM||(tok&&(tok.addedBy===myName||tok.playerOwner===myName))||false;
       if(canMove){
         selTok=h; dragging=true; dragId=h;
         dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
@@ -5448,7 +5493,108 @@ function subscribeSfx(){
   });
 }
 
-// ── DROPDOWN MENU ──────────────────────────────────────────
+// ── PLAYER CHARACTER SYSTEM ────────────────────────────────
+var myCharId = null;   // Firebase key of my own token
+var myCharColor = '#3498db';
+
+// Show button for players, prompt on enter
+function initPlayerChar(){
+  if(isDM) return;
+  // Show Mi PJ button
+  var btn = document.getElementById('btn_mychar');
+  if(btn) btn.style.display='flex';
+  // Check if player already has a token
+  var saved = null;
+  try{ saved=JSON.parse(localStorage.getItem('vtt_mychar_'+room)||'null'); }catch(e){}
+  if(saved && saved.id){
+    myCharId = saved.id;
+    // Verify it still exists in Firebase
+    get(ref(db,'rooms/'+room+'/tokens/'+saved.id)).then(function(s){
+      if(!s.exists()){
+        myCharId=null;
+        localStorage.removeItem('vtt_mychar_'+room);
+        setTimeout(openMyChar, 800); // token gone, re-create
+      }
+    });
+  } else {
+    // First time — show modal after a short delay
+    setTimeout(openMyChar, 1000);
+  }
+}
+
+window.openMyChar = function(){
+  // If player already has token, pre-fill from it
+  if(myCharId && tokens[myCharId]){
+    var t = tokens[myCharId];
+    document.getElementById('mc_charname').value = t.name||'';
+    document.getElementById('mc_classrace').value = t.classrace||'';
+    document.getElementById('mc_hp').value = t.hpMax||10;
+    document.getElementById('mc_icon').value = t.icon||'';
+    myCharColor = t.color||'#3498db';
+    // Update color picker
+    document.querySelectorAll('#mc_cpicker .cswatch').forEach(function(s){
+      s.classList.toggle('sel', s.dataset.c===myCharColor);
+    });
+  }
+  document.getElementById('mychar_modal').classList.add('open');
+  setTimeout(function(){ document.getElementById('mc_charname').focus(); },100);
+};
+
+window.mcPickColor = function(el){
+  document.querySelectorAll('#mc_cpicker .cswatch').forEach(function(s){s.classList.remove('sel');});
+  el.classList.add('sel');
+  myCharColor = el.dataset.c;
+};
+
+window.saveMyChar = function(){
+  var charname = document.getElementById('mc_charname').value.trim();
+  var classrace = document.getElementById('mc_classrace').value.trim();
+  var hpMax = parseInt(document.getElementById('mc_hp').value)||10;
+  var icon = document.getElementById('mc_icon').value.trim();
+
+  if(!charname){ toast('Escribe el nombre de tu personaje'); return; }
+
+  var tokenData = {
+    name: charname,
+    classrace: classrace,
+    hp: hpMax,
+    hpMax: hpMax,
+    ac: 10,
+    init: 0,
+    icon: icon,
+    color: myCharColor,
+    type: 'player',
+    addedBy: myName,
+    playerOwner: myName, // for move permissions
+    dead: false,
+    x: Math.floor((fogW||20)/2),
+    y: Math.floor((fogH||15)/2)
+  };
+
+  if(myCharId && tokens[myCharId]){
+    // Update existing token
+    update(ref(db,'rooms/'+room+'/tokens/'+myCharId), tokenData);
+    toast('✓ Personaje actualizado');
+  } else {
+    // Create new token
+    var newRef = push(ref(db,'rooms/'+room+'/tokens'));
+    myCharId = newRef.key;
+    set(newRef, tokenData);
+    // Save to localStorage so player can reclaim on refresh
+    try{ localStorage.setItem('vtt_mychar_'+room, JSON.stringify({id:myCharId})); }catch(e){}
+    var classStr = classrace ? ' ('+classrace+')' : '';
+    sysMsg('🧙 '+charname+classStr+' entró a la partida');
+    toast('✓ '+charname+' añadido al mapa');
+  }
+
+  closeModal('mychar_modal');
+};
+
+// Show in applyRole
+function showPlayerCharBtn(){
+  var btn=document.getElementById('btn_mychar');
+  if(btn) btn.style.display=isDM?'none':'flex';
+}
 let menuOpen=false;
 
 window.toggleMenu=function(e){
