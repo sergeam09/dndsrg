@@ -115,12 +115,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 #menu_btn { display:inline-block }
 
 /* ── Toolbar mobile ── */
-@media(max-width:640px){
-  #toolbar{width:44px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  #toolbar::-webkit-scrollbar{display:none}
-  .tbtn{width:36px;height:36px;font-size:.9rem;min-height:36px}
-  .tbtn .tlabel{font-size:.45rem}
-  .tb-sep{margin:1px 0}
+@media(max-width:1024px) and (orientation:portrait),
+(max-width:640px){
+  /* Hide toolbar — bottom tabs replace all navigation */
+  #toolbar{display:none !important}
 }
 
 /* Ping animation */
@@ -388,8 +386,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 /* ═══════════════════════════════════════════════
    BOTTOM TABS (portrait / mobile ≤640px)
    ═══════════════════════════════════════════════ */
-@media(max-width:640px) and (orientation:portrait),
-(max-width:480px){
+@media(max-width:1024px) and (orientation:portrait),
+(max-width:640px){
 
   /* Hide classic sidebar */
   #sidebar{display:none !important}
@@ -439,9 +437,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   #main{position:relative}
 }
 
-@media(min-width:641px),(orientation:landscape){
+@media(min-width:1025px),(orientation:landscape) and (min-width:641px){
   #bottom_tabs{display:none !important}
   #mobile_panel{display:none !important}
+}
+
+/* ── Mobile portrait fixes ── */
+@media(max-width:1024px) and (orientation:portrait),
+(max-width:640px){
+  /* Room bar above bottom tabs */
+  #room_bar{bottom:52px !important}
+
+  /* Tool indicator above room bar */
+  #tool_ind{bottom:88px !important}
+
+  /* Turn banner stays at top */
+  #turn_banner{top:8px}
+
+  /* Canvas/cwrap gets remaining height */
+  #cwrap{flex:1;min-height:0}
+
+  /* Notes panel repositioned */
+  #notes_panel{top:8px;right:8px;bottom:auto;width:calc(100vw - 100px)}
+
+  /* Prop ctrl panel above tabs */
+  #prop_ctrl{bottom:56px}
+
+  /* Dice overlay centered properly */
+  #dice_overlay{top:40%;bottom:auto}
 }
 </style>
 </head>
@@ -956,6 +979,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     </div>
     <div class="btab dm-only" id="btab_scenes" onclick="switchBottomTab('scenes')" style="display:none">
       <div class="btab-icon">🗺</div><div>Escenas</div>
+    </div>
+    <div class="btab dm-only" id="btab_tools" onclick="switchBottomTab('tools')" style="display:none">
+      <div class="btab-icon">🛠</div><div>Tools</div>
     </div>
     <div class="btab dm-only" id="btab_audio" onclick="switchBottomTab('audio')" style="display:none">
       <div class="btab-icon">🎵</div><div>Audio</div>
@@ -5961,6 +5987,29 @@ var mobileTabContent = {
       +'<button class="hbtn danger" style="font-size:.68rem" onclick="clearInit()">✕</button>'
       +'</div></div>';
   },
+  tools: function(){
+    return '<div style="padding:8px">'
+      +'<div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:6px">🛠 HERRAMIENTAS</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">'
+      +'<button class="tbtn active" id="mob_tb_select" onclick="setTool('select');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">↖<div class="tlabel">Mover</div></button>'
+      +'<button class="tbtn" id="mob_tb_measure" onclick="setTool('measure');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">📏<div class="tlabel">Medir</div></button>'
+      +'<button class="tbtn" id="mob_tb_laser" onclick="setTool('laser');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🔴<div class="tlabel">Láser</div></button>'
+      +'<button class="tbtn" id="mob_tb_fog" onclick="setTool('fog');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌫<div class="tlabel">Revelar</div></button>'
+      +'<button class="tbtn" id="mob_tb_fogadd" onclick="setTool('fogadd');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌑<div class="tlabel">Cubrir</div></button>'
+      +'<button class="tbtn" id="mob_tb_draw" onclick="setTool('draw');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">✏<div class="tlabel">Dibujar</div></button>'
+      +'<button class="tbtn" id="mob_tb_erase" onclick="setTool('erase');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">⬜<div class="tlabel">Borrar</div></button>'
+      +'<button class="tbtn" onclick="clearDrawing();closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🗑<div class="tlabel">Limpiar</div></button>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+      +'<button class="hbtn" onclick="openMapModal();closeMobilePanel()" style="padding:8px">🗺 Mapa</button>'
+      +'<button class="hbtn" onclick="openAddToken();closeMobilePanel()" style="padding:8px">＋ Token</button>'
+      +'<button class="hbtn" onclick="openMonsterModal();closeMobilePanel()" style="padding:8px">🐉 Monstruo</button>'
+      +'<button class="hbtn" onclick="openAddProp();closeMobilePanel()" style="padding:8px">🖼 Prop</button>'
+      +'<button class="hbtn" onclick="clearFog();closeMobilePanel()" style="padding:8px">☀ Revelar todo</button>'
+      +'<button class="hbtn" onclick="fillFog();closeMobilePanel()" style="padding:8px">🌑 Cubrir todo</button>'
+      +'</div>'
+      +'</div>';
+  },
   scenes: function(){
     return '<div style="padding:6px 8px">'
       +'<div id="mobile_scene_list" style="margin-bottom:6px;font-size:.77rem"></div>'
@@ -6112,8 +6161,9 @@ function updateMobileChat(){
 
 // Check if mobile mode is active
 function isMobileMode(){
+  // Mobile if: phone, OR tablet in portrait (height > width)
   return window.innerWidth<=640 ||
-    (window.innerWidth<=768 && window.innerHeight>window.innerWidth);
+    (window.innerWidth<=1024 && window.innerHeight>window.innerWidth);
 }
 
 // Show bottom tabs on enter for mobile
@@ -6125,8 +6175,10 @@ function initMobileTabs(){
   if(isDM){
     var sc=document.getElementById('btab_scenes');
     var au=document.getElementById('btab_audio');
+    var tl=document.getElementById('btab_tools');
     if(sc) sc.style.display='flex';
     if(au) au.style.display='flex';
+    if(tl) tl.style.display='flex';
   }
   // Open chat by default
   setTimeout(function(){ switchBottomTab('chat'); }, 500);
