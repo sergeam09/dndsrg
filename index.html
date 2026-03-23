@@ -5376,63 +5376,63 @@ var sfxCache = {}; // query -> preview url (cache to avoid repeated API calls)
 window.playSfx = async function(query){
   if(!query||!query.trim()) return;
   query = query.trim();
+  var resultsEl = document.getElementById('sfx_results');
 
-  // Use cached URL if available
+  // Use cached URL if available — show in results, don't auto-play
   if(sfxCache[query]){
-    fireSfx(sfxCache[query], query);
+    if(resultsEl){
+      resultsEl.innerHTML = '<div class="audio-result" onclick="window.fireSfx(\''+sfxCache[query]+'\',\''+query+'\')">'
+        +'<span>▶</span><span style="flex:1;font-size:.68rem">'+query+'</span></div>';
+    }
     return;
   }
 
-  // Search Freesound for short sound effect
+  // Search Freesound
+  if(resultsEl) resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--text3);padding:4px">Buscando...</div>';
   try {
     var url = 'https://freesound.org/apiv2/search/text/'
       +'?query='+encodeURIComponent(query)
       +'&fields=id,name,previews,duration'
-      +'&filter=duration:[0.5+TO+8]'  // short sounds only
+      +'&filter=duration:[0.5+TO+8]'
       +'&sort=rating_desc'
-      +'&page_size=4&token='+FREESOUND_KEY;
+      +'&page_size=5&token='+FREESOUND_KEY;
     var res = await fetch(url);
     var data = await res.json();
 
     if(!data.results||!data.results.length){
-      // Show search results for manual pick
-      toast('Sin resultados para "'+query+'"');
+      if(resultsEl) resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--text3);padding:4px">Sin resultados</div>';
       return;
     }
 
-    // Auto-play best result, show alternatives
-    var best = data.results[0];
-    var previewUrl = best.previews['preview-hq-mp3']||best.previews['preview-lq-mp3'];
-    sfxCache[query] = previewUrl;
-    fireSfx(previewUrl, best.name);
-
-    // Show alternatives in results div
-    var resultsEl = document.getElementById('sfx_results');
-    if(resultsEl && data.results.length>1){
-      resultsEl.innerHTML = data.results.slice(1).map(function(s){
+    // Show all results — user clicks to play
+    if(resultsEl){
+      resultsEl.innerHTML = data.results.map(function(s){
         var pu = s.previews['preview-hq-mp3']||s.previews['preview-lq-mp3'];
-        return '<div class="audio-result" onclick="fireSfx(\''+pu+'\',\''+s.name.replace(/'/g,"&#39;")+'\')">'
-          +'<span style="font-size:.7rem">▶</span>'
+        var dur = Math.round(s.duration);
+        var safeName = s.name.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+        return '<div class="audio-result" onclick="window.fireSfx(\''+pu+'\',\''+safeName+'\')">'
+          +'<span>▶</span>'
           +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem">'+s.name+'</span>'
+          +'<span class="ar-dur">'+dur+'s</span>'
           +'</div>';
       }).join('');
-      setTimeout(function(){ if(resultsEl) resultsEl.innerHTML=''; }, 5000);
     }
+
+    // Cache the top result URL for next time
+    sfxCache[query] = data.results[0].previews['preview-hq-mp3']||data.results[0].previews['preview-lq-mp3'];
+
   } catch(err){
-    toast('Error buscando efecto: '+err.message);
+    if(resultsEl) resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--red);padding:4px">Error: '+err.message+'</div>';
   }
 };
 
-function fireSfx(url, name){
-  // Play locally
+window.fireSfx = function(url, name){
   var sfxEl = new Audio(url);
   sfxEl.volume = sfxVolume;
   sfxEl.play().catch(function(){});
-  // Sync to all clients via Firebase
   update(r('sfx'), {url:url, name:name, ts:Date.now()});
-  // Visual feedback
   toast('⚡ '+name.substring(0,30));
-}
+};
 
 // Subscribe to SFX (all clients play when DM fires)
 function subscribeSfx(){
