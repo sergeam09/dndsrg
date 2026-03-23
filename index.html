@@ -2718,6 +2718,111 @@ function applyRole(){
 }
 
 // ── SUBSCRIBE ──────────────────────────────────────────────
+// ── DICE OVERLAY SYSTEM ────────────────────────────────────
+var diceOverlayTimer=null;
+var diceSfxCache={normal:null,crit:null,fail:null};
+
+function showDiceOverlay(who,die,result,crit,fail){
+  var overlay=document.getElementById('dice_overlay');
+  var strip=document.getElementById('dice_roller_strip');
+  var whoEl=document.getElementById('dice_roller_who');
+  var dieEl=document.getElementById('dice_roller_die');
+  var labelEl=document.getElementById('dice_roller_label');
+  if(!overlay||!strip) return;
+
+  whoEl.textContent=who.toUpperCase();
+  dieEl.textContent='🎲 '+die;
+
+  var sides=parseInt((die.match(/d(\d+)/)||[0,20])[1])||20;
+  var spinCount=crit||fail?28:18;
+  var frames=[];
+  for(var i=0;i<spinCount;i++) frames.push(Math.ceil(Math.random()*sides));
+  frames.push(result);
+
+  strip.innerHTML=frames.map(function(n,i){
+    var cls='drum-num'+(i===frames.length-1?(crit?' crit':fail?' fail':''):'');
+    return '<div class="'+cls+'">'+n+'</div>';
+  }).join('');
+
+  overlay.style.display='block';
+  overlay.className='show';
+  clearTimeout(diceOverlayTimer);
+
+  var numH=64;
+  strip.style.transition='none';
+  strip.style.transform='translateY(0)';
+
+  var frameIdx=0;
+  var delays=[];
+  for(var i=0;i<frames.length-1;i++){
+    var progress=i/(frames.length-2);
+    delays.push(30+Math.pow(progress,2)*180);
+  }
+
+  function nextFrame(){
+    if(frameIdx>=frames.length-1){
+      strip.style.transition='transform 0.3s cubic-bezier(.2,.8,.3,1.2)';
+      strip.style.transform='translateY(-'+(numH*(frames.length-1))+'px)';
+      var inner=document.getElementById('dice_overlay_inner');
+      if(crit){
+        labelEl.textContent='💥 ¡CRÍTICO!'; labelEl.style.color='#f0ad4e';
+        if(inner){inner.style.animation='drum-crit .4s ease'; setTimeout(function(){inner.style.animation='';},400);}
+      } else if(fail){
+        labelEl.textContent='💀 Pifia'; labelEl.style.color='var(--red)';
+        if(inner){inner.style.animation='drum-fail .6s ease 3'; setTimeout(function(){inner.style.animation='';},1800);}
+      } else {
+        labelEl.textContent=''; labelEl.style.color='var(--text3)';
+      }
+      var hideDelay=crit||fail?3000:2000;
+      diceOverlayTimer=setTimeout(function(){
+        overlay.className='hide';
+        setTimeout(function(){overlay.style.display='none';overlay.className='';},250);
+      },hideDelay);
+      return;
+    }
+    strip.style.transition='none';
+    strip.style.transform='translateY(-'+(numH*frameIdx)+'px)';
+    frameIdx++;
+    setTimeout(nextFrame,delays[frameIdx-1]||60);
+  }
+
+  labelEl.textContent='';
+  setTimeout(nextFrame,50);
+  playDiceSound(crit,fail);
+}
+
+async function playDiceSound(crit,fail){
+  var key=crit?'crit':fail?'fail':'normal';
+  if(diceSfxCache[key]){
+    var a=new Audio(diceSfxCache[key]); a.volume=0.5; a.play().catch(function(){});
+    return;
+  }
+  var query=crit?'dice roll critical success':fail?'dice fail fumble':'dice rolling';
+  try{
+    var res=await fetch('https://freesound.org/apiv2/search/text/'
+      +'?query='+encodeURIComponent(query)
+      +'&fields=previews,duration&filter=duration:[0.5+TO+4]'
+      +'&sort=rating_desc&page_size=1&token='+FREESOUND_KEY);
+    var data=await res.json();
+    if(data.results&&data.results.length){
+      var url=data.results[0].previews['preview-hq-mp3']||data.results[0].previews['preview-lq-mp3'];
+      diceSfxCache[key]=url;
+      var a=new Audio(url); a.volume=0.5; a.play().catch(function(){});
+    }
+  }catch(e){}
+}
+
+// ── DICE ROLL SYNC ─────────────────────────────────────────
+function subscribeDiceRolls(){
+  var lastTs=0;
+  onValue(r('diceRoll'),function(s){
+    var d=s.val(); if(!d||!d.ts) return;
+    if(d.ts===lastTs) return;
+    lastTs=d.ts;
+    showDiceOverlay(d.who,d.die,d.result,d.crit,d.fail);
+  });
+}
+
 function subscribe(){
   // Tokens
   onChildAdded(r('tokens'),s=>{
