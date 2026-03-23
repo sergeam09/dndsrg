@@ -3626,10 +3626,11 @@ function mdbl(e){
     }
   } else {
     // Double click on empty space = ping for everyone
-    const rc=cv.getBoundingClientRect();
-    const sx=e.clientX-rc.left;
-    const sy=e.clientY-rc.top;
-    pushPing(sx,sy);
+    if(tool==='select'){
+      const rc=cv.getBoundingClientRect();
+      const color=isDM?'#c8a84b':'#5bb3e8';
+      update(r('ping'),{active:true,x:e.clientX-rc.left,y:e.clientY-rc.top,name:myName,color:color,ts:Date.now()});
+    }
   }
 }
 
