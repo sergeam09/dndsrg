@@ -79,23 +79,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .s-title:hover{background:var(--bg3)}
 .s-body{padding:6px 8px}
 
-/* MOBILE ≤640px — sidebar narrows */
-@media(max-width:640px){
-  #sidebar{width:180px}
-  #header h1{display:none}
-}
 
-/* MOBILE ≤480px — sidebar slides over canvas */
-@media(max-width:480px){
-  #sidebar{
-    display:none;
-    position:absolute;right:0;top:0;bottom:0;
-    z-index:50;width:220px;
-    box-shadow:-4px 0 24px rgba(0,0,0,.7);
-  }
-  #sidebar.show{display:flex}
-  #main{position:relative}
-}
 
 /* Sidebar toggle (mobile) */
 #sb_toggle{
@@ -106,7 +90,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   color:var(--text2);font-size:.75rem;writing-mode:vertical-rl;
   -webkit-tap-highlight-color:transparent;line-height:1.4;text-align:center;
 }
-@media(max-width:480px){#sb_toggle{display:block}}
 
 /* Header group separator */
 .hbtn-sep{width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0;align-self:center}
@@ -114,8 +97,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 /* ── Hamburger siempre visible (menú secundario) ── */
 #menu_btn { display:inline-block }
 
-/* ── Toolbar mobile ── */
-@media(max-width:1024px) and (orientation:portrait),
 (max-width:640px){
   /* Hide toolbar — bottom tabs replace all navigation */
   #toolbar{display:none !important}
@@ -224,7 +205,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .scene-item.active-scene{background:rgba(200,168,75,.1);border-color:var(--gold);color:var(--gold)}
 .scene-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* Bigger touch targets */
 @media(max-width:768px){
   .dbtn{min-height:38px;font-size:.78rem}
   .tok-item{min-height:32px;font-size:.8rem}
@@ -261,16 +241,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .dbtn:hover{background:rgba(200,168,75,.15);border-color:var(--gold)}
 
 /* MOBILE: compact dice bar */
-@media(max-width:640px){
-  #dice_bar{display:none;padding:4px 6px}
-  #dice_bar.open{display:flex}
-  #dice_toggle{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;border-top:1px solid var(--border);cursor:pointer;flex-shrink:0;font-size:.72rem;color:var(--gold2);background:var(--bg3);-webkit-tap-highlight-color:transparent}
-  #dice_toggle:active{background:rgba(200,168,75,.1)}
-}
-@media(min-width:641px){
-  #dice_toggle{display:none}
-  #dice_bar{display:flex !important}
-}
 
 /* MODALS */
 .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:center;justify-content:center}
@@ -329,11 +299,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 /* Footer */
 .l-footer{padding:12px 24px;border-top:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 #lerr{width:100%;color:#e74c3c;font-size:.75rem;text-align:center;display:none;padding:4px 0}
-@media(max-width:480px){
-  .l-header h1{font-size:1.2rem}
-  .l-panel{padding:16px}
-  #lcard{border-radius:10px}
-}
 
 /* ROLES */
 .dm-only { display:none } /* hidden until isDM confirmed */
@@ -384,9 +349,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
 /* ═══════════════════════════════════════════════
-   BOTTOM TABS (portrait / mobile ≤640px)
    ═══════════════════════════════════════════════ */
-@media(max-width:1024px) and (orientation:portrait),
 (max-width:640px){
 
   /* Hide classic sidebar */
@@ -437,13 +400,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   #main{position:relative}
 }
 
-@media(min-width:1025px),(orientation:landscape) and (min-width:641px){
-  #bottom_tabs{display:none !important}
-  #mobile_panel{display:none !important}
-}
 
-/* ── Mobile portrait fixes ── */
-@media(max-width:1024px) and (orientation:portrait),
 (max-width:640px){
   /* Room bar above bottom tabs */
   #room_bar{bottom:52px !important}
@@ -465,6 +422,169 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 
   /* Dice overlay centered properly */
   #dice_overlay{top:40%;bottom:auto}
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE SYSTEM — El Cadejo VTT
+   
+   DESKTOP (>768px landscape): sidebar + toolbar visible
+   TABLET/MOBILE portrait OR ≤768px: bottom tabs, no sidebar/toolbar
+   ═══════════════════════════════════════════════════════════ */
+
+
+/* ── MOBILE MODE: portrait OR narrow screen ── */
+@media (orientation:portrait), (max-width:768px) {
+
+  /* Hide desktop sidebar and its toggle */
+  #sidebar   { display:none !important }
+  #sb_toggle { display:none !important }
+  #sb_overlay{ display:none !important }
+
+  /* Hide desktop toolbar */
+  #toolbar   { display:none !important }
+
+  /* Main layout: column so bottom tabs sit at bottom */
+  #main { flex-direction:column; position:relative }
+
+  /* Canvas/cwrap fills remaining space */
+  #cwrap { flex:1; min-height:0; position:relative }
+
+  /* Bottom tab bar */
+  #bottom_tabs {
+    display:flex !important;
+    flex-shrink:0;
+    background:var(--bg2);
+    border-top:1px solid var(--border);
+    z-index:60;
+    height:52px;
+  }
+  .btab {
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:4px 2px;cursor:pointer;
+    font-size:.6rem;color:var(--text3);gap:1px;
+    border-top:2px solid transparent;
+    -webkit-tap-highlight-color:transparent;
+    transition:color .15s;
+    min-width:0;
+  }
+  .btab .btab-icon { font-size:1rem;line-height:1 }
+  .btab.active     { color:var(--gold2);border-top-color:var(--gold) }
+
+  /* Sliding panel from bottom */
+  #mobile_panel {
+    display:none;
+    position:absolute;
+    bottom:52px; left:0; right:0;
+    background:var(--bg2);
+    border-top:1px solid var(--border);
+    z-index:55;
+    max-height:52vh;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    box-shadow:0 -4px 20px rgba(0,0,0,.5);
+  }
+  #mobile_panel.open { display:block }
+
+  #mobile_panel_handle {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 12px;border-bottom:1px solid var(--border);
+    font-size:.75rem;color:var(--gold2);letter-spacing:1px;
+    cursor:pointer;position:sticky;top:0;
+    background:var(--bg2);z-index:1;
+  }
+
+  /* Push floating UI above bottom tabs */
+  #room_bar  { bottom:56px !important }
+  #tool_ind  { bottom:92px !important }
+  #prop_ctrl { bottom:60px !important }
+  #notes_panel { top:8px; right:8px; width:min(320px, calc(100vw - 16px)) }
+
+  /* Dice bar hidden — inside chat panel */
+  #dice_bar   { display:none !important }
+  #dice_toggle{ display:none !important }
+
+  /* Header title hidden to save space */
+  #header h1  { display:none }
+}
+
+/* ── DESKTOP MODE: landscape AND wider than 768px ── */
+@media (orientation:landscape) and (min-width:769px) {
+  #bottom_tabs  { display:none !important }
+  #mobile_panel { display:none !important }
+  #sidebar      { display:flex }
+  #toolbar      { display:flex }
+  #dice_bar     { display:flex !important }
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE — El Cadejo VTT
+   
+   MOBILE/PORTRAIT (orientation:portrait OR ≤768px):
+     → bottom tabs, no sidebar, no toolbar
+   DESKTOP (landscape AND >768px):
+     → sidebar + toolbar visible
+   ═══════════════════════════════════════════ */
+
+/* Touch device targets */
+@media(hover:none){
+  .dbtn{min-height:40px;font-size:.8rem}
+  .tok-item{min-height:34px}
+  .init-row{min-height:32px}
+  #cinput{font-size:16px}
+  .hbtn{min-height:34px}
+}
+
+/* ── MOBILE MODE ── */
+@media (orientation:portrait),(max-width:768px){
+  #sidebar,#sb_toggle,#sb_overlay,#toolbar{display:none !important}
+  #main{flex-direction:column;position:relative}
+  #cwrap{flex:1;min-height:0;position:relative}
+  #header h1{display:none}
+  #dice_bar,#dice_toggle{display:none !important}
+
+  #bottom_tabs{
+    display:flex !important;flex-shrink:0;height:52px;
+    background:var(--bg2);border-top:1px solid var(--border);z-index:60;
+  }
+  .btab{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:4px 2px;cursor:pointer;
+    font-size:.58rem;color:var(--text3);gap:1px;
+    border-top:2px solid transparent;
+    -webkit-tap-highlight-color:transparent;min-width:0;
+  }
+  .btab .btab-icon{font-size:1rem;line-height:1}
+  .btab.active{color:var(--gold2);border-top-color:var(--gold)}
+
+  #mobile_panel{
+    display:none;position:absolute;
+    bottom:52px;left:0;right:0;
+    background:var(--bg2);border-top:1px solid var(--border);
+    z-index:55;max-height:52vh;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    box-shadow:0 -4px 20px rgba(0,0,0,.5);
+  }
+  #mobile_panel.open{display:block}
+  #mobile_panel_handle{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 12px;border-bottom:1px solid var(--border);
+    font-size:.75rem;color:var(--gold2);cursor:pointer;
+    position:sticky;top:0;background:var(--bg2);z-index:1;
+  }
+
+  #room_bar{bottom:56px !important}
+  #tool_ind{bottom:92px !important}
+  #prop_ctrl{bottom:60px !important}
+  #notes_panel{top:8px;right:8px;width:min(320px,calc(100vw - 16px))}
+}
+
+/* ── DESKTOP MODE ── */
+@media (orientation:landscape) and (min-width:769px){
+  #bottom_tabs,#mobile_panel{display:none !important}
+  #toolbar{display:flex}
+  #sidebar{display:flex}
+  #dice_bar{display:flex !important}
 }
 </style>
 </head>
@@ -6188,9 +6308,9 @@ function updateMobileChat(){
 
 // Check if mobile mode is active
 function isMobileMode(){
-  // Mobile if: phone, OR tablet in portrait (height > width)
-  return window.innerWidth<=640 ||
-    (window.innerWidth<=1024 && window.innerHeight>window.innerWidth);
+  // Matches CSS: portrait orientation OR width ≤ 768px
+  return window.innerWidth<=768 ||
+    window.innerHeight>window.innerWidth;
 }
 
 // Show bottom tabs on enter for mobile
