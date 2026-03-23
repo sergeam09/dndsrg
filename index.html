@@ -5823,20 +5823,6 @@ window.closeModal=function(id){document.getElementById(id).classList.remove('ope
   },{passive:true});
 })();
 
-// On mobile, close sidebar when a modal opens
-var _origOpen = HTMLElement.prototype.classList;
-document.addEventListener('click', function(e){
-  // If a modal was opened while sidebar is visible on mobile, close sidebar
-  if(window.innerWidth<=480){
-    var sb=document.getElementById('sidebar');
-    if(sb && sb.classList.contains('show')){
-      // If click was inside a modal button (not the sidebar itself)
-      if(!sb.contains(e.target) && !document.getElementById('sb_toggle').contains(e.target)){
-        // Don't close here — the overlay handles it
-      }
-    }
-  }
-});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape') document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'));
 });
