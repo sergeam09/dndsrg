@@ -5658,22 +5658,35 @@ window.selectAudio = function(layer, url, title){
 };
 
 function playAudioUrl(layer, url, title, isLocal){
-  var el=audioEls[layer];
-  // Stop current playback cleanly
-  el.pause();
-  el.src=url;
-  // Apply volume
+  // Stop and destroy old element — avoids CORS "tainted" MediaElement issue
+  if(audioEls[layer]){
+    audioEls[layer].pause();
+    audioEls[layer].src='';
+  }
+  // Create fresh Audio element every time
+  var el = new Audio();
+  el.loop = true;
+  el.crossOrigin = 'anonymous';
   var vol = (window._audioVolumes&&window._audioVolumes[layer]!==undefined)
     ? window._audioVolumes[layer]
     : (layer==='amb'?0.4:0.3);
   el.volume = vol;
-  el.loop = true;
-  // Play
+  el.src = url;
+  audioEls[layer] = el;
+
   var playPromise = el.play();
   if(playPromise){
     playPromise.catch(function(e){
-      console.warn('Audio play failed:', e);
-      updateAudioUI(layer, title, false);
+      // CORS failed with crossOrigin — retry without it
+      var el2 = new Audio();
+      el2.loop = true;
+      el2.volume = vol;
+      el2.src = url;
+      audioEls[layer] = el2;
+      el2.play().catch(function(e2){
+        console.warn('Audio play failed:', e2);
+        updateAudioUI(layer, title, false);
+      });
     });
   }
   audioState[layer]={playing:true, url:url, title:title};
