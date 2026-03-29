@@ -3508,7 +3508,7 @@ function draw(){
   // Props (images) — below tokens, above map
   drawProps();
 
-  // Tokens
+  // Tokens (including speech bubbles)
   Object.entries(tokens).forEach(([id,t])=>drawTok(id,t));
 
   // Drawing layer — on top of everything
@@ -3652,6 +3652,16 @@ function drawTok(id,t){
       cx.font='bold '+(iconSize*0.7)+'px sans-serif';
       cx.fillText('+'+(conds.length-5), x+iconR, y-iconR);
     }
+  }
+
+  // ── SPEECH BUBBLE ─────────────────────────────────────────
+  const bubble = tokenBubbles[id];
+  if(bubble && bubble.text && Date.now() < bubble.expires){
+    var timeLeft = bubble.expires - Date.now();
+    var alpha = timeLeft < 800 ? Math.max(0.05, timeLeft/800) : 1;
+    cx.globalAlpha = alpha;
+    drawSpeechBubble(cx, x, y-r2, bubble.text, t.color||'#c8a84b');
+    cx.globalAlpha = 1;
   }
 }
 
@@ -4487,6 +4497,16 @@ function appendMsg(msg){
   while(log.children.length>120)log.removeChild(log.firstChild);
   // Sync mobile chat panel
   if(isMobileMode) updateMobileChat();
+
+  // ── Speech bubble on token ──────────────────────────────
+  // Only for normal chat messages (not dice/system)
+  if(msg.type==='normal'&&msg.who&&msg.text){
+    var tokId=findTokenForPlayer(msg.who);
+    if(tokId){
+      var tokColor=tokens[tokId]?tokens[tokId].color:'#c8a84b';
+      showBubble(tokId, msg.text, tokColor);
+    }
+  }
 }
 
 // ── MAP ADJUSTMENTS ────────────────────────────────────────
@@ -5983,6 +6003,101 @@ function showPlayerCharBtn(){
   var btn=document.getElementById('btn_mychar');
   if(btn) btn.style.display=isDM?'none':'flex';
 }
+// ── SPEECH BUBBLES ─────────────────────────────────────────
+var tokenBubbles = {}; // tokenId -> {text, expires, color}
+var bubbleTimers  = {}; // tokenId -> setTimeout handle
+var BUBBLE_DURATION = 4000; // ms
+
+function drawSpeechBubble(ctx, tx, ty, text, color){
+  var maxW  = Math.max(60, Math.min(180, CELL*2.8));
+  var fSize = Math.max(9, Math.min(13, CELL*0.17));
+  var pad   = fSize*0.7;
+  var tailH = fSize*0.8;
+
+  ctx.save();
+  ctx.font = 'bold '+fSize+'px sans-serif';
+
+  // Word-wrap
+  var words=text.split(' '), lines=[], cur='';
+  words.forEach(function(w){
+    var test=cur?cur+' '+w:w;
+    if(ctx.measureText(test).width>maxW-pad*2&&cur){lines.push(cur);cur=w;}
+    else{cur=test;}
+  });
+  if(cur) lines.push(cur);
+  if(lines.length>3) lines=lines.slice(0,3);
+
+  var lineH=fSize*1.3;
+  var bw=0;
+  lines.forEach(function(l){bw=Math.max(bw,ctx.measureText(l).width);});
+  bw+=pad*2;
+  var bh=lines.length*lineH+pad*2;
+
+  var bx=tx-bw/2;
+  var by=ty-bh-tailH-4/scale;
+
+  // Bubble background
+  var r3=fSize*0.5;
+  ctx.beginPath();
+  ctx.moveTo(bx+r3,by);
+  ctx.lineTo(bx+bw-r3,by);
+  ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+r3);
+  ctx.lineTo(bx+bw,by+bh-r3);
+  ctx.quadraticCurveTo(bx+bw,by+bh,bx+bw-r3,by+bh);
+  ctx.lineTo(tx+tailH*0.4,by+bh);
+  ctx.lineTo(tx,by+bh+tailH);
+  ctx.lineTo(tx-tailH*0.4,by+bh);
+  ctx.lineTo(bx+r3,by+bh);
+  ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-r3);
+  ctx.lineTo(bx,by+r3);
+  ctx.quadraticCurveTo(bx,by,bx+r3,by);
+  ctx.closePath();
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  ctx.fill();
+  ctx.strokeStyle=color||'#c8a84b';
+  ctx.lineWidth=1.5/scale;
+  ctx.stroke();
+
+  // Text
+  ctx.fillStyle='#111';
+  ctx.textAlign='left';
+  ctx.textBaseline='top';
+  lines.forEach(function(l,i){ctx.fillText(l,bx+pad,by+pad+i*lineH);});
+  ctx.restore();
+}
+
+function findTokenForPlayer(who){
+  for(var id in tokens){
+    var t=tokens[id];
+    if(t.playerOwner===who||t.addedBy===who) return id;
+  }
+  return null;
+}
+
+function showBubble(tokenId, text, color){
+  if(!tokenId) return;
+  if(bubbleTimers[tokenId]) clearTimeout(bubbleTimers[tokenId]);
+  tokenBubbles[tokenId]={text:text,expires:Date.now()+BUBBLE_DURATION,color:color};
+  bubbleTimers[tokenId]=setTimeout(function(){
+    delete tokenBubbles[tokenId];
+    delete bubbleTimers[tokenId];
+    draw();
+  },BUBBLE_DURATION);
+  // Animate fade in last 800ms
+  startBubbleFade(tokenId);
+  draw();
+}
+
+function startBubbleFade(tokenId){
+  var fadeStart=Date.now()+BUBBLE_DURATION-800;
+  function tick(){
+    if(!tokenBubbles[tokenId]) return;
+    if(Date.now()>=fadeStart){ draw(); }
+    if(Date.now()<tokenBubbles[tokenId].expires+100) requestAnimationFrame(tick);
+  }
+  setTimeout(function(){ requestAnimationFrame(tick); }, BUBBLE_DURATION-900);
+}
+
 let menuOpen=false;
 
 window.toggleMenu=function(e){
