@@ -5667,21 +5667,9 @@ function playAudioUrl(layer, url, title, isLocal){
   try{ el.volume = vol; }catch(e){}
 
   el.play().then(function(){
-    // Connect through Web Audio GainNode for iOS volume control
-    try{
-      var ctx = getAudioCtx();
-      if(ctx.state==='suspended') ctx.resume();
-      // Disconnect old source
-      if(audioSources[layer]){ try{audioSources[layer].disconnect();}catch(e){} }
-      var src = ctx.createMediaElementSource(el);
-      var gain = ctx.createGain();
-      gain.gain.value = vol;
-      src.connect(gain);
-      gain.connect(ctx.destination);
-      gainNodes[layer] = gain;
-      audioSources[layer] = src;
-    } catch(e){
-      // Web Audio not available — fall back to .volume only
+    ensureAudioConnected(layer);
+    if(gainNodes[layer]){
+      try{ gainNodes[layer].gain.setTargetAtTime(vol,getAudioCtx().currentTime,0.01); }catch(e){}
     }
   }).catch(function(){ updateAudioUI(layer,title,false); });
 
@@ -5750,25 +5738,42 @@ window.stopAudio = function(layer){
 var audioCtx = null;
 var gainNodes = {amb: null, mus: null};
 var audioSources = {amb: null, mus: null};
+var audioConnected = {amb: false, mus: false}; // MediaElementSource can only be created once
 
 function getAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   return audioCtx;
 }
 
+// Connect layer to Web Audio ONCE — subsequent calls reuse existing gain node
+function ensureAudioConnected(layer){
+  if(audioConnected[layer]) return;
+  try{
+    var ctx=getAudioCtx();
+    if(ctx.state==='suspended') ctx.resume();
+    var src=ctx.createMediaElementSource(audioEls[layer]);
+    var gain=ctx.createGain();
+    var vol=(window._audioVolumes&&window._audioVolumes[layer]!==undefined)
+      ?window._audioVolumes[layer]:(layer==='amb'?0.4:0.3);
+    gain.gain.value=vol;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    gainNodes[layer]=gain;
+    audioSources[layer]=src;
+    audioConnected[layer]=true;
+  }catch(e){}
+}
+
 window.setVolume = function(layer, val){
   var v = parseFloat(val)/100;
-  // Try .volume first (works on desktop)
-  if(audioEls[layer]){
-    try{ audioEls[layer].volume = v; } catch(e){}
-  }
-  // Also try GainNode (works on iOS)
-  if(gainNodes[layer]){
-    gainNodes[layer].gain.setTargetAtTime(v, getAudioCtx().currentTime, 0.01);
-  }
-  // Store for next playback
   if(!window._audioVolumes) window._audioVolumes={};
   window._audioVolumes[layer] = v;
+  // Desktop: .volume property
+  try{ if(audioEls[layer]) audioEls[layer].volume = v; }catch(e){}
+  // iOS: GainNode
+  if(gainNodes[layer]){
+    try{ gainNodes[layer].gain.setTargetAtTime(v, getAudioCtx().currentTime, 0.01); }catch(e){}
+  }
 };
 
 window.setSfxVolume = function(val){
