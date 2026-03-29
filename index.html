@@ -939,12 +939,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         <div style="margin-bottom:6px">
           <div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:3px">🌲 AMBIENTE</div>
           <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px" id="amb_presets">
-            <button class="audio-preset" onclick="searchAudio("amb","tavern ambience")">🍺 Taberna</button>
-            <button class="audio-preset" onclick="searchAudio("amb","dungeon ambience")">🏰 Mazorra</button>
-            <button class="audio-preset" onclick="searchAudio("amb","forest nature")">🌲 Bosque</button>
-            <button class="audio-preset" onclick="searchAudio("amb","rain storm")">🌧 Lluvia</button>
-            <button class="audio-preset" onclick="searchAudio("amb","cave dripping")">🕳 Cueva</button>
-            <button class="audio-preset" onclick="searchAudio("amb","ocean waves")">🌊 Mar</button>
+            <button class="audio-preset" onclick="searchAudio('amb','tavern ambience')">🍺 Taberna</button>
+            <button class="audio-preset" onclick="searchAudio('amb','dungeon ambience')">🏰 Mazorra</button>
+            <button class="audio-preset" onclick="searchAudio('amb','forest nature')">🌲 Bosque</button>
+            <button class="audio-preset" onclick="searchAudio('amb','rain storm')">🌧 Lluvia</button>
+            <button class="audio-preset" onclick="searchAudio('amb','cave dripping')">🕳 Cueva</button>
+            <button class="audio-preset" onclick="searchAudio('amb','ocean waves')">🌊 Mar</button>
           </div>
           <div style="display:flex;gap:3px;align-items:center">
             <input id="amb_search" placeholder="Buscar..." style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:.72rem;font-family:var(--font)" onkeydown="if(event.key==='Enter')searchAudio('amb',this.value)">
@@ -965,11 +965,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         <div style="border-top:1px solid var(--border);padding-top:6px">
           <div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:3px">🎶 MÚSICA</div>
           <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px">
-            <button class="audio-preset" onclick="searchAudio("mus","epic battle music")">⚔ Batalla</button>
-            <button class="audio-preset" onclick="searchAudio("mus","fantasy rpg music")">🏰 Épica</button>
-            <button class="audio-preset" onclick="searchAudio("mus","mysterious ambient music")">🌙 Misterio</button>
-            <button class="audio-preset" onclick="searchAudio("mus","sad emotional music")">😢 Drama</button>
-            <button class="audio-preset" onclick="searchAudio("mus","tavern folk music")">🎻 Festiva</button>
+            <button class="audio-preset" onclick="searchAudio('mus','epic battle music')">⚔ Batalla</button>
+            <button class="audio-preset" onclick="searchAudio('mus','fantasy rpg music')">🏰 Épica</button>
+            <button class="audio-preset" onclick="searchAudio('mus','mysterious ambient music')">🌙 Misterio</button>
+            <button class="audio-preset" onclick="searchAudio('mus','sad emotional music')">😢 Drama</button>
+            <button class="audio-preset" onclick="searchAudio('mus','tavern folk music')">🎻 Festiva</button>
           </div>
           <div style="display:flex;gap:3px;align-items:center">
             <input id="mus_search" placeholder="Buscar..." style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:.72rem;font-family:var(--font)" onkeydown="if(event.key==='Enter')searchAudio('mus',this.value)">
@@ -5610,8 +5610,7 @@ function subscribeAudio(){
 window.searchAudio = async function(layer, query){
   if(!query||!query.trim()) return;
   var resultsEl = document.getElementById(layer+'_results');
-  if(!resultsEl) return;
-  resultsEl.innerHTML = '<div style="font-size:.68rem;color:var(--text3);padding:4px">Buscando...</div>';
+  if(resultsEl) resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--text3);padding:4px">🔍 Buscando...</div>';
   try {
     var url = 'https://freesound.org/apiv2/search/text/'
       +'?query='+encodeURIComponent(query)
@@ -5621,22 +5620,32 @@ window.searchAudio = async function(layer, query){
     var res = await fetch(url);
     var data = await res.json();
     if(!data.results||!data.results.length){
-      resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--text3);padding:4px">Sin resultados</div>';
+      if(resultsEl) resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--text3);padding:4px">Sin resultados</div>';
       return;
     }
-    resultsEl.innerHTML = data.results.map(function(s){
-      var dur=Math.round(s.duration);
-      var durStr=Math.floor(dur/60)+':'+(dur%60<10?'0':'')+dur%60;
-      var previewUrl=s.previews['preview-hq-mp3']||s.previews['preview-lq-mp3'];
-      var safeName=s.name.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
-      return '<div class="audio-result" onclick="selectAudio(\''+layer+'\',\''+previewUrl+'\',\''+safeName+'\')">'
-        +'<span>▶</span>'
-        +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>'
-        +'<span class="ar-dur">'+durStr+'</span>'
-        +'</div>';
-    }).join('');
+
+    // Auto-play best result immediately
+    var best=data.results[0];
+    var bestUrl=best.previews['preview-hq-mp3']||best.previews['preview-lq-mp3'];
+    selectAudio(layer, bestUrl, best.name);
+
+    // Show alternatives (results 2-6) so DM can pick another
+    if(resultsEl && data.results.length>1){
+      resultsEl.innerHTML='<div style="font-size:.65rem;color:var(--text3);padding:2px 4px">Alternativas:</div>'
+        +data.results.slice(1).map(function(s){
+          var dur=Math.round(s.duration);
+          var durStr=Math.floor(dur/60)+':'+(dur%60<10?'0':'')+dur%60;
+          var pu=s.previews['preview-hq-mp3']||s.previews['preview-lq-mp3'];
+          var safeName=s.name.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+          return '<div class="audio-result" onclick="selectAudio(\''+layer+'\',\''+pu+'\',\''+safeName+'\')">'
+            +'<span>▶</span>'
+            +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>'
+            +'<span class="ar-dur">'+durStr+'</span>'
+            +'</div>';
+        }).join('');
+    }
   } catch(err){
-    resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--red);padding:4px">Error: '+err.message+'</div>';
+    if(resultsEl) resultsEl.innerHTML='<div style="font-size:.68rem;color:var(--red);padding:4px">Error: '+err.message+'</div>';
   }
 };
 
