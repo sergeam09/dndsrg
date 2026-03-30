@@ -6458,8 +6458,12 @@ window.closeAreaSelector=function(){
 };
 
 window.placeArea=function(shape, ft){
+  console.log('placeArea called:', shape, ft, 'areaTokenId=', areaTokenId);
   closeAreaSelector();
-  if(!areaTokenId||!tokens[areaTokenId]) return;
+  if(!areaTokenId||!tokens[areaTokenId]){
+    console.log('placeArea ABORT: areaTokenId=',areaTokenId,'tokens=',tokens);
+    return;
+  }
   var tok=tokens[areaTokenId];
   var area={
     shape:shape, ft:ft,
@@ -6474,6 +6478,7 @@ window.placeArea=function(shape, ft){
   areaPlacing=true;
   areaPlacingId=areaTokenId;
   cv.style.cursor='crosshair';
+  console.log('PLACING MODE ON — areaPlacingId=',areaPlacingId,'area=',activeAreas[areaPlacingId]);
   // Animate pulsing ring while placing
   function placingTick(){
     if(!areaPlacing) return;
