@@ -699,7 +699,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div id="cdot"></div>
     <span id="role_badge" style="font-size:.68rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
     <span id="pcount" style="color:var(--text2);font-size:.7rem"></span>
-    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.3</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
+    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.4</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
     <button class="hbtn" id="btn_fullscreen" onclick="toggleFullscreen()" style="padding:3px 8px;font-size:.8rem" title="Pantalla completa">⛶</button>
     <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" style="padding:3px 8px">☰</button>
     <div id="dropdown_menu" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:200px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
@@ -6379,7 +6379,7 @@ window.tamAction=function(action){
   }
   else if(action==='cleararea'){
     delete activeAreas[tamTokenId];
-    update(r('areas/'+tamTokenId),null);
+    remove(r('areas/'+tamTokenId));
     draw();
   }
 };
@@ -6398,12 +6398,13 @@ window.placeArea=function(shape, ft){
   closeAreaSelector();
   if(!areaTokenId||!tokens[areaTokenId]) return;
   var tok=tokens[areaTokenId];
-  // Place area offset from token so it's visible
-  var offset = (ft/5)*0.5 + 1;
+  // Place area clearly offset from token center
+  var ftCells=(ft/5)||1;
+  var offsetX = ftCells * 0.6 + 1.5; // push right by radius + margin
   var area={
     shape:shape, ft:ft,
-    x:tok.x+0.5+offset, y:tok.y+0.5,
-    angle:0,
+    x:tok.x+0.5+offsetX, y:tok.y+0.5,
+    angle: (shape==='cone'||shape==='line') ? 90 : 0,
     color:AREA_COLORS[shape]||'rgba(255,100,100,0.25)',
     stroke:AREA_STROKE[shape]||'rgba(255,100,100,0.8)',
     owner:myName, tokId:areaTokenId
@@ -6426,7 +6427,7 @@ function subscribeAreas(){
     if(s.val()) activeAreas[s.key]=s.val(); draw();
   });
   onChildChanged(r('areas'),function(s){
-    if(s.val()) activeAreas[s.key]=s.val(); else delete activeAreas[s.key]; draw();
+    var v=s.val(); if(v) activeAreas[s.key]=v; else delete activeAreas[s.key]; draw();
   });
   onChildRemoved(r('areas'),function(s){
     delete activeAreas[s.key]; draw();
