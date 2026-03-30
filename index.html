@@ -3827,6 +3827,7 @@ function cvPos(e){
 function cellOf(e){const p=cvPos(e);return{c:Math.floor(p.x/CELL),r:Math.floor(p.y/CELL),x:p.x,y:p.y};}
 
 function mdown(e){
+  if(e.button!==0) return; // only left-click — right-click goes to contextmenu
   const p=cvPos(e), cl=cellOf(e);
 
   // PLACING MODE — click to fix area at cursor position
@@ -3926,6 +3927,7 @@ function mdown(e){
 }
 
 function mmove(e){
+  if(e.buttons===2) return; // ignore right-click drag
   const p=cvPos(e), cl=cellOf(e);
 
   // PLACING MODE — area follows cursor until click
@@ -4041,6 +4043,7 @@ function mmove(e){
 }
 
 function mup(e){
+  if(e.button!==0) return; // only left-click releases
   // Release area drag
   if(areaDragId){
     var a=activeAreas[areaDragId];
