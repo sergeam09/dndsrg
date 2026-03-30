@@ -3288,7 +3288,7 @@ function subscribe(){
   });
 
   // Chat
-  onChildAdded(r('chat'),s=>appendMsg(s.val()));
+  onChildAdded(r('chat'),s=>{var m=s.val();if(m&&m.ts&&m.ts<enterTs)return;appendMsg(m);});
 }
 
 // ── CANVAS ─────────────────────────────────────────────────
