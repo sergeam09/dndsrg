@@ -3508,6 +3508,21 @@ function tmove(e){
     const dx=t.clientX-touch1.clientX, dy=t.clientY-touch1.clientY;
     if(Math.sqrt(dx*dx+dy*dy)>10){ tapMoved=true; clearTimeout(tapTimer); }
 
+    // PLACING MODE — area follows finger
+    if(areaPlacing && areaPlacingId && activeAreas[areaPlacingId]){
+      var a=activeAreas[areaPlacingId];
+      a.x=p.x/CELL; a.y=p.y/CELL;
+      if(a.shape==='cone'||a.shape==='line'){
+        var tok3=tokens[areaPlacingId];
+        if(tok3){
+          var dx3=p.x/CELL-(tok3.x+0.5), dy3=p.y/CELL-(tok3.y+0.5);
+          if(Math.abs(dx3)>0.2||Math.abs(dy3)>0.2)
+            a.angle=Math.atan2(dy3,dx3)*180/Math.PI+90;
+        }
+      }
+      draw(); return;
+    }
+
     if(dragging&&dragId){
       const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
       const nr=Math.max(0,Math.floor((p.y-doy)/CELL));
@@ -3537,6 +3552,24 @@ function tmove(e){
 function tend(e){
   e.preventDefault();
   clearTimeout(tapTimer);
+
+  // PLACING MODE — tap to fix area on mobile
+  if(areaPlacing && areaPlacingId && !tapMoved){
+    var t=e.changedTouches[0];
+    if(t){
+      var pt=touchPos(t);
+      var a=activeAreas[areaPlacingId];
+      if(a){
+        a.x=pt.x/CELL; a.y=pt.y/CELL;
+        update(r('areas/'+areaPlacingId), a);
+      }
+    }
+    areaPlacing=false; areaPlacingId=null;
+    cv.style.cursor='';
+    draw();
+    toast('✓ Área fijada');
+    return;
+  }
 
   // Release prop pinch
   if(propPinching && selPropId){
@@ -3795,6 +3828,21 @@ function cellOf(e){const p=cvPos(e);return{c:Math.floor(p.x/CELL),r:Math.floor(p
 
 function mdown(e){
   const p=cvPos(e), cl=cellOf(e);
+
+  // PLACING MODE — click to fix area at cursor position
+  if(areaPlacing && areaPlacingId){
+    var a=activeAreas[areaPlacingId];
+    if(a){
+      a.x=p.x/CELL; a.y=p.y/CELL;
+      update(r('areas/'+areaPlacingId), a);
+    }
+    areaPlacing=false; areaPlacingId=null;
+    cv.style.cursor='';
+    draw();
+    toast('✓ Área fijada — rueda del mouse para rotar');
+    return;
+  }
+
   if(tool==='draw'){
     isDrawing=true;
     currentStroke={color:drawColor,size:drawSize,points:[{x:p.x,y:p.y}]};
@@ -3879,6 +3927,22 @@ function mdown(e){
 
 function mmove(e){
   const p=cvPos(e), cl=cellOf(e);
+
+  // PLACING MODE — area follows cursor until click
+  if(areaPlacing && areaPlacingId && activeAreas[areaPlacingId]){
+    var a=activeAreas[areaPlacingId];
+    a.x=p.x/CELL; a.y=p.y/CELL;
+    if(a.shape==='cone'||a.shape==='line'){
+      var tok2=tokens[areaPlacingId];
+      if(tok2){
+        var dx2=p.x/CELL-(tok2.x+0.5);
+        var dy2=p.y/CELL-(tok2.y+0.5);
+        if(Math.abs(dx2)>0.2||Math.abs(dy2)>0.2)
+          a.angle=Math.atan2(dy2,dx2)*180/Math.PI+90;
+      }
+    }
+    draw(); return;
+  }
 
   // Area drag — also auto-rotate directional shapes
   if(areaDragId && activeAreas[areaDragId]){
@@ -6291,6 +6355,8 @@ function subscribeSpells(){
 var activeAreas = {}; // tokenId -> {shape,ft,x,y,angle,color,owner}
 var areaTokenId = null; // which token is being edited
 var areaDragging = false;
+var areaPlacing = false;  // true while area follows cursor before being fixed
+var areaPlacingId = null; // tokenId of area being placed
 var areaRotating = false;
 var areaRotStart = 0;
 var areaRotStartAngle = 0;
@@ -6401,10 +6467,13 @@ window.placeArea=function(shape, ft){
     owner:myName, tokId:areaTokenId
   };
   activeAreas[areaTokenId]=area;
-  // Push to Firebase for all to see
-  update(r('areas/'+areaTokenId), area);
+  // Enter placing mode — area follows cursor until click fixes it
+  areaPlacing=true;
+  areaPlacingId=areaTokenId;
+  // Change cursor to crosshair
+  cv.style.cursor='crosshair';
   draw();
-  toast('🔴 '+shape+' '+ft+'ft — arrastra para posicionar');
+  toast('🔴 Mueve el cursor y haz click para fijar el área');
 };
 
 window.placeAreaCustom=function(){
@@ -7089,7 +7158,16 @@ window.closeModal=function(id){document.getElementById(id).classList.remove('ope
 })();
 
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape') document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'));
+  if(e.key==='Escape'){
+    // Cancel area placing mode
+    if(areaPlacing){
+      if(areaPlacingId) delete activeAreas[areaPlacingId];
+      areaPlacing=false; areaPlacingId=null;
+      cv.style.cursor='';
+      draw();
+    }
+    document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'));
+  }
 });
 
 // Check URL on init
