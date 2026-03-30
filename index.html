@@ -3424,6 +3424,19 @@ function tstart(e){
     clearTimeout(tapTimer);
     touch1=touches[0]; touch2=touches[1];
 
+    // Check if fingers are near an active area → rotate it
+    var p1t=touchPos(touch1), p2t=touchPos(touch2);
+    var midX=(p1t.x+p2t.x)/2, midY=(p1t.y+p2t.y)/2;
+    var ha2=hitArea(midX,midY)||hitArea(p1t.x,p1t.y)||hitArea(p2t.x,p2t.y);
+    if(ha2 && activeAreas[ha2]){
+      areaDragId=ha2;
+      areaPinch0={
+        angle: Math.atan2(touch2.clientY-touch1.clientY, touch2.clientX-touch1.clientX)*180/Math.PI,
+        areaAngle: activeAreas[ha2].angle||0
+      };
+      return;
+    }
+
     // Check if both fingers are on the selected prop → prop pinch
     if(isDM && selPropId && !props[selPropId]?.locked){
       var p1=touchPos(touch1), p2=touchPos(touch2);
@@ -3453,6 +3466,14 @@ function tmove(e){
 
   if(touches.length===2 && touch1 && touch2){
     const t1=touches[0], t2=touches[1];
+
+    // Area two-finger rotation
+    if(areaPinch0 && areaDragId && activeAreas[areaDragId]){
+      var newAng=Math.atan2(t2.clientY-t1.clientY, t2.clientX-t1.clientX)*180/Math.PI;
+      var delta=newAng-areaPinch0.angle;
+      activeAreas[areaDragId].angle=areaPinch0.areaAngle+delta;
+      draw(); return;
+    }
 
     // Prop pinch (scale + rotate)
     if(propPinching && selPropId && props[selPropId]){      var prop=props[selPropId];
@@ -3859,10 +3880,23 @@ function mdown(e){
 function mmove(e){
   const p=cvPos(e), cl=cellOf(e);
 
-  // Area drag
+  // Area drag — also auto-rotate directional shapes
   if(areaDragId && activeAreas[areaDragId]){
-    activeAreas[areaDragId].x=(p.x-areaDragOx)/CELL;
-    activeAreas[areaDragId].y=(p.y-areaDragOy)/CELL;
+    var a=activeAreas[areaDragId];
+    var newX=(p.x-areaDragOx)/CELL;
+    var newY=(p.y-areaDragOy)/CELL;
+    // For cone/line: auto-angle toward drag direction from token origin
+    if(a.shape==='cone'||a.shape==='line'){
+      var tok=tokens[areaDragId];
+      if(tok){
+        var dx=newX-(tok.x+0.5);
+        var dy=newY-(tok.y+0.5);
+        if(Math.abs(dx)>0.3||Math.abs(dy)>0.3){
+          a.angle=Math.atan2(dy,dx)*180/Math.PI+90;
+        }
+      }
+    }
+    a.x=newX; a.y=newY;
     draw(); return;
   }
 
@@ -3946,8 +3980,8 @@ function mup(e){
   // Release area drag
   if(areaDragId){
     var a=activeAreas[areaDragId];
-    if(a) update(r('areas/'+areaDragId),{x:a.x,y:a.y});
-    areaDragId=null; return;
+    if(a) update(r('areas/'+areaDragId),{x:a.x,y:a.y,angle:a.angle||0});
+    areaDragId=null; areaPinch0=null; return;
   }
 
   // Release prop handle
@@ -4023,6 +4057,19 @@ function mdbl(e){
 
 function mwheel(e){
   e.preventDefault();
+  const p=cvPos(e);
+
+  // If hovering an area → rotate it instead of zooming
+  var ha=hitArea(p.x,p.y);
+  if(ha && activeAreas[ha]){
+    var a=activeAreas[ha];
+    var delta=e.deltaY>0?15:-15; // 15° per scroll step
+    a.angle=(a.angle||0)+delta;
+    update(r('areas/'+ha),{angle:a.angle});
+    draw(); return;
+  }
+
+  // Otherwise zoom
   const d=e.deltaY>0?0.88:1.14;
   const rc=cv.getBoundingClientRect();
   const mx=e.clientX-rc.left, my=e.clientY-rc.top;
@@ -5038,6 +5085,7 @@ var propHandle = null; // {type:'corner'|'rotate', corner:0-3, startX,startY,sta
 
 // Prop pinch (touch)
 var propPinching = false;
+var areaPinch0 = null; // {angle, areaAngle} for two-finger area rotation
 var propPinch0 = {dist:0, angle:0, w:1, h:1, rot:0}; // initial state when pinch started
 
 window.openAddProp = function(){
@@ -6443,13 +6491,14 @@ function drawAreas(){
 
     cx.setLineDash([]);
 
-    // Range label (not for personal/touch)
+    // Range label
     if(area.ft>0){
       var labelR=r4+8/scale;
       cx.fillStyle=area.stroke;
       cx.font='bold '+(Math.max(9,CELL*0.14)/scale)+'px sans-serif';
       cx.textAlign='center'; cx.textBaseline='middle';
-      cx.fillText(area.ft+'ft', 0, -labelR);
+      var shapeLabel={'sphere':'●','cone':'◢','line':'▬','cube':'■'}[area.shape]||'';
+      cx.fillText(shapeLabel+' '+area.ft+'ft', 0, -labelR);
     }
 
     // Selected indicator (own area)
