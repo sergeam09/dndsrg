@@ -699,7 +699,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div id="cdot"></div>
     <span id="role_badge" style="font-size:.68rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
     <span id="pcount" style="color:var(--text2);font-size:.7rem"></span>
-    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.4</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
+    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.6</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
     <button class="hbtn" id="btn_fullscreen" onclick="toggleFullscreen()" style="padding:3px 8px;font-size:.8rem" title="Pantalla completa">⛶</button>
     <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" style="padding:3px 8px">☰</button>
     <div id="dropdown_menu" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:200px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
@@ -1120,11 +1120,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 <!-- TOKEN ACTION MENU (right-click / long-press) -->
 <div id="tok_action_menu" style="display:none;pointer-events:none;position:fixed;background:var(--bg2);border:1px solid var(--gold);border-radius:8px;min-width:180px;z-index:600;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
   <div id="tam_title" style="padding:7px 12px;font-size:.7rem;color:var(--gold2);letter-spacing:1px;border-bottom:1px solid var(--border);font-weight:bold"></div>
-  <div class="tam-item" onclick="tamAction('edit')">✏ Editar token</div>
-  <div class="tam-item" id="tam_hp" onclick="tamAction('hp')">💔 HP rápido</div>
-  <div class="tam-item" onclick="tamAction('area')">🔴 Área de efecto</div>
-  <div class="tam-item" onclick="tamAction('spell')">✨ Efecto mágico</div>
-  <div class="tam-item" id="tam_clear_area" onclick="tamAction('cleararea')" style="display:none">✕ Quitar área</div>
+  <div class="tam-item" onclick="tokenMenuAction('edit')">✏ Editar token</div>
+  <div class="tam-item" id="tam_hp" onclick="tokenMenuAction('hp')">💔 HP rápido</div>
+  <div class="tam-item" onclick="tokenMenuAction('area')">🔴 Área de efecto</div>
+  <div class="tam-item" onclick="tokenMenuAction('spell')">✨ Efecto mágico</div>
+  <div class="tam-item" id="tam_clear_area" onclick="tokenMenuAction('cleararea')" style="display:none">✕ Quitar área</div>
   <div class="tam-item" style="border-top:1px solid var(--border);color:var(--text3);font-size:.72rem" onclick="closeTokMenu()">Cancelar</div>
 </div>
 
@@ -6355,7 +6355,7 @@ window.closeTokMenu=function(){
   if(menu){ menu.style.display='none'; menu.style.pointerEvents='none'; }
 };
 
-window.tamAction=function(action){
+window.tamAction=window.tokenMenuAction=function(action){
   closeTokMenu();
   if(action==='edit'){ openEdit(tamTokenId); }
   else if(action==='hp'){
