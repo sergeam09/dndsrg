@@ -67,10 +67,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .hbtn.danger{border-color:var(--red);color:var(--red)}
 
 /* LAYOUT */
-#main{display:flex;flex:1;overflow:hidden;min-height:0}
+#main{display:flex;flex:1;overflow:hidden;min-height:0;height:0}
 
 /* CANVAS */
-#cwrap{flex:1;position:relative;overflow:hidden;background:#080a0f;cursor:default}
+#cwrap{flex:1;position:relative;overflow:hidden;background:#080a0f;cursor:default;min-width:100px;min-height:200px}
 #vtt{position:absolute;top:0;left:0;touch-action:none}
 
 /* SIDEBAR */
@@ -179,6 +179,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .audio-result{padding:4px 6px;font-size:.7rem;color:var(--text2);cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:5px;transition:background .1s}
 .audio-result:hover{background:var(--bg3)}
 .audio-result .ar-dur{font-size:.62rem;color:var(--text3);margin-left:auto;flex-shrink:0}
+
+/* Token action menu */
+.tam-item{padding:9px 14px;font-size:.8rem;color:var(--text2);cursor:pointer;transition:background .1s}
+.tam-item:hover{background:var(--bg3);color:var(--text)}
+.area-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:5px;padding:6px 4px;cursor:pointer;font-size:.72rem;font-family:var(--font);transition:all .1s;text-align:center}
+.area-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,.08)}
+.area-btn:active{transform:scale(0.96)}
 
 /* Conditions */
 .cond-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .1s;user-select:none}
@@ -717,33 +724,33 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <div id="toolbar" style="display:none">
 
     <!-- GRUPO: Navegación -->
-    <button class="tbtn active" id="tb_select" onclick="setTool("select")" title="Mover tokens y props">
+    <button class="tbtn active" id="tb_select" onclick="setTool('select')" title="Mover tokens y props">
       ↖<div class="tlabel">Mover</div>
     </button>
-    <button class="tbtn" id="tb_measure" onclick="setTool("measure")" title="Medir distancia">
+    <button class="tbtn" id="tb_measure" onclick="setTool('measure')" title="Medir distancia">
       📏<div class="tlabel">Medir</div>
     </button>
-    <button class="tbtn" id="tb_laser" onclick="setTool("laser")" title="Apuntador láser">
+    <button class="tbtn" id="tb_laser" onclick="setTool('laser')" title="Apuntador láser">
       🔴<div class="tlabel">Láser</div>
     </button>
 
     <div class="tb-sep dm-only"></div>
 
     <!-- GRUPO: Fog (DM) -->
-    <button class="tbtn dm-only" id="tb_fog" onclick="setTool("fog")" title="Revelar niebla de guerra">
+    <button class="tbtn dm-only" id="tb_fog" onclick="setTool('fog')" title="Revelar niebla de guerra">
       🌫<div class="tlabel">Revelar</div>
     </button>
-    <button class="tbtn dm-only" id="tb_fogadd" onclick="setTool("fogadd")" title="Oscurecer zona">
+    <button class="tbtn dm-only" id="tb_fogadd" onclick="setTool('fogadd')" title="Oscurecer zona">
       🌑<div class="tlabel">Cubrir</div>
     </button>
 
     <div class="tb-sep dm-only"></div>
 
     <!-- GRUPO: Dibujo (DM) -->
-    <button class="tbtn dm-only" id="tb_draw" onclick="setTool("draw")" title="Dibujar sobre el mapa">
+    <button class="tbtn dm-only" id="tb_draw" onclick="setTool('draw')" title="Dibujar sobre el mapa">
       ✏<div class="tlabel">Dibujar</div>
     </button>
-    <button class="tbtn dm-only" id="tb_erase" onclick="setTool("erase")" title="Borrar trazos">
+    <button class="tbtn dm-only" id="tb_erase" onclick="setTool('erase')" title="Borrar trazos">
       ⬜<div class="tlabel">Borrar</div>
     </button>
     <button class="tbtn dm-only" onclick="clearDrawing()" title="Limpiar todo el dibujo">
@@ -1108,6 +1115,52 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     </div>
   </div>
 
+</div>
+
+<!-- TOKEN ACTION MENU (right-click / long-press) -->
+<div id="tok_action_menu" style="display:none;pointer-events:none;position:fixed;background:var(--bg2);border:1px solid var(--gold);border-radius:8px;min-width:180px;z-index:600;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
+  <div id="tam_title" style="padding:7px 12px;font-size:.7rem;color:var(--gold2);letter-spacing:1px;border-bottom:1px solid var(--border);font-weight:bold"></div>
+  <div class="tam-item" onclick="tamAction('edit')">✏ Editar token</div>
+  <div class="tam-item" id="tam_hp" onclick="tamAction('hp')">💔 HP rápido</div>
+  <div class="tam-item" onclick="tamAction('area')">🔴 Área de efecto</div>
+  <div class="tam-item" onclick="tamAction('spell')">✨ Efecto mágico</div>
+  <div class="tam-item" id="tam_clear_area" onclick="tamAction('cleararea')" style="display:none">✕ Quitar área</div>
+  <div class="tam-item" style="border-top:1px solid var(--border);color:var(--text3);font-size:.72rem" onclick="closeTokMenu()">Cancelar</div>
+</div>
+
+<!-- AREA OF EFFECT SELECTOR -->
+<div id="area_selector" style="display:none;pointer-events:none;position:fixed;background:var(--bg2);border:1px solid var(--gold);border-radius:8px;min-width:220px;z-index:600;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
+  <div style="padding:7px 12px;font-size:.7rem;color:var(--gold2);letter-spacing:1px;border-bottom:1px solid var(--border)">🔴 ÁREA DE EFECTO</div>
+
+  <div style="padding:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <button class="area-btn" onclick="placeArea('sphere',20)" title="Esfera 20ft">○ Esfera 20ft</button>
+    <button class="area-btn" onclick="placeArea('sphere',10)" title="Esfera 10ft">○ Esfera 10ft</button>
+    <button class="area-btn" onclick="placeArea('cone',60)" title="Cono 60ft">△ Cono 60ft</button>
+    <button class="area-btn" onclick="placeArea('cone',30)" title="Cono 30ft">△ Cono 30ft</button>
+    <button class="area-btn" onclick="placeArea('line',60)" title="Línea 60ft">— Línea 60ft</button>
+    <button class="area-btn" onclick="placeArea('line',30)" title="Línea 30ft">— Línea 30ft</button>
+    <button class="area-btn" onclick="placeArea('cube',15)" title="Cubo 15ft">□ Cubo 15ft</button>
+    <button class="area-btn" onclick="placeArea('cube',10)" title="Cubo 10ft">□ Cubo 10ft</button>
+    <button class="area-btn" onclick="placeArea('personal',0)" title="Personal" style="grid-column:1/3">👤 Personal</button>
+    <button class="area-btn" onclick="placeArea('touch',5)" title="Al toque" style="grid-column:1/3">👆 Al toque</button>
+  </div>
+
+  <div style="padding:4px 12px 8px;display:flex;gap:6px;align-items:center">
+    <span style="font-size:.68rem;color:var(--text3)">ft:</span>
+    <input id="area_custom_ft" type="number" value="20" min="5" max="120" step="5"
+      style="width:55px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:.8rem;text-align:center">
+    <select id="area_custom_shape" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px;font-size:.75rem;font-family:var(--font)">
+      <option value="sphere">Esfera</option>
+      <option value="cone">Cono</option>
+      <option value="line">Línea</option>
+      <option value="cube">Cubo</option>
+    </select>
+    <button class="area-btn" onclick="placeAreaCustom()" style="padding:4px 8px">▶</button>
+  </div>
+
+  <div style="border-top:1px solid var(--border);padding:5px 12px;text-align:right">
+    <button onclick="closeAreaSelector()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.78rem">Cancelar</button>
+  </div>
 </div>
 
 <!-- ADD PROP MODAL -->
@@ -2979,6 +3032,8 @@ function enter(){
   rb.classList.add('show');
   applyRole();
   initCanvas();
+  // Ensure canvas is sized correctly even without a map
+  setTimeout(function(){ if(cv) { var w=document.getElementById('cwrap'); cv.width=w.clientWidth||window.innerWidth; cv.height=w.clientHeight||500; draw(); }}, 200);
   subscribe();
   set(r('players/'+myId),{name:myName,isDM,joined:serverTimestamp()});
   sysMsg(myName+' entró'+(isDM?' como DM 🎭':' como jugador 👤'));
@@ -3203,6 +3258,12 @@ function subscribe(){
     }
   });
 
+  // Areas of effect
+  subscribeAreas();
+
+  // Spell effects
+  subscribeSpells();
+
   // Audio (all clients hear what DM plays)
   subscribeAudio();
   subscribeSfx();
@@ -3256,10 +3317,8 @@ function initCanvas(){
     const p=cvPos(e);
     const h=hitTok(p);
     if(h){
-      // Right click on token → quick HP
-      openQuickHp(h,e);
+      openTokenActionMenu(h, e.clientX, e.clientY);
     } else {
-      // Right click on empty → ping for everyone
       firePing(e);
     }
   });
@@ -3275,7 +3334,10 @@ function initCanvas(){
 
 function resize(){
   const w=document.getElementById('cwrap');
-  cv.width=w.clientWidth; cv.height=w.clientHeight; draw();
+  var ww=w.clientWidth||window.innerWidth;
+  var wh=w.clientHeight||window.innerHeight*0.7;
+  cv.width=ww; cv.height=wh;
+  draw();
 }
 
 // Touch state
@@ -3343,9 +3405,12 @@ function tstart(e){
         dragging=true; dragId=h;
         dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
       }
-      // Long press = edit
+      // Long press = token action menu (edit + area of effect + HP)
       tapTimer=setTimeout(()=>{
-        if(!tapMoved){ dragging=false; dragId=null; openEdit(h); }
+        if(!tapMoved){
+          dragging=false; dragId=null;
+          openTokenActionMenu(h, touch1.clientX, touch1.clientY);
+        }
       }, 600);
       draw(); renderToks();
     } else {
@@ -3390,8 +3455,7 @@ function tmove(e){
     const t1=touches[0], t2=touches[1];
 
     // Prop pinch (scale + rotate)
-    if(propPinching && selPropId && props[selPropId]){
-      var prop=props[selPropId];
+    if(propPinching && selPropId && props[selPropId]){      var prop=props[selPropId];
       var newDist=pinchDist(t1,t2);
       var newAngle=Math.atan2(t2.clientY-t1.clientY, t2.clientX-t1.clientX);
       var scaleRatio=newDist/propPinch0.dist;
@@ -3505,11 +3569,17 @@ function draw(){
   // Measure
   if(tool==='measure'&&ms&&me) drawMeasure();
 
+  // Areas of effect — below tokens
+  drawAreas();
+
   // Props (images) — below tokens, above map
   drawProps();
 
   // Tokens (including speech bubbles)
   Object.entries(tokens).forEach(([id,t])=>drawTok(id,t));
+
+  // Spell effects (particles) — on top of tokens
+  drawSpellEffects();
 
   // Drawing layer — on top of everything
   drawAllStrokes();
@@ -3720,6 +3790,16 @@ function mdown(e){
     pushLaser(sx,sy); resetLaserTimer(); return;
   }
   if(tool==='select'){
+    // Areas — check if clicking on one to drag
+    var ha=hitArea(p.x,p.y);
+    if(ha){
+      areaDragId=ha;
+      var a=activeAreas[ha];
+      areaDragOx=p.x-a.x*CELL;
+      areaDragOy=p.y-a.y*CELL;
+      return;
+    }
+
     // Props first (DM only, on top visually)
     if(isDM){
       // Check handles on selected prop first
@@ -3778,6 +3858,13 @@ function mdown(e){
 
 function mmove(e){
   const p=cvPos(e), cl=cellOf(e);
+
+  // Area drag
+  if(areaDragId && activeAreas[areaDragId]){
+    activeAreas[areaDragId].x=(p.x-areaDragOx)/CELL;
+    activeAreas[areaDragId].y=(p.y-areaDragOy)/CELL;
+    draw(); return;
+  }
 
   // Prop handle drag (corner scale or rotation)
   if(propHandle && selPropId){
@@ -3856,6 +3943,13 @@ function mmove(e){
 }
 
 function mup(e){
+  // Release area drag
+  if(areaDragId){
+    var a=activeAreas[areaDragId];
+    if(a) update(r('areas/'+areaDragId),{x:a.x,y:a.y});
+    areaDragId=null; return;
+  }
+
   // Release prop handle
   if(propHandle && selPropId){
     var prop=props[selPropId];
@@ -3902,20 +3996,23 @@ function mup(e){
 
 function mdbl(e){
   const p=cvPos(e);
-  // Props
+  // Props (DM only)
   if(isDM){
     const hp=hitProp(p.x,p.y);
     if(hp){selectProp(hp);return;}
   }
   const h=hitTok(p);
   if(h){
-    if(tokens[h]&&tokens[h].monsterData){
-      showTokenStatBlock(h);
+    if(isDM){
+      // DM: statblock for monsters, edit for custom tokens
+      if(tokens[h]&&tokens[h].monsterData) showTokenStatBlock(h);
+      else openEdit(h);
     } else {
-      openEdit(h);
+      // Player: show action menu
+      openTokenActionMenu(h, e.clientX, e.clientY);
     }
   } else {
-    // Double click on empty space = ping for everyone
+    // Double click on empty = ping
     if(tool==='select'){
       const rc=cv.getBoundingClientRect();
       const color=isDM?'#c8a84b':'#5bb3e8';
@@ -6003,7 +6100,391 @@ function showPlayerCharBtn(){
   var btn=document.getElementById('btn_mychar');
   if(btn) btn.style.display=isDM?'none':'flex';
 }
-// ── SPEECH BUBBLES ─────────────────────────────────────────
+// ── SPELL EFFECTS (Particles) ──────────────────────────────
+var spellEffects = [];
+var spellAnimFrame = null;
+
+var SPELL_TYPES = {
+  fire:    {colors:['#ff4400','#ff8800','#ffcc00','#ff2200'], label:'🔥 Fuego'},
+  ice:     {colors:['#88ddff','#aaeeff','#ffffff','#44aaff'], label:'❄ Hielo'},
+  lightning:{colors:['#ffff00','#ffffff','#aaaaff','#ffff88'], label:'⚡ Rayo'},
+  arcane:  {colors:['#cc44ff','#ff44ff','#8844ff','#ffffff'], label:'✨ Arcano'},
+  nature:  {colors:['#44ff44','#88ff44','#ffff44','#44cc44'], label:'🌿 Naturaleza'},
+  necrotic:{colors:['#44ff44','#004400','#000000','#228822'], label:'💀 Necrótico'},
+  radiant: {colors:['#ffffff','#ffffaa','#ffee44','#ffcc00'], label:'☀ Radiante'},
+  heal:    {colors:['#44ff88','#88ffcc','#ffffff','#44ffaa'], label:'💚 Curación'},
+};
+
+function spawnSpellEffect(tokenId, type){
+  var tok=tokens[tokenId]; if(!tok) return;
+  var def=SPELL_TYPES[type]||SPELL_TYPES.arcane;
+  var x=tok.x*CELL+CELL/2, y=tok.y*CELL+CELL/2;
+  var count=16;
+  for(var i=0;i<count;i++){
+    var angle=Math.random()*Math.PI*2;
+    var speed=(0.3+Math.random()*0.7)*CELL*0.08;
+    var life=0.5+Math.random()*0.7;
+    spellEffects.push({
+      x:x,y:y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      size:(0.08+Math.random()*0.15)*CELL,
+      color:def.colors[Math.floor(Math.random()*def.colors.length)],
+      life:life,maxLife:life,type:type,
+      spin:(Math.random()-0.5)*0.3,rot:Math.random()*Math.PI*2
+    });
+  }
+  // Central burst ring
+  spellEffects.push({x:x,y:y,vx:0,vy:0,size:0,maxSize:CELL*1.0,
+    color:def.colors[0],life:0.6,maxLife:0.6,isRing:true,type:type});
+  if(!spellAnimFrame) animateSpells();
+}
+
+function animateSpells(){
+  var hasActive=false;
+  var dt=0.016;
+  spellEffects=spellEffects.filter(function(p){
+    p.life-=dt;
+    if(p.life<=0) return false;
+    if(!p.isRing){
+      p.x+=p.vx; p.y+=p.vy;
+      p.vy+=CELL*0.001;
+      p.rot+=p.spin;
+      p.size*=0.96;
+    } else {
+      p.size=p.maxSize*(1-(p.life/p.maxLife));
+    }
+    hasActive=true;
+    return true;
+  });
+  if(hasActive){ draw(); spellAnimFrame=requestAnimationFrame(animateSpells); }
+  else { spellAnimFrame=null; draw(); }
+}
+
+function drawSpellEffects(){
+  if(!spellEffects.length) return;
+  spellEffects.forEach(function(p){
+    var alpha=Math.max(0,p.life/p.maxLife);
+    cx.save();
+    cx.globalAlpha=alpha;
+    if(p.isRing){
+      cx.beginPath();
+      cx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      cx.strokeStyle=p.color;
+      cx.lineWidth=3/scale;
+      cx.stroke();
+    } else if(p.type==='arcane'||p.type==='radiant'){
+      cx.translate(p.x,p.y); cx.rotate(p.rot);
+      cx.fillStyle=p.color;
+      cx.shadowColor=p.color; cx.shadowBlur=p.size*3;
+      cx.beginPath();
+      cx.moveTo(0,-p.size); cx.lineTo(p.size*0.25,0);
+      cx.lineTo(0,p.size); cx.lineTo(-p.size*0.25,0);
+      cx.closePath(); cx.fill();
+    } else if(p.type==='lightning'){
+      cx.translate(p.x,p.y); cx.rotate(p.rot);
+      cx.fillStyle=p.color;
+      cx.shadowColor=p.color; cx.shadowBlur=p.size*2;
+      cx.fillRect(-p.size*0.15,-p.size,p.size*0.3,p.size*2);
+    } else {
+      cx.beginPath(); cx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      cx.fillStyle=p.color;
+      cx.shadowColor=p.color; cx.shadowBlur=p.size*2;
+      cx.fill();
+    }
+    cx.shadowBlur=0; cx.globalAlpha=1; cx.restore();
+  });
+}
+
+window.openSpellSelector=function(tokenId, cx2, cy2){
+  var existing=document.getElementById('spell_selector');
+  if(existing) existing.remove();
+  var div=document.createElement('div');
+  div.id='spell_selector';
+  div.style.cssText='position:fixed;background:var(--bg2);border:1px solid var(--gold);border-radius:8px;z-index:601;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden;min-width:200px';
+  div.innerHTML='<div style="padding:7px 12px;font-size:.7rem;color:var(--gold2);letter-spacing:1px;border-bottom:1px solid var(--border)">✨ EFECTO MÁGICO</div>'
+    +'<div style="padding:6px 10px;display:grid;grid-template-columns:1fr 1fr;gap:5px">'
+    +Object.entries(SPELL_TYPES).map(function(e){
+      return '<button onclick="castSpell(\''+tokenId+'\',\''+e[0]+'\')" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:5px;padding:6px 4px;cursor:pointer;font-size:.75rem;font-family:var(--font)">'+e[1].label+'</button>';
+    }).join('')
+    +'</div>'
+    +'<div style="padding:4px 12px 8px;text-align:right"><button onclick="document.getElementById(\'spell_selector\').remove()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.75rem">Cancelar</button></div>';
+  var mx=Math.min(cx2,window.innerWidth-220);
+  var my=Math.min(cy2,window.innerHeight-280);
+  div.style.left=mx+'px'; div.style.top=my+'px';
+  document.body.appendChild(div);
+  setTimeout(function(){
+    document.addEventListener('click',function closeIt(e){
+      var sel=document.getElementById('spell_selector');
+      if(sel&&!sel.contains(e.target)){sel.remove();}
+      document.removeEventListener('click',closeIt);
+    });
+  },50);
+};
+
+window.castSpell=function(tokenId, type){
+  var sel=document.getElementById('spell_selector');
+  if(sel) sel.remove();
+  spawnSpellEffect(tokenId,type);
+  update(r('spell'),{tokenId:tokenId,type:type,ts:Date.now()});
+  var tok=tokens[tokenId];
+  if(tok) sysMsg('✨ '+tok.name+' '+SPELL_TYPES[type].label);
+};
+
+function subscribeSpells(){
+  var lastTs=0;
+  onValue(r('spell'),function(s){
+    var d=s.val(); if(!d||!d.ts) return;
+    if(d.ts===lastTs||d.ts<enterTs) return;
+    lastTs=d.ts;
+    spawnSpellEffect(d.tokenId,d.type);
+  });
+}
+
+// ── AREA OF EFFECT SYSTEM ──────────────────────────────────
+var activeAreas = {}; // tokenId -> {shape,ft,x,y,angle,color,owner}
+var areaTokenId = null; // which token is being edited
+var areaDragging = false;
+var areaRotating = false;
+var areaRotStart = 0;
+var areaRotStartAngle = 0;
+
+// AREA COLORS per shape
+var AREA_COLORS = {
+  sphere:'rgba(255,80,80,0.25)', cone:'rgba(255,160,0,0.25)',
+  line:'rgba(100,180,255,0.25)', cube:'rgba(180,100,255,0.25)',
+  personal:'rgba(0,200,100,0.2)', touch:'rgba(255,220,0,0.25)'
+};
+var AREA_STROKE = {
+  sphere:'rgba(255,80,80,0.8)', cone:'rgba(255,160,0,0.8)',
+  line:'rgba(100,180,255,0.8)', cube:'rgba(180,100,255,0.8)',
+  personal:'rgba(0,200,100,0.8)', touch:'rgba(255,220,0,0.8)'
+};
+
+// Token action menu
+var tamTokenId=null, tamClientX=0, tamClientY=0;
+
+window.openTokenActionMenu=function(id, cx2, cy2){
+  tamTokenId=id;
+  tamClientX=cx2; tamClientY=cy2;
+  var tok=tokens[id]; if(!tok) return;
+  var menu=document.getElementById('tok_action_menu');
+  var title=document.getElementById('tam_title');
+  var clearBtn=document.getElementById('tam_clear_area');
+  if(!menu) return;
+  if(title) title.textContent=tok.name;
+  if(clearBtn) clearBtn.style.display=activeAreas[id]?'block':'none';
+  // Restrict area/spell to own tokens or DM
+  var isOwn=isDM||(tok.playerOwner===myName||tok.addedBy===myName);
+  var areaItem=menu.querySelectorAll('.tam-item')[2];
+  var spellItem=menu.querySelectorAll('.tam-item')[3];
+  if(areaItem) areaItem.style.display=isOwn?'block':'none';
+  if(spellItem) spellItem.style.display=isOwn?'block':'none';
+  var mx=Math.min(cx2, window.innerWidth-200);
+  var my=Math.min(cy2, window.innerHeight-250);
+  menu.style.left=mx+'px';
+  menu.style.top=my+'px';
+  menu.style.display='block';
+  menu.style.pointerEvents='all';
+  // Close on outside click
+  setTimeout(function(){
+    document.addEventListener('click', closeTokMenuOnce);
+  },10);
+};
+
+function closeTokMenuOnce(e){
+  var menu=document.getElementById('tok_action_menu');
+  if(menu&&!menu.contains(e.target)) closeTokMenu();
+  document.removeEventListener('click',closeTokMenuOnce);
+}
+
+window.closeTokMenu=function(){
+  var menu=document.getElementById('tok_action_menu');
+  if(menu){ menu.style.display='none'; menu.style.pointerEvents='none'; }
+};
+
+window.tamAction=function(action){
+  closeTokMenu();
+  if(action==='edit'){ openEdit(tamTokenId); }
+  else if(action==='hp'){
+    // Show quickhp near last position
+    var fake={clientX:tamClientX,clientY:tamClientY};
+    openQuickHp(tamTokenId,fake);
+  }
+  else if(action==='area'){
+    var menu=document.getElementById('area_selector');
+    if(!menu) return;
+    var mx=Math.min(tamClientX,window.innerWidth-240);
+    var my=Math.min(tamClientY,window.innerHeight-300);
+    menu.style.left=mx+'px';
+    menu.style.top=my+'px';
+    menu.style.display='block';
+    areaTokenId=tamTokenId;
+    setTimeout(function(){document.addEventListener('click',closeAreaSelectorOnce);},10);
+  }
+  else if(action==='spell'){
+    openSpellSelector(tamTokenId, tamClientX, tamClientY);
+  }
+  else if(action==='cleararea'){
+    delete activeAreas[tamTokenId];
+    update(r('areas/'+tamTokenId),null);
+    draw();
+  }
+};
+
+function closeAreaSelectorOnce(e){
+  var sel=document.getElementById('area_selector');
+  if(sel&&!sel.contains(e.target)) closeAreaSelector();
+  document.removeEventListener('click',closeAreaSelectorOnce);
+}
+window.closeAreaSelector=function(){
+  var sel=document.getElementById('area_selector');
+  if(sel) sel.style.display='none';
+};
+
+window.placeArea=function(shape, ft){
+  closeAreaSelector();
+  if(!areaTokenId||!tokens[areaTokenId]) return;
+  var tok=tokens[areaTokenId];
+  var area={
+    shape:shape, ft:ft,
+    x:tok.x+0.5, y:tok.y+0.5,
+    angle:0,
+    color:AREA_COLORS[shape]||'rgba(255,100,100,0.25)',
+    stroke:AREA_STROKE[shape]||'rgba(255,100,100,0.8)',
+    owner:myName, tokId:areaTokenId
+  };
+  activeAreas[areaTokenId]=area;
+  // Push to Firebase for all to see
+  update(r('areas/'+areaTokenId), area);
+  draw();
+  toast('🔴 '+shape+' '+ft+'ft — arrastra para posicionar');
+};
+
+window.placeAreaCustom=function(){
+  var ft=parseInt(document.getElementById('area_custom_ft').value)||20;
+  var shape=document.getElementById('area_custom_shape').value;
+  placeArea(shape,ft);
+};
+
+// Subscribe to area changes
+function subscribeAreas(){
+  onChildAdded(r('areas'),function(s){
+    if(s.val()) activeAreas[s.key]=s.val(); draw();
+  });
+  onChildChanged(r('areas'),function(s){
+    if(s.val()) activeAreas[s.key]=s.val(); else delete activeAreas[s.key]; draw();
+  });
+  onChildRemoved(r('areas'),function(s){
+    delete activeAreas[s.key]; draw();
+  });
+}
+
+// Draw all areas on canvas
+function drawAreas(){
+  Object.entries(activeAreas).forEach(function(entry){
+    var id=entry[0], area=entry[1];
+    if(!area||!area.shape) return;
+    var px=area.x*CELL, py=area.y*CELL;
+    var r4=(area.ft/5)*CELL; // ft to pixels (5ft per cell)
+
+    cx.save();
+    cx.translate(px,py);
+    cx.rotate((area.angle||0)*Math.PI/180);
+
+    cx.fillStyle=area.color||'rgba(255,100,100,0.25)';
+    cx.strokeStyle=area.stroke||'rgba(255,100,100,0.8)';
+    cx.lineWidth=2/scale;
+    cx.setLineDash([6/scale,3/scale]);
+
+    if(area.shape==='sphere'){
+      cx.beginPath();
+      cx.arc(0,0,r4,0,Math.PI*2);
+      cx.fill(); cx.stroke();
+
+    } else if(area.shape==='cone'){
+      var halfAngle=Math.PI/6; // 60 degree cone
+      cx.beginPath();
+      cx.moveTo(0,0);
+      cx.arc(0,0,r4,-Math.PI/2-halfAngle,-Math.PI/2+halfAngle);
+      cx.closePath();
+      cx.fill(); cx.stroke();
+
+    } else if(area.shape==='line'){
+      var w=CELL*0.5; // 5ft wide
+      cx.beginPath();
+      cx.rect(-w/2,-r4,w,r4);
+      cx.fill(); cx.stroke();
+
+    } else if(area.shape==='cube'){
+      cx.beginPath();
+      cx.rect(-r4/2,-r4,r4,r4);
+      cx.fill(); cx.stroke();
+
+    } else if(area.shape==='personal'){
+      cx.beginPath();
+      cx.arc(0,0,CELL*0.5,0,Math.PI*2);
+      cx.fill(); cx.stroke();
+      // Label
+      cx.setLineDash([]);
+      cx.fillStyle=area.stroke;
+      cx.font='bold '+(CELL*0.2)+'px sans-serif';
+      cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText('Personal',0,CELL*0.8);
+
+    } else if(area.shape==='touch'){
+      cx.beginPath();
+      cx.arc(0,0,CELL*0.3,0,Math.PI*2);
+      cx.fill(); cx.stroke();
+      cx.setLineDash([]);
+      cx.fillStyle=area.stroke;
+      cx.font='bold '+(CELL*0.2)+'px sans-serif';
+      cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText('Toque',0,CELL*0.6);
+    }
+
+    cx.setLineDash([]);
+
+    // Range label (not for personal/touch)
+    if(area.ft>0){
+      var labelR=r4+8/scale;
+      cx.fillStyle=area.stroke;
+      cx.font='bold '+(Math.max(9,CELL*0.14)/scale)+'px sans-serif';
+      cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText(area.ft+'ft', 0, -labelR);
+    }
+
+    // Selected indicator (own area)
+    if(area.owner===myName||isDM){
+      cx.strokeStyle='rgba(255,255,255,0.4)';
+      cx.lineWidth=1/scale;
+      cx.setLineDash([3/scale,3/scale]);
+      cx.beginPath(); cx.arc(0,0,8/scale,0,Math.PI*2); cx.stroke();
+      cx.setLineDash([]);
+    }
+
+    cx.restore();
+  });
+}
+
+// Area dragging — mouse
+var areaDragId=null;
+var areaDragOx=0, areaDragOy=0;
+
+// Hook area dragging into mdown/mmove/mup
+function hitArea(px,py){
+  // Check if click is near center of any area
+  var found=null, foundDist=999;
+  Object.entries(activeAreas).forEach(function(entry){
+    var id=entry[0], a=entry[1];
+    if(!a) return;
+    // Can only move own area or DM can move any
+    if(a.owner!==myName && !isDM) return;
+    var dx=px-a.x*CELL, dy=py-a.y*CELL;
+    var dist=Math.sqrt(dx*dx+dy*dy);
+    var hitR=Math.max(20,(a.ft/5)*CELL*0.3);
+    if(dist<hitR && dist<foundDist){ found=id; foundDist=dist; }
+  });
+  return found;
+}
 var tokenBubbles = {}; // tokenId -> {text, expires, color}
 var bubbleTimers  = {}; // tokenId -> setTimeout handle
 var BUBBLE_DURATION = 4000; // ms
@@ -6241,13 +6722,13 @@ var mobileTabContent = {
     return '<div style="padding:8px">'
       +'<div style="font-size:.65rem;color:var(--text3);letter-spacing:1px;margin-bottom:6px">🛠 HERRAMIENTAS</div>'
       +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">'
-      +'<button class="tbtn active" id="mob_tb_select" onclick="setTool("select");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">↖<div class="tlabel">Mover</div></button>'
-      +'<button class="tbtn" id="mob_tb_measure" onclick="setTool("measure");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">📏<div class="tlabel">Medir</div></button>'
-      +'<button class="tbtn" id="mob_tb_laser" onclick="setTool("laser");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🔴<div class="tlabel">Láser</div></button>'
-      +'<button class="tbtn" id="mob_tb_fog" onclick="setTool("fog");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌫<div class="tlabel">Revelar</div></button>'
-      +'<button class="tbtn" id="mob_tb_fogadd" onclick="setTool("fogadd");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌑<div class="tlabel">Cubrir</div></button>'
-      +'<button class="tbtn" id="mob_tb_draw" onclick="setTool("draw");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">✏<div class="tlabel">Dibujar</div></button>'
-      +'<button class="tbtn" id="mob_tb_erase" onclick="setTool("erase");closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">⬜<div class="tlabel">Borrar</div></button>'
+      +'<button class="tbtn active" id="mob_tb_select" onclick="setTool('select');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">↖<div class="tlabel">Mover</div></button>'
+      +'<button class="tbtn" id="mob_tb_measure" onclick="setTool('measure');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">📏<div class="tlabel">Medir</div></button>'
+      +'<button class="tbtn" id="mob_tb_laser" onclick="setTool('laser');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🔴<div class="tlabel">Láser</div></button>'
+      +'<button class="tbtn" id="mob_tb_fog" onclick="setTool('fog');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌫<div class="tlabel">Revelar</div></button>'
+      +'<button class="tbtn" id="mob_tb_fogadd" onclick="setTool('fogadd');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🌑<div class="tlabel">Cubrir</div></button>'
+      +'<button class="tbtn" id="mob_tb_draw" onclick="setTool('draw');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">✏<div class="tlabel">Dibujar</div></button>'
+      +'<button class="tbtn" id="mob_tb_erase" onclick="setTool('erase');closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">⬜<div class="tlabel">Borrar</div></button>'
       +'<button class="tbtn" onclick="clearDrawing();closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🗑<div class="tlabel">Limpiar</div></button>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
