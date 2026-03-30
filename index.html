@@ -3508,21 +3508,6 @@ function tmove(e){
     const dx=t.clientX-touch1.clientX, dy=t.clientY-touch1.clientY;
     if(Math.sqrt(dx*dx+dy*dy)>10){ tapMoved=true; clearTimeout(tapTimer); }
 
-    // PLACING MODE — area follows finger
-    if(areaPlacing && areaPlacingId && activeAreas[areaPlacingId]){
-      var a=activeAreas[areaPlacingId];
-      a.x=p.x/CELL; a.y=p.y/CELL;
-      if(a.shape==='cone'||a.shape==='line'){
-        var tok3=tokens[areaPlacingId];
-        if(tok3){
-          var dx3=p.x/CELL-(tok3.x+0.5), dy3=p.y/CELL-(tok3.y+0.5);
-          if(Math.abs(dx3)>0.2||Math.abs(dy3)>0.2)
-            a.angle=Math.atan2(dy3,dx3)*180/Math.PI+90;
-        }
-      }
-      draw(); return;
-    }
-
     if(dragging&&dragId){
       const nc=Math.max(0,Math.floor((p.x-dox)/CELL));
       const nr=Math.max(0,Math.floor((p.y-doy)/CELL));
@@ -3552,24 +3537,6 @@ function tmove(e){
 function tend(e){
   e.preventDefault();
   clearTimeout(tapTimer);
-
-  // PLACING MODE — tap to fix area on mobile
-  if(areaPlacing && areaPlacingId && !tapMoved){
-    var t=e.changedTouches[0];
-    if(t){
-      var pt=touchPos(t);
-      var a=activeAreas[areaPlacingId];
-      if(a){
-        a.x=pt.x/CELL; a.y=pt.y/CELL;
-        update(r('areas/'+areaPlacingId), a);
-      }
-    }
-    areaPlacing=false; areaPlacingId=null;
-    cv.style.cursor='';
-    draw();
-    toast('✓ Área fijada');
-    return;
-  }
 
   // Release prop pinch
   if(propPinching && selPropId){
@@ -3830,20 +3797,6 @@ function mdown(e){
   if(e.button!==0) return; // only left-click — right-click goes to contextmenu
   const p=cvPos(e), cl=cellOf(e);
 
-  // PLACING MODE — click to fix area at cursor position
-  if(areaPlacing && areaPlacingId){
-    var a=activeAreas[areaPlacingId];
-    if(a){
-      a.x=p.x/CELL; a.y=p.y/CELL;
-      update(r('areas/'+areaPlacingId), a);
-    }
-    areaPlacing=false; areaPlacingId=null;
-    cv.style.cursor='';
-    draw();
-    toast('✓ Área fijada — rueda del mouse para rotar');
-    return;
-  }
-
   if(tool==='draw'){
     isDrawing=true;
     currentStroke={color:drawColor,size:drawSize,points:[{x:p.x,y:p.y}]};
@@ -3929,22 +3882,6 @@ function mdown(e){
 function mmove(e){
   if(e.buttons===2) return; // ignore right-click drag
   const p=cvPos(e), cl=cellOf(e);
-
-  // PLACING MODE — area follows cursor until click
-  if(areaPlacing && areaPlacingId && activeAreas[areaPlacingId]){
-    var a=activeAreas[areaPlacingId];
-    a.x=p.x/CELL; a.y=p.y/CELL;
-    if(a.shape==='cone'||a.shape==='line'){
-      var tok2=tokens[areaPlacingId];
-      if(tok2){
-        var dx2=p.x/CELL-(tok2.x+0.5);
-        var dy2=p.y/CELL-(tok2.y+0.5);
-        if(Math.abs(dx2)>0.2||Math.abs(dy2)>0.2)
-          a.angle=Math.atan2(dy2,dx2)*180/Math.PI+90;
-      }
-    }
-    draw(); return;
-  }
 
   // Area drag — also auto-rotate directional shapes
   if(areaDragId && activeAreas[areaDragId]){
@@ -6458,35 +6395,23 @@ window.closeAreaSelector=function(){
 };
 
 window.placeArea=function(shape, ft){
-  console.log('placeArea called:', shape, ft, 'areaTokenId=', areaTokenId);
   closeAreaSelector();
-  if(!areaTokenId||!tokens[areaTokenId]){
-    console.log('placeArea ABORT: areaTokenId=',areaTokenId,'tokens=',tokens);
-    return;
-  }
+  if(!areaTokenId||!tokens[areaTokenId]) return;
   var tok=tokens[areaTokenId];
+  // Place area offset from token so it's visible
+  var offset = (ft/5)*0.5 + 1;
   var area={
     shape:shape, ft:ft,
-    x:tok.x+0.5, y:tok.y+0.5,
+    x:tok.x+0.5+offset, y:tok.y+0.5,
     angle:0,
     color:AREA_COLORS[shape]||'rgba(255,100,100,0.25)',
     stroke:AREA_STROKE[shape]||'rgba(255,100,100,0.8)',
     owner:myName, tokId:areaTokenId
   };
   activeAreas[areaTokenId]=area;
-  // Enter placing mode — area follows cursor until click fixes it
-  areaPlacing=true;
-  areaPlacingId=areaTokenId;
-  cv.style.cursor='crosshair';
-  console.log('PLACING MODE ON — areaPlacingId=',areaPlacingId,'area=',activeAreas[areaPlacingId]);
-  // Animate pulsing ring while placing
-  function placingTick(){
-    if(!areaPlacing) return;
-    draw();
-    requestAnimationFrame(placingTick);
-  }
-  requestAnimationFrame(placingTick);
-  toast('✛ Mueve el cursor — CLICK IZQUIERDO para fijar  |  ESC cancela');
+  update(r('areas/'+areaTokenId), area);
+  draw();
+  toast('🔴 Área colocada — arrástrala con click izquierdo para moverla');
 };
 
 window.placeAreaCustom=function(){
@@ -6590,20 +6515,6 @@ function drawAreas(){
       cx.setLineDash([3/scale,3/scale]);
       cx.beginPath(); cx.arc(0,0,8/scale,0,Math.PI*2); cx.stroke();
       cx.setLineDash([]);
-    }
-
-    // PLACING MODE — pulsing white ring to show area is being positioned
-    if(areaPlacing && id===areaPlacingId){
-      var pulse=0.5+0.5*Math.sin(Date.now()*0.006);
-      cx.strokeStyle='rgba(255,255,255,'+( 0.5+0.5*pulse)+')';
-      cx.lineWidth=2/scale;
-      cx.setLineDash([]);
-      cx.beginPath(); cx.arc(0,0,(area.ft/5)*CELL*0.5,0,Math.PI*2); cx.stroke();
-      // "CLICK" label
-      cx.fillStyle='rgba(255,255,255,0.9)';
-      cx.font='bold '+(Math.max(10,CELL*0.15)/scale)+'px sans-serif';
-      cx.textAlign='center'; cx.textBaseline='middle';
-      cx.fillText('CLICK ✓', 0, (area.ft/5)*CELL*0.7);
     }
 
     cx.restore();
@@ -7186,13 +7097,6 @@ window.closeModal=function(id){document.getElementById(id).classList.remove('ope
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    // Cancel area placing mode
-    if(areaPlacing){
-      if(areaPlacingId) delete activeAreas[areaPlacingId];
-      areaPlacing=false; areaPlacingId=null;
-      cv.style.cursor='';
-      draw();
-    }
     document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'));
   }
 });
