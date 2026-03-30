@@ -699,7 +699,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div id="cdot"></div>
     <span id="role_badge" style="font-size:.68rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
     <span id="pcount" style="color:var(--text2);font-size:.7rem"></span>
-    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.6</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
+    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.7</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
     <button class="hbtn" id="btn_fullscreen" onclick="toggleFullscreen()" style="padding:3px 8px;font-size:.8rem" title="Pantalla completa">⛶</button>
     <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" style="padding:3px 8px">☰</button>
     <div id="dropdown_menu" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:200px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
@@ -3315,6 +3315,12 @@ function initCanvas(){
   cv.addEventListener('contextmenu',e=>{
     e.preventDefault();
     const p=cvPos(e);
+    // Right-click on area → spell selector for that area
+    const ha=hitArea(p.x,p.y);
+    if(ha && (activeAreas[ha].owner===myName||isDM)){
+      openSpellSelector(ha, e.clientX, e.clientY);
+      return;
+    }
     const h=hitTok(p);
     if(h){
       openTokenActionMenu(h, e.clientX, e.clientY);
@@ -6170,24 +6176,109 @@ var SPELL_TYPES = {
 function spawnSpellEffect(tokenId, type){
   var tok=tokens[tokenId]; if(!tok) return;
   var def=SPELL_TYPES[type]||SPELL_TYPES.arcane;
-  var x=tok.x*CELL+CELL/2, y=tok.y*CELL+CELL/2;
-  var count=16;
+  var area=activeAreas[tokenId];
+
+  if(area && area.shape && area.shape!=='personal'){
+    // Spawn particles across the area shape
+    spawnAreaEffect(area, def, type);
+    // Remove area after effect
+    setTimeout(function(){
+      delete activeAreas[tokenId];
+      remove(r('areas/'+tokenId));
+      draw();
+    }, 1200);
+  } else {
+    // No area — spawn on token (personal or no area set)
+    var x=tok.x*CELL+CELL/2, y=tok.y*CELL+CELL/2;
+    spawnBurst(x, y, CELL*1.0, def, type, 16);
+  }
+  if(!spellAnimFrame) animateSpells();
+}
+
+function spawnBurst(cx2, cy2, maxR, def, type, count){
   for(var i=0;i<count;i++){
     var angle=Math.random()*Math.PI*2;
-    var speed=(0.3+Math.random()*0.7)*CELL*0.08;
+    var r2=(0.3+Math.random()*0.7)*maxR;
+    var speed=(0.3+Math.random()*0.7)*CELL*0.06;
     var life=0.5+Math.random()*0.7;
     spellEffects.push({
-      x:x,y:y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
-      size:(0.08+Math.random()*0.15)*CELL,
+      x:cx2+Math.cos(angle)*r2*0.3,
+      y:cy2+Math.sin(angle)*r2*0.3,
+      vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      size:(0.06+Math.random()*0.12)*CELL,
       color:def.colors[Math.floor(Math.random()*def.colors.length)],
       life:life,maxLife:life,type:type,
       spin:(Math.random()-0.5)*0.3,rot:Math.random()*Math.PI*2
     });
   }
-  // Central burst ring
-  spellEffects.push({x:x,y:y,vx:0,vy:0,size:0,maxSize:CELL*1.0,
+  spellEffects.push({x:cx2,y:cy2,vx:0,vy:0,size:0,maxSize:maxR,
     color:def.colors[0],life:0.6,maxLife:0.6,isRing:true,type:type});
-  if(!spellAnimFrame) animateSpells();
+}
+
+function spawnAreaEffect(area, def, type){
+  var ax=area.x*CELL, ay=area.y*CELL;
+  var r2=(area.ft/5)*CELL;
+  var angleRad=(area.angle||0)*Math.PI/180;
+
+  if(area.shape==='sphere'||area.shape==='touch'){
+    // Fill circle with particles
+    spawnBurst(ax, ay, r2, def, type, 24);
+
+  } else if(area.shape==='cone'){
+    // Particles distributed in cone shape
+    var halfA=Math.PI/6;
+    var dirAngle=angleRad - Math.PI/2;
+    for(var i=0;i<20;i++){
+      var dist=(0.2+Math.random()*0.8)*r2;
+      var spread=(Math.random()-0.5)*2*halfA;
+      var a=dirAngle+spread;
+      var px=ax+Math.cos(a)*dist, py=ay+Math.sin(a)*dist;
+      var speed=CELL*0.04;
+      spellEffects.push({
+        x:px,y:py,vx:Math.cos(a)*speed*0.3,vy:Math.sin(a)*speed*0.3,
+        size:(0.07+Math.random()*0.1)*CELL,
+        color:def.colors[Math.floor(Math.random()*def.colors.length)],
+        life:0.6+Math.random()*0.5,maxLife:1.1,type:type,
+        spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
+      });
+    }
+    // Ring at origin
+    spellEffects.push({x:ax,y:ay,vx:0,vy:0,size:0,maxSize:r2,
+      color:def.colors[0],life:0.5,maxLife:0.5,isRing:true,type:type});
+
+  } else if(area.shape==='line'){
+    // Particles along the line
+    var lineDir=angleRad - Math.PI/2;
+    for(var i=0;i<18;i++){
+      var dist=(i/17)*r2;
+      var perp=(Math.random()-0.5)*CELL*0.5;
+      var px=ax+Math.cos(lineDir)*dist + Math.cos(lineDir+Math.PI/2)*perp;
+      var py=ay+Math.sin(lineDir)*dist + Math.sin(lineDir+Math.PI/2)*perp;
+      spellEffects.push({
+        x:px,y:py,vx:(Math.random()-0.5)*CELL*0.04,vy:(Math.random()-0.5)*CELL*0.04,
+        size:(0.06+Math.random()*0.1)*CELL,
+        color:def.colors[Math.floor(Math.random()*def.colors.length)],
+        life:0.5+Math.random()*0.6,maxLife:1.1,type:type,
+        spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
+      });
+    }
+
+  } else if(area.shape==='cube'){
+    // Particles in square grid
+    var side=r2;
+    var cosA=Math.cos(angleRad), sinA=Math.sin(angleRad);
+    for(var i=0;i<20;i++){
+      var lx=(Math.random()-0.5)*side, ly=-Math.random()*side;
+      var wx=ax+lx*cosA-ly*sinA, wy=ay+lx*sinA+ly*cosA;
+      spellEffects.push({
+        x:wx,y:wy,vx:(Math.random()-0.5)*CELL*0.03,vy:(Math.random()-0.5)*CELL*0.03,
+        size:(0.06+Math.random()*0.1)*CELL,
+        color:def.colors[Math.floor(Math.random()*def.colors.length)],
+        life:0.5+Math.random()*0.6,maxLife:1.1,type:type,
+        spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
+      });
+    }
+  }
 }
 
 function animateSpells(){
@@ -6288,6 +6379,10 @@ function subscribeSpells(){
     if(d.ts===lastTs||d.ts<enterTs) return;
     lastTs=d.ts;
     spawnSpellEffect(d.tokenId,d.type);
+  });
+  // Also listen for area removal after spell
+  onChildRemoved(r('areas'),function(s){
+    delete activeAreas[s.key]; draw();
   });
 }
 
