@@ -699,7 +699,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div id="cdot"></div>
     <span id="role_badge" style="font-size:.68rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
     <span id="pcount" style="color:var(--text2);font-size:.7rem"></span>
-    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.1</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
+    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.2</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
     <button class="hbtn" id="btn_fullscreen" onclick="toggleFullscreen()" style="padding:3px 8px;font-size:.8rem" title="Pantalla completa">⛶</button>
     <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" style="padding:3px 8px">☰</button>
     <div id="dropdown_menu" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:200px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
@@ -6395,6 +6395,7 @@ window.closeAreaSelector=function(){
 };
 
 window.placeArea=function(shape, ft){
+  alert('placeArea: shape='+shape+' ft='+ft+' areaTokenId='+areaTokenId+' hasToken='+(!!tokens[areaTokenId]));
   closeAreaSelector();
   if(!areaTokenId||!tokens[areaTokenId]) return;
   var tok=tokens[areaTokenId];
