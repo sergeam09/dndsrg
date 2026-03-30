@@ -6473,10 +6473,15 @@ window.placeArea=function(shape, ft){
   // Enter placing mode — area follows cursor until click fixes it
   areaPlacing=true;
   areaPlacingId=areaTokenId;
-  // Change cursor to crosshair
   cv.style.cursor='crosshair';
-  draw();
-  toast('🔴 Mueve el cursor y haz click para fijar el área');
+  // Animate pulsing ring while placing
+  function placingTick(){
+    if(!areaPlacing) return;
+    draw();
+    requestAnimationFrame(placingTick);
+  }
+  requestAnimationFrame(placingTick);
+  toast('✛ Mueve el cursor — CLICK IZQUIERDO para fijar  |  ESC cancela');
 };
 
 window.placeAreaCustom=function(){
@@ -6580,6 +6585,20 @@ function drawAreas(){
       cx.setLineDash([3/scale,3/scale]);
       cx.beginPath(); cx.arc(0,0,8/scale,0,Math.PI*2); cx.stroke();
       cx.setLineDash([]);
+    }
+
+    // PLACING MODE — pulsing white ring to show area is being positioned
+    if(areaPlacing && id===areaPlacingId){
+      var pulse=0.5+0.5*Math.sin(Date.now()*0.006);
+      cx.strokeStyle='rgba(255,255,255,'+( 0.5+0.5*pulse)+')';
+      cx.lineWidth=2/scale;
+      cx.setLineDash([]);
+      cx.beginPath(); cx.arc(0,0,(area.ft/5)*CELL*0.5,0,Math.PI*2); cx.stroke();
+      // "CLICK" label
+      cx.fillStyle='rgba(255,255,255,0.9)';
+      cx.font='bold '+(Math.max(10,CELL*0.15)/scale)+'px sans-serif';
+      cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText('CLICK ✓', 0, (area.ft/5)*CELL*0.7);
     }
 
     cx.restore();
