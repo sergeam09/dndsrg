@@ -699,7 +699,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div id="cdot"></div>
     <span id="role_badge" style="font-size:.68rem;padding:2px 7px;border-radius:10px;font-weight:bold"></span>
     <span id="pcount" style="color:var(--text2);font-size:.7rem"></span>
-    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.7</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
+    <span id="ver_tag" style="font-size:.6rem;color:var(--text3);opacity:0.5">v3.8</span><span id="room_code_display" onclick="copyLink()" title="Copiar link de invitación">—</span>
     <button class="hbtn" id="btn_fullscreen" onclick="toggleFullscreen()" style="padding:3px 8px;font-size:.8rem" title="Pantalla completa">⛶</button>
     <button class="hbtn" onclick="toggleMenu(event)" id="menu_btn" style="padding:3px 8px">☰</button>
     <div id="dropdown_menu" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);min-width:200px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.8);overflow:hidden">
@@ -3411,11 +3411,18 @@ function tstart(e){
         dragging=true; dragId=h;
         dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
       }
-      // Long press = token action menu (edit + area of effect + HP)
+      // Long press = action menu
       tapTimer=setTimeout(()=>{
         if(!tapMoved){
           dragging=false; dragId=null;
-          openTokenActionMenu(h, touch1.clientX, touch1.clientY);
+          // If long-pressing on own area → spell selector
+          var tp=touchPos(touch1);
+          var ha=hitArea(tp.x,tp.y);
+          if(ha && (activeAreas[ha].owner===myName||isDM)){
+            openSpellSelector(ha, touch1.clientX, touch1.clientY);
+          } else {
+            openTokenActionMenu(h, touch1.clientX, touch1.clientY);
+          }
         }
       }, 600);
       draw(); renderToks();
@@ -6168,9 +6175,13 @@ var SPELL_TYPES = {
   lightning:{colors:['#ffff00','#ffffff','#aaaaff','#ffff88'], label:'⚡ Rayo'},
   arcane:  {colors:['#cc44ff','#ff44ff','#8844ff','#ffffff'], label:'✨ Arcano'},
   nature:  {colors:['#44ff44','#88ff44','#ffff44','#44cc44'], label:'🌿 Naturaleza'},
-  necrotic:{colors:['#44ff44','#004400','#000000','#228822'], label:'💀 Necrótico'},
+  necrotic:{colors:['#33ff33','#004400','#111111','#228822'], label:'💀 Necrótico'},
   radiant: {colors:['#ffffff','#ffffaa','#ffee44','#ffcc00'], label:'☀ Radiante'},
   heal:    {colors:['#44ff88','#88ffcc','#ffffff','#44ffaa'], label:'💚 Curación'},
+  water:   {colors:['#0088ff','#00ccff','#ffffff','#0044aa'], label:'🌊 Agua'},
+  wind:    {colors:['#ccffee','#aaffdd','#ffffff','#88ddcc'], label:'🌪 Viento'},
+  acid:    {colors:['#aaff00','#88dd00','#ffff44','#44aa00'], label:'🧪 Ácido'},
+  poison:  {colors:['#88ff00','#44aa00','#aaffaa','#006600'], label:'☠ Veneno'},
 };
 
 function spawnSpellEffect(tokenId, type){
@@ -6186,7 +6197,7 @@ function spawnSpellEffect(tokenId, type){
       delete activeAreas[tokenId];
       remove(r('areas/'+tokenId));
       draw();
-    }, 1200);
+    }, 2800);
   } else {
     // No area — spawn on token (personal or no area set)
     var x=tok.x*CELL+CELL/2, y=tok.y*CELL+CELL/2;
@@ -6238,13 +6249,13 @@ function spawnAreaEffect(area, def, type){
         x:px,y:py,vx:Math.cos(a)*speed*0.3,vy:Math.sin(a)*speed*0.3,
         size:(0.07+Math.random()*0.1)*CELL,
         color:def.colors[Math.floor(Math.random()*def.colors.length)],
-        life:0.6+Math.random()*0.5,maxLife:1.1,type:type,
+        life:1.4+Math.random()*0.8,maxLife:2.2,type:type,
         spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
       });
     }
     // Ring at origin
     spellEffects.push({x:ax,y:ay,vx:0,vy:0,size:0,maxSize:r2,
-      color:def.colors[0],life:0.5,maxLife:0.5,isRing:true,type:type});
+      color:def.colors[0],life:1.5,maxLife:1.5,isRing:true,type:type});
 
   } else if(area.shape==='line'){
     // Particles along the line
@@ -6258,7 +6269,7 @@ function spawnAreaEffect(area, def, type){
         x:px,y:py,vx:(Math.random()-0.5)*CELL*0.04,vy:(Math.random()-0.5)*CELL*0.04,
         size:(0.06+Math.random()*0.1)*CELL,
         color:def.colors[Math.floor(Math.random()*def.colors.length)],
-        life:0.5+Math.random()*0.6,maxLife:1.1,type:type,
+        life:1.4+Math.random()*0.8,maxLife:2.2,type:type,
         spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
       });
     }
@@ -6274,7 +6285,7 @@ function spawnAreaEffect(area, def, type){
         x:wx,y:wy,vx:(Math.random()-0.5)*CELL*0.03,vy:(Math.random()-0.5)*CELL*0.03,
         size:(0.06+Math.random()*0.1)*CELL,
         color:def.colors[Math.floor(Math.random()*def.colors.length)],
-        life:0.5+Math.random()*0.6,maxLife:1.1,type:type,
+        life:1.4+Math.random()*0.8,maxLife:2.2,type:type,
         spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
       });
     }
@@ -6495,7 +6506,7 @@ window.placeArea=function(shape, ft){
   var tok=tokens[areaTokenId];
   // Place area clearly offset from token center
   var ftCells=(ft/5)||1;
-  var offsetX = ftCells * 0.6 + 1.5; // push right by radius + margin
+  var offsetX = ftCells * 0.5 + 0.8; // close to token but visible
   var area={
     shape:shape, ft:ft,
     x:tok.x+0.5+offsetX, y:tok.y+0.5,
@@ -6623,16 +6634,17 @@ var areaDragOx=0, areaDragOy=0;
 
 // Hook area dragging into mdown/mmove/mup
 function hitArea(px,py){
-  // Check if click is near center of any area
   var found=null, foundDist=999;
+  // Bigger hit radius on touch devices
+  var isTouchDevice = ('ontouchstart' in window);
   Object.entries(activeAreas).forEach(function(entry){
     var id=entry[0], a=entry[1];
     if(!a) return;
-    // Can only move own area or DM can move any
     if(a.owner!==myName && !isDM) return;
     var dx=px-a.x*CELL, dy=py-a.y*CELL;
     var dist=Math.sqrt(dx*dx+dy*dy);
-    var hitR=Math.max(20,(a.ft/5)*CELL*0.3);
+    var baseR = (a.ft/5)*CELL*0.5;
+    var hitR = Math.max(isTouchDevice?CELL*1.5:CELL*0.8, baseR);
     if(dist<hitR && dist<foundDist){ found=id; foundDist=dist; }
   });
   return found;
