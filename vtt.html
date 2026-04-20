@@ -238,6 +238,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .cmsg.crit{border-left-color:#f0ad4e;background:rgba(240,173,78,.08)}
 .cmsg.fail{border-left-color:var(--red);background:rgba(192,57,43,.08)}
 .cmsg.sys{border-left-color:var(--blue);color:var(--text3);font-style:italic}
+.cmsg.whisper{border-left-color:#9b59b6;background:rgba(155,89,182,.08);font-style:italic}
+.cmsg.emote{border-left-color:#2ecc71;background:rgba(46,204,113,.06);font-style:italic;color:var(--text2)}
+.cmsg.secret{border-left-color:#e74c3c;background:rgba(231,76,60,.08)}
 .cwho{font-weight:bold;color:var(--gold2);font-size:0.7rem}
 .cres{font-size:1rem;font-weight:bold}
 #cinput_wrap{padding:6px;border-top:1px solid var(--border);display:flex;gap:4px;flex-shrink:0}
@@ -347,6 +350,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 /* TOAST */
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg2);border:1px solid var(--gold);border-radius:6px;padding:7px 14px;font-size:.8rem;color:var(--gold2);opacity:0;transition:all .3s;z-index:999;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#audio_unlock{position:fixed;bottom:60px;right:12px;background:var(--bg2);border:1px solid var(--gold);border-radius:20px;padding:5px 12px;font-size:.75rem;color:var(--gold2);cursor:pointer;z-index:900;display:none;gap:5px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.4);animation:pulse-gold 2s infinite}
+@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(200,168,75,.4)}50%{box-shadow:0 0 0 6px rgba(200,168,75,0)}}
 
 /* MAP URL modal */
 #mapurl_modal .mcard{width:400px}
@@ -1079,7 +1084,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <button class="dbtn" onclick="rollDie(100)">d%</button>
     </div>
     <div id="cinput_wrap">
-      <input id="cinput" placeholder="Mensaje o /r 2d6+3..." onkeydown="if(event.key==='Enter')sendChat()">
+      <input id="cinput" placeholder="Mensaje, /r d20, /w susurro, /me acción, /rs secreto" onkeydown="if(event.key==='Enter')sendChat()">
       <button class="hbtn" onclick="sendChat()">↵</button>
     </div>
   </div>
@@ -1491,6 +1496,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 <!-- Audio button in toolbar (injected by JS) -->
 
 <div id="toast"></div>
+<div id="audio_unlock" onclick="unlockAudio()">🔊 Activar audio</div>
 
 <!-- HP QUICK POPUP -->
 <div id="hp_quick">
@@ -4670,12 +4676,33 @@ window.sendChat=function(){
   const inp=document.getElementById('cinput');
   const txt=inp.value.trim(); if(!txt)return;
   inp.value='';
-  const m=txt.match(/^\/r(?:oll)?\s+(.+)/i);
-  if(m){rollFx(m[1].trim());return;}
+
+  // /r /roll — tirada normal
+  const mRoll=txt.match(/^\/r(?:oll)?\s+(.+)/i);
+  if(mRoll){rollFx(mRoll[1].trim());return;}
+
+  // /rs /rsecret — tirada secreta (solo DM y tú la ven)
+  const mSecret=txt.match(/^\/rs(?:ecret)?\s+(.+)/i);
+  if(mSecret){rollFx(mSecret[1].trim(), true);return;}
+
+  // /w /whisper — susurro al DM
+  const mWhisper=txt.match(/^\/w(?:hisper)?\s+(.+)/i);
+  if(mWhisper){
+    pushMsg({who:myName,text:'🔇 '+mWhisper[1].trim(),type:'whisper',whisper:true});
+    return;
+  }
+
+  // /me /emote — acción/emote
+  const mEmote=txt.match(/^\/me\s+(.+)/i);
+  if(mEmote){
+    pushMsg({who:myName,text:'✦ '+myName+' '+mEmote[1].trim(),type:'emote'});
+    return;
+  }
+
   pushMsg({who:myName,text:txt,type:'normal'});
 };
 
-function rollFx(f){
+function rollFx(f, secret){
   const m=f.match(/^(\d*)d(\d+)([+-]\d+)?$/i);
   if(!m){toast('Formato: 2d6+3 o d20');return;}
   const n=parseInt(m[1])||1, s=parseInt(m[2]), mod=parseInt(m[3])||0;
@@ -4684,14 +4711,22 @@ function rollFx(f){
   const crit=n===1&&s===20&&rolls[0]===20, fail=n===1&&s===20&&rolls[0]===1;
   const entry={who:myName,die:f,result:total,ts:Date.now(),crit,fail};
   addToDiceHistory(entry);
-  update(r('diceRoll'),{who:myName,die:f,result:total,crit,fail,ts:Date.now()});
-  pushMsg({who:myName,text:f,result:total,type:crit?'crit':fail?'fail':'dice',detail:'['+rolls.join(',')+']'+(mod?(mod>0?'+':'')+mod:'')});
+  if(secret){
+    // Tirada secreta — solo se guarda en chat con flag, no dispara overlay global
+    pushMsg({who:myName,text:'🎲 [Secreto] '+f,result:total,type:'secret',secret:true,detail:'['+rolls.join(',')+']'+(mod?(mod>0?'+':'')+mod:'')});
+  } else {
+    update(r('diceRoll'),{who:myName,die:f,result:total,crit,fail,ts:Date.now()});
+    pushMsg({who:myName,text:f,result:total,type:crit?'crit':fail?'fail':'dice',detail:'['+rolls.join(',')+']'+(mod?(mod>0?'+':'')+mod:'')});
+  }
 }
 
 function pushMsg(msg){msg.ts=Date.now();push(r('chat'),msg);}
 function sysMsg(t){pushMsg({who:'Sistema',text:t,type:'sys'});}
 
 function appendMsg(msg){
+  // Susurros y tiradas secretas: solo el emisor y el DM las ven
+  if((msg.whisper||msg.secret) && msg.who!==myName && !isDM) return;
+
   const log=document.getElementById('chat_log');
   const d=document.createElement('div');
   d.className='cmsg '+(msg.type||'normal');
@@ -5907,14 +5942,24 @@ function playAudioUrl(layer, url, title, isLocal){
   var playPromise = el.play();
   if(playPromise){
     playPromise.catch(function(e){
-      // CORS failed with crossOrigin — retry without it
+      // Autoplay blocked — show unlock button for players
+      if(!isDM && !window._audioUnlocked){
+        window._audioPending = true;
+        var btn = document.getElementById('audio_unlock');
+        if(btn) btn.style.display='flex';
+      }
+      // CORS failed — retry without crossOrigin
       var el2 = new Audio();
       el2.loop = true;
       el2.volume = vol;
       el2.src = url;
       audioEls[layer] = el2;
       el2.play().catch(function(e2){
-        console.warn('Audio play failed:', e2);
+        if(!isDM && !window._audioUnlocked){
+          window._audioPending = true;
+          var btn = document.getElementById('audio_unlock');
+          if(btn) btn.style.display='flex';
+        }
         updateAudioUI(layer, title, false);
       });
     });
@@ -5922,6 +5967,20 @@ function playAudioUrl(layer, url, title, isLocal){
   audioState[layer]={playing:true, url:url, title:title};
   updateAudioUI(layer, title, true);
 }
+
+window.unlockAudio = function(){
+  window._audioUnlocked = true;
+  window._audioPending = false;
+  var btn = document.getElementById('audio_unlock');
+  if(btn) btn.style.display='none';
+  // Replay all active layers now that user has interacted
+  ['amb','mus'].forEach(function(layer){
+    if(audioState[layer] && audioState[layer].url && audioState[layer].playing){
+      playAudioUrl(layer, audioState[layer].url, audioState[layer].title||'', false);
+    }
+  });
+  toast('🔊 Audio activado');
+};
 
 function pauseAudioLocal(layer){
   audioEls[layer].pause();
@@ -6245,7 +6304,7 @@ function spawnSpellEffect(tokenId, type){
       delete activeAreas[tokenId];
       remove(r('areas/'+tokenId));
       draw();
-    }, 800); // area vanishes quickly, particles linger
+    }, 1500); // area and particles disappear together
   } else {
     // No area — spawn on token (personal or no area set)
     var x=tok.x*CELL+CELL/2, y=tok.y*CELL+CELL/2;
@@ -6259,7 +6318,7 @@ function spawnBurst(cx2, cy2, maxR, def, type, count){
     var angle=Math.random()*Math.PI*2;
     var r2=(0.2+Math.random()*0.8)*maxR;
     var speed=(0.2+Math.random()*0.5)*CELL*0.05;
-    var life=2.0+Math.random()*2.0; // 2-4 seconds worth
+    var life=0.5+Math.random()*0.3; // ~1.5s real time
     spellEffects.push({
       x:cx2+Math.cos(angle)*r2*0.2,
       y:cy2+Math.sin(angle)*r2*0.2,
@@ -6272,7 +6331,7 @@ function spawnBurst(cx2, cy2, maxR, def, type, count){
   }
   // Multiple expanding rings for drama
   for(var r=0;r<3;r++){
-    var rLife=0.8+r*0.4;
+    var rLife=0.4+r*0.15;
     spellEffects.push({x:cx2,y:cy2,vx:0,vy:0,size:0,
       maxSize:maxR*(0.4+r*0.35),
       color:def.colors[r%def.colors.length],
@@ -6303,13 +6362,13 @@ function spawnAreaEffect(area, def, type){
         x:px,y:py,vx:Math.cos(a)*speed*0.3,vy:Math.sin(a)*speed*0.3,
         size:(0.07+Math.random()*0.1)*CELL,
         color:def.colors[Math.floor(Math.random()*def.colors.length)],
-        life:2.5+Math.random()*2.0,maxLife:4.5,type:type,
+        life:0.5+Math.random()*0.3,maxLife:0.8,type:type,
         spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
       });
     }
     // Ring at origin
     spellEffects.push({x:ax,y:ay,vx:0,vy:0,size:0,maxSize:r2,
-      color:def.colors[0],life:3.0,maxLife:3.0,isRing:true,type:type});
+      color:def.colors[0],life:0.6,maxLife:0.6,isRing:true,type:type});
 
   } else if(area.shape==='line'){
     // Particles along the line
@@ -6323,7 +6382,7 @@ function spawnAreaEffect(area, def, type){
         x:px,y:py,vx:(Math.random()-0.5)*CELL*0.04,vy:(Math.random()-0.5)*CELL*0.04,
         size:(0.06+Math.random()*0.1)*CELL,
         color:def.colors[Math.floor(Math.random()*def.colors.length)],
-        life:2.5+Math.random()*2.0,maxLife:4.5,type:type,
+        life:0.5+Math.random()*0.3,maxLife:0.8,type:type,
         spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
       });
     }
@@ -6339,7 +6398,7 @@ function spawnAreaEffect(area, def, type){
         x:wx,y:wy,vx:(Math.random()-0.5)*CELL*0.03,vy:(Math.random()-0.5)*CELL*0.03,
         size:(0.06+Math.random()*0.1)*CELL,
         color:def.colors[Math.floor(Math.random()*def.colors.length)],
-        life:2.5+Math.random()*2.0,maxLife:4.5,type:type,
+        life:0.5+Math.random()*0.3,maxLife:0.8,type:type,
         spin:(Math.random()-0.5)*0.2,rot:Math.random()*Math.PI*2
       });
     }
@@ -7113,8 +7172,14 @@ window.mobileSendChat = function(){
   if(!inp) return;
   var txt=inp.value.trim(); if(!txt) return;
   inp.value='';
-  var m=txt.match(/^\/r(?:oll)?\s+(.+)/i);
-  if(m){ rollFx(m[1].trim()); return; }
+  var mRoll=txt.match(/^\/r(?:oll)?\s+(.+)/i);
+  if(mRoll){ rollFx(mRoll[1].trim()); return; }
+  var mSecret=txt.match(/^\/rs(?:ecret)?\s+(.+)/i);
+  if(mSecret){ rollFx(mSecret[1].trim(), true); return; }
+  var mWhisper=txt.match(/^\/w(?:hisper)?\s+(.+)/i);
+  if(mWhisper){ pushMsg({who:myName,text:'🔇 '+mWhisper[1].trim(),type:'whisper',whisper:true}); return; }
+  var mEmote=txt.match(/^\/me\s+(.+)/i);
+  if(mEmote){ pushMsg({who:myName,text:'✦ '+myName+' '+mEmote[1].trim(),type:'emote'}); return; }
   pushMsg({who:myName,text:txt,type:'normal'});
 };
 
