@@ -766,17 +766,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div class="tb-sep dm-only"></div>
 
     <!-- GRUPO: Objetos (DM) -->
-    <button class="tbtn dm-only" onclick="openMapModal()" title="Cargar mapa">
-      🗺<div class="tlabel">Mapa</div>
+    <button class="tbtn dm-only" onclick="openAddProp()" title="Añadir imagen o mapa de fondo">
+      🖼<div class="tlabel">Imagen</div>
     </button>
     <button class="tbtn dm-only" onclick="openAddToken()" title="Añadir token">
       ＋<div class="tlabel">Token</div>
     </button>
     <button class="tbtn dm-only" onclick="openMonsterModal()" title="Añadir monstruo SRD">
       🐉<div class="tlabel">Bestia</div>
-    </button>
-    <button class="tbtn dm-only" onclick="openAddProp()" title="Añadir imagen/prop">
-      🖼<div class="tlabel">Prop</div>
     </button>
 
     <div class="tb-sep dm-only"></div>
@@ -1169,24 +1166,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   </div>
 </div>
 
-<!-- ADD PROP MODAL -->
-<div class="mbg" id="prop_modal">
-  <div class="mcard">
-    <h2>🖼 AÑADIR IMAGEN (PROP)</h2>
-    <label>URL de la imagen</label>
-    <input id="prop_url" placeholder="Discord, Drive, GitHub..." type="text">
-    <label>Etiqueta (opcional)</label>
-    <input id="prop_label" placeholder="Ej: Dragón, Puerta, Cofre..." maxlength="32">
-    <label>Tamaño inicial (px en el mapa)</label>
-    <input id="prop_size" type="number" value="200" min="40" max="2000">
-    <p style="font-size:.7rem;color:var(--text3);margin:-4px 0 6px">Una vez colocado puedes moverlo, escalarlo y rotarlo directamente en el mapa.</p>
-    <div class="mbtns">
-      <button class="bprimary" onclick="addProp()">＋ Añadir al mapa</button>
-      <button class="bcancel" onclick="closeModal('prop_modal')">Cancelar</button>
-    </div>
-  </div>
-</div>
-
 <!-- MONSTER MODAL -->
 <div class="mbg" id="monster_modal">
   <div class="mcard" style="width:480px;max-height:85vh;display:flex;flex-direction:column">
@@ -1253,20 +1232,77 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   </div>
 </div>
 
-<!-- PROP MODAL -->
+<!-- UNIFIED ADD IMAGE MODAL -->
 <div class="mbg" id="prop_modal">
-  <div class="mcard">
-    <h2>🖼 AÑADIR PROP / IMAGEN</h2>
-    <label>URL de la imagen</label>
-    <input id="prop_url" placeholder="https://... (Discord, Drive, GitHub)" style="margin-bottom:4px">
-    <p style="font-size:.68rem;color:var(--text3);margin-bottom:10px">Usa el mismo tipo de link que para los mapas.</p>
-    <label>Nombre / etiqueta</label>
-    <input id="prop_name" placeholder="Ej: Cofre, Goblin Jefe, Carta..." maxlength="24">
-    <label>Tamaño inicial (casillas)</label>
-    <input id="prop_size" type="number" value="2" min="1" max="20">
-    <div class="mbtns">
-      <button class="bprimary" onclick="addProp()">🖼 Añadir al mapa</button>
-      <button class="bcancel" onclick="closeModal('prop_modal')">Cancelar</button>
+  <div class="mcard" style="width:400px">
+    <h2>🖼 AÑADIR AL MAPA</h2>
+
+    <!-- TABS -->
+    <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:12px">
+      <div id="addtab_prop" onclick="switchAddTab('prop')"
+        style="flex:1;padding:7px;text-align:center;font-size:.78rem;cursor:pointer;border-bottom:2px solid var(--gold);color:var(--gold);user-select:none">
+        🖼 Imagen libre
+      </div>
+      <div id="addtab_map" onclick="switchAddTab('map')"
+        style="flex:1;padding:7px;text-align:center;font-size:.78rem;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);user-select:none">
+        🗺 Fondo del mapa
+      </div>
+    </div>
+
+    <!-- PANEL IMAGEN LIBRE (prop) -->
+    <div id="addpanel_prop">
+      <div id="prop_drop"
+        style="border:2px dashed var(--border);border-radius:var(--radius);padding:14px;text-align:center;margin-bottom:8px;cursor:pointer;background:var(--bg3);transition:border-color .2s"
+        ondragover="event.preventDefault();this.style.borderColor='var(--gold)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="handlePropDrop(event)"
+        onclick="document.getElementById('prop_file').click()">
+        <div style="font-size:1.2rem;margin-bottom:3px">🗂</div>
+        <div style="font-size:.8rem;color:var(--text2)">Arrastra o <span style="color:var(--gold);text-decoration:underline">haz clic para buscar</span></div>
+        <div id="prop_filename" style="font-size:.7rem;color:var(--gold2);margin-top:4px"></div>
+      </div>
+      <input type="file" id="prop_file" accept="image/*" style="display:none" onchange="loadPropFile(event)">
+      <label>O pega una URL</label>
+      <input id="prop_url" placeholder="https://cdn.discordapp.com/..." style="margin-bottom:8px">
+      <label>Nombre</label>
+      <input id="prop_name" placeholder="Cofre, Puerta, Referencia..." maxlength="24">
+      <label>Tamaño inicial (casillas)</label>
+      <input id="prop_size" type="number" value="4" min="1" max="40">
+      <p style="font-size:.68rem;color:var(--text3);margin:2px 0 8px">Muévela, escálala y rótala directamente en el mapa.</p>
+      <div class="mbtns">
+        <button class="bprimary" onclick="addProp()">＋ Colocar imagen</button>
+        <button class="bcancel" onclick="closeModal('prop_modal')">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- PANEL FONDO DEL MAPA -->
+    <div id="addpanel_map" style="display:none">
+      <div id="map_drop2"
+        style="border:2px dashed var(--border);border-radius:var(--radius);padding:14px;text-align:center;margin-bottom:8px;cursor:pointer;background:var(--bg3);transition:border-color .2s"
+        ondragover="event.preventDefault();this.style.borderColor='var(--gold)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="handleMapDrop2(event)"
+        onclick="document.getElementById('map_file_input2').click()">
+        <div style="font-size:1.2rem;margin-bottom:3px">🗂</div>
+        <div style="font-size:.8rem;color:var(--text2)">Arrastra o <span style="color:var(--gold);text-decoration:underline">haz clic para buscar</span></div>
+        <div id="drop_filename2" style="font-size:.7rem;color:var(--gold2);margin-top:4px"></div>
+      </div>
+      <input type="file" id="map_file_input2" accept="image/*" style="display:none" onchange="loadMapFile2(event)">
+      <div id="upload_share_row2" style="display:none;margin-bottom:8px">
+        <button id="imgur_btn2" class="blg gold" style="width:100%;padding:7px;font-size:.8rem" onclick="uploadToImgur2()">
+          ☁ Subir para compartir con jugadores
+        </button>
+        <p style="font-size:.67rem;color:var(--text3);margin-top:3px;text-align:center">Se sube anónimamente a Imgur</p>
+      </div>
+      <label>O pega una URL</label>
+      <input type="text" id="map_url_input2" placeholder="https://cdn.discordapp.com/...">
+      <label style="margin-top:4px">Tamaño de celda (px)</label>
+      <input type="number" id="cell_size_input2" value="70" min="20" max="300">
+      <p style="font-size:.68rem;color:var(--text3);margin:2px 0 8px">Ajusta hasta que el grid coincida. Típico: 70-140px.</p>
+      <div class="mbtns">
+        <button class="bprimary" onclick="applyMap2()">✓ Cargar como fondo</button>
+        <button class="bcancel" onclick="closeModal('prop_modal')">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3218,6 +3254,7 @@ function subscribe(){
   onValue(r('mapUrl'),s=>{
     const url=s.val();
     if(url) loadSharedMap(url);
+    else { mapOK=false; mapWasFit=false; draw(); }
   });
   onValue(r('cellSize'),s=>{if(s.val()){CELL=s.val();draw();}});
   onValue(r('mapOffX2'),s=>{if(s.val()!==null){mapOffX2=s.val();draw();}});
@@ -5281,12 +5318,124 @@ var propPinching = false;
 var areaPinch0 = null; // {angle, areaAngle} for two-finger area rotation
 var propPinch0 = {dist:0, angle:0, w:1, h:1, rot:0}; // initial state when pinch started
 
+window.switchAddTab=function(tab){
+  ['prop','map'].forEach(function(t){
+    document.getElementById('addpanel_'+t).style.display = t===tab?'block':'none';
+    var el=document.getElementById('addtab_'+t);
+    el.style.borderBottomColor = t===tab?'var(--gold)':'transparent';
+    el.style.color = t===tab?'var(--gold)':'var(--text3)';
+  });
+};
+
 window.openAddProp = function(){
   document.getElementById('prop_url').value='';
   document.getElementById('prop_name').value='';
-  document.getElementById('prop_size').value='2';
+  document.getElementById('prop_size').value='4';
+  document.getElementById('prop_filename').textContent='';
+  document.getElementById('prop_drop').style.borderColor='var(--border)';
+  document.getElementById('prop_file').value='';
+  // Reset map tab
+  document.getElementById('map_url_input2').value='';
+  document.getElementById('cell_size_input2').value='70';
+  document.getElementById('drop_filename2').textContent='';
+  document.getElementById('map_drop2').style.borderColor='var(--border)';
+  document.getElementById('upload_share_row2').style.display='none';
+  var btn2=document.getElementById('imgur_btn2');
+  if(btn2){btn2.textContent='☁ Subir para compartir con jugadores';btn2.disabled=false;btn2.style.color='';btn2.style.borderColor='';}
+  pendingMapData=null;
+  switchAddTab('prop');
   document.getElementById('prop_modal').classList.add('open');
-  document.getElementById('prop_url').focus();
+};
+
+window.handlePropDrop=function(e){
+  e.preventDefault();
+  e.currentTarget.style.borderColor='var(--border)';
+  var file=e.dataTransfer.files[0];
+  if(file&&file.type.startsWith('image/')) processPropFile(file);
+};
+
+window.loadPropFile=function(e){
+  var file=e.target.files[0]; if(!file)return;
+  processPropFile(file);
+};
+
+function processPropFile(file){
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var img=new Image();
+    img.onload=function(){
+      var MAX=1024;
+      var w=img.width, h=img.height;
+      if(w>MAX||h>MAX){var ratio=Math.min(MAX/w,MAX/h);w=Math.round(w*ratio);h=Math.round(h*ratio);}
+      var c=document.createElement('canvas');
+      c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      document.getElementById('prop_url').value=c.toDataURL('image/jpeg',0.88);
+      document.getElementById('prop_filename').textContent='✓ '+file.name;
+      document.getElementById('prop_drop').style.borderColor='var(--gold)';
+      if(!document.getElementById('prop_name').value)
+        document.getElementById('prop_name').value=file.name.replace(/\.[^.]+$/,'').substring(0,24);
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Map tab in unified modal — reuses map drop zone but needs separate Imgur button
+window.uploadToImgur2=function(){
+  if(!pendingMapData){toast('Selecciona una imagen primero');return;}
+  var btn=document.getElementById('imgur_btn2');
+  btn.textContent='⏳ Subiendo...'; btn.disabled=true;
+  var base64=pendingMapData.split(',')[1];
+  fetch('https://api.imgur.com/3/image',{
+    method:'POST',
+    headers:{'Authorization':'Client-ID 546c25a59c58ad7','Content-Type':'application/json'},
+    body:JSON.stringify({image:base64,type:'base64'})
+  }).then(function(r){return r.json();}).then(function(data){
+    if(data.success){
+      document.getElementById('map_url_input2').value=data.data.link;
+      btn.textContent='✓ Subido — toca "Cargar"';
+      btn.style.borderColor='var(--gold)'; btn.style.color='var(--gold)';
+      toast('✓ Imagen subida. Toca "Cargar como fondo".');
+    } else {
+      btn.textContent='❌ Error. Usa URL manual.'; btn.disabled=false;
+    }
+  }).catch(function(){btn.textContent='❌ Sin conexión.'; btn.disabled=false;});
+};
+
+window.handleMapDrop2=function(e){
+  e.preventDefault();
+  e.currentTarget.style.borderColor='var(--border)';
+  var file=e.dataTransfer.files[0];
+  if(file&&file.type.startsWith('image/')) readMapFile2(file);
+};
+
+window.loadMapFile2=function(e){
+  var file=e.target.files[0]; if(!file)return;
+  readMapFile2(file);
+};
+
+function readMapFile2(file){
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    pendingMapData=ev.target.result;
+    document.getElementById('drop_filename2').textContent='✓ '+file.name;
+    document.getElementById('map_drop2').style.borderColor='var(--gold)';
+    document.getElementById('map_url_input2').value='';
+    document.getElementById('upload_share_row2').style.display='block';
+  };
+  reader.onerror=function(){toast('❌ Error leyendo el archivo');};
+  reader.readAsDataURL(file);
+}
+
+window.applyMap2=function(){
+  var url=document.getElementById('map_url_input2').value.trim();
+  var cs=parseInt(document.getElementById('cell_size_input2').value)||70;
+  if(!url){toast('Selecciona una imagen o pega una URL');return;}
+  url=convertDriveUrl(url);
+  CELL=cs;
+  applyMapData(url,true);
+  closeModal('prop_modal');
 };
 
 window.addProp = function(){
@@ -7121,10 +7270,9 @@ var mobileTabContent = {
         +'<button class="tbtn" onclick="clearDrawing();closeMobilePanel()" style="width:100%;height:48px;border-radius:6px;border:1px solid var(--border)">🗑<div class="tlabel">Limpiar</div></button>'
         +'</div>'
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
-        +'<button class="hbtn" onclick="openMapModal();closeMobilePanel()" style="padding:8px">🗺 Mapa</button>'
+        +'<button class="hbtn" onclick="openAddProp();closeMobilePanel()" style="padding:8px">🖼 Imagen/Mapa</button>'
         +'<button class="hbtn" onclick="openAddToken();closeMobilePanel()" style="padding:8px">＋ Token</button>'
         +'<button class="hbtn" onclick="openMonsterModal();closeMobilePanel()" style="padding:8px">🐉 Monstruo</button>'
-        +'<button class="hbtn" onclick="openAddProp();closeMobilePanel()" style="padding:8px">🖼 Prop</button>'
         +'<button class="hbtn" onclick="clearFog();closeMobilePanel()" style="padding:8px">☀ Revelar todo</button>'
         +'<button class="hbtn" onclick="fillFog();closeMobilePanel()" style="padding:8px">🌑 Cubrir todo</button>'
         +'</div>';
