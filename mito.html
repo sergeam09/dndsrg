@@ -115,16 +115,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   animation:ping-grow 1.2s ease-out forwards;
 }
 
-/* Turn banner */
+/* Turn banner — appears top-right near sidebar */
 #turn_banner{
-  position:absolute;top:44px;left:50%;transform:translateX(-50%) translateY(-60px);
+  position:fixed;top:52px;right:232px;transform:translateY(-60px);
   background:rgba(200,168,75,.15);border:1px solid var(--gold);
   border-radius:8px;padding:6px 18px;font-size:.85rem;color:var(--gold2);
   pointer-events:none;z-index:20;transition:transform .4s cubic-bezier(.34,1.56,.64,1);
   white-space:nowrap;font-family:var(--font);letter-spacing:1px;
   display:none;
 }
-#turn_banner.show{transform:translateX(-50%) translateY(0)}
+#turn_banner.show{transform:translateY(0)}
 
 /* HP Quick modal */
 #hp_quick{
@@ -141,10 +141,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 #ping_dot .ping-center{position:absolute;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);animation:ping-pulse 0.6s ease-in-out 3}
 #ping_dot .ping-label{position:absolute;transform:translate(-50%,16px);font-size:.65rem;white-space:nowrap;font-family:var(--font);font-weight:bold;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 
-/* Turn banner */
-#turn_banner{position:absolute;top:44px;left:50%;transform:translateX(-50%) translateY(-60px);background:rgba(13,15,20,.95);border:1px solid var(--gold);border-radius:8px;padding:8px 20px;z-index:30;pointer-events:none;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.6);transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s}
-#turn_banner.show{transform:translateX(-50%) translateY(0)}
-#turn_banner.hide{transform:translateX(-50%) translateY(-60px);opacity:0}
+/* Turn banner — top-right near sidebar, not over canvas */
+#turn_banner{position:fixed;top:52px;right:232px;transform:translateY(-60px);background:rgba(13,15,20,.95);border:1px solid var(--gold);border-radius:8px;padding:8px 20px;z-index:30;pointer-events:none;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.6);transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s}
+#turn_banner.show{transform:translateY(0)}
+#turn_banner.hide{transform:translateY(-60px);opacity:0}
 
 /* Quick HP popup */
 #quickhp{position:fixed;background:var(--bg2);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;z-index:600;display:none;box-shadow:0 4px 20px rgba(0,0,0,.7);min-width:160px}
@@ -200,8 +200,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 /* Draw tool */
 .draw-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s;flex-shrink:0}
 .draw-swatch:hover,.draw-swatch.sel{transform:scale(1.3);border-color:#fff}
-#draw_ctrl{display:none}
-#draw_ctrl.show{display:flex !important}
+#ctx_bar{display:none;position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(13,15,20,.95);border:1px solid var(--gold);border-radius:8px;padding:8px 16px;z-index:50;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+#ctx_bar.show{display:flex !important}
+#ctx_draw,#ctx_prop{display:none;align-items:center;gap:8px;flex-wrap:wrap}
+#ctx_draw.show,#ctx_prop.show{display:flex}
 
 /* Laser animation */
 @keyframes laser-pulse{from{opacity:1;transform:scale(1)}to{opacity:0.6;transform:scale(1.3)}}
@@ -430,7 +432,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   #notes_panel{top:8px;right:8px;bottom:auto;width:calc(100vw - 100px)}
 
   /* Prop ctrl panel above tabs */
-  #prop_ctrl{bottom:56px}
+  #ctx_bar{bottom:62px}
 
   /* Dice overlay centered properly */
   #dice_overlay{top:40%;bottom:auto}
@@ -509,7 +511,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   /* Push floating UI above bottom tabs */
   #room_bar  { bottom:56px !important }
   #tool_ind  { bottom:92px !important }
-  #prop_ctrl { bottom:60px !important }
+  #ctx_bar { bottom:64px !important }
   #notes_panel { top:8px; right:8px; width:min(320px, calc(100vw - 16px)) }
 
   /* Dice bar hidden — inside chat panel */
@@ -587,7 +589,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 
   #room_bar{bottom:56px !important}
   #tool_ind{bottom:92px !important}
-  #prop_ctrl{bottom:60px !important}
+  #ctx_bar{bottom:64px !important}
   #notes_panel{top:8px;right:8px;width:min(320px,calc(100vw - 16px))}
 }
 
@@ -818,23 +820,51 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <span id="brush_val">3</span>
     </div>
 
-    <!-- Draw toolbar (appears when draw/erase tool active) -->
-    <div id="draw_ctrl" style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(13,15,20,.92);border:1px solid var(--border);border-radius:6px;padding:8px 12px;display:none;align-items:center;gap:8px;z-index:10;flex-wrap:wrap">
-      <span style="font-size:.68rem;color:var(--text3);letter-spacing:1px">COLOR:</span>
-      <div id="draw_colors" style="display:flex;gap:4px">
-        <div class="draw-swatch sel" style="background:#e74c3c" data-color="#e74c3c" onclick="setDrawColor(this)"></div>
-        <div class="draw-swatch" style="background:#e67e22" data-color="#e67e22" onclick="setDrawColor(this)"></div>
-        <div class="draw-swatch" style="background:#f1c40f" data-color="#f1c40f" onclick="setDrawColor(this)"></div>
-        <div class="draw-swatch" style="background:#2ecc71" data-color="#2ecc71" onclick="setDrawColor(this)"></div>
-        <div class="draw-swatch" style="background:#3498db" data-color="#3498db" onclick="setDrawColor(this)"></div>
-        <div class="draw-swatch" style="background:#9b59b6" data-color="#9b59b6" onclick="setDrawColor(this)"></div>
-        <div class="draw-swatch" style="background:#ffffff" data-color="#ffffff" onclick="setDrawColor(this)"></div>
-        <div class="draw-swatch" style="background:#1a1a2e" data-color="#1a1a2e" onclick="setDrawColor(this)"></div>
+    <!-- Unified context bar (bottom, shows draw controls OR prop controls) -->
+    <div id="ctx_bar">
+      <!-- Draw section: shown when draw/erase tool active and no prop selected -->
+      <div id="ctx_draw">
+        <span style="font-size:.68rem;color:var(--text3);letter-spacing:1px">COLOR:</span>
+        <div id="draw_colors" style="display:flex;gap:4px">
+          <div class="draw-swatch sel" style="background:#e74c3c" data-color="#e74c3c" onclick="setDrawColor(this)"></div>
+          <div class="draw-swatch" style="background:#e67e22" data-color="#e67e22" onclick="setDrawColor(this)"></div>
+          <div class="draw-swatch" style="background:#f1c40f" data-color="#f1c40f" onclick="setDrawColor(this)"></div>
+          <div class="draw-swatch" style="background:#2ecc71" data-color="#2ecc71" onclick="setDrawColor(this)"></div>
+          <div class="draw-swatch" style="background:#3498db" data-color="#3498db" onclick="setDrawColor(this)"></div>
+          <div class="draw-swatch" style="background:#9b59b6" data-color="#9b59b6" onclick="setDrawColor(this)"></div>
+          <div class="draw-swatch" style="background:#ffffff" data-color="#ffffff" onclick="setDrawColor(this)"></div>
+          <div class="draw-swatch" style="background:#1a1a2e" data-color="#1a1a2e" onclick="setDrawColor(this)"></div>
+        </div>
+        <span style="font-size:.68rem;color:var(--text3);letter-spacing:1px">GROSOR:</span>
+        <input type="range" id="draw_size" min="2" max="40" value="6" style="width:70px;accent-color:var(--gold)"
+          oninput="window._setDrawSize(this.value);document.getElementById('draw_size_val').textContent=this.value">
+        <span id="draw_size_val" style="font-size:.72rem;color:var(--gold2);min-width:18px">6</span>
       </div>
-      <span style="font-size:.68rem;color:var(--text3);letter-spacing:1px">GROSOR:</span>
-      <input type="range" id="draw_size" min="2" max="40" value="6" style="width:70px;accent-color:var(--gold)"
-        oninput="window._setDrawSize(this.value);document.getElementById('draw_size_val').textContent=this.value">
-      <span id="draw_size_val" style="font-size:.72rem;color:var(--gold2);min-width:18px">6</span>
+      <!-- Prop section: shown when a prop/image is selected -->
+      <div id="ctx_prop">
+        <span id="prop_ctrl_name" style="font-size:.75rem;color:var(--gold2);font-weight:bold"></span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:.68rem;color:var(--text3)">Escala</span>
+          <button onclick="scaleProp(-0.1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">−</button>
+          <span id="prop_scale_val" style="font-size:.75rem;color:var(--gold2);min-width:36px;text-align:center">1.0×</span>
+          <button onclick="scaleProp(0.1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">＋</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:.68rem;color:var(--text3)">Rotar</span>
+          <button onclick="rotateProp(-15)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">↺</button>
+          <span id="prop_rot_val" style="font-size:.75rem;color:var(--gold2);min-width:36px;text-align:center">0°</span>
+          <button onclick="rotateProp(15)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">↻</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:.68rem;color:var(--text3)">Opacidad</span>
+          <input type="range" min="10" max="100" value="100" id="prop_opacity_range"
+            oninput="setPropOpacity(this.value)"
+            style="width:60px;accent-color:var(--gold)">
+        </div>
+        <button onclick="togglePropLock()" id="prop_lock_btn" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">🔓 Libre</button>
+        <button onclick="deleteProp()" style="background:rgba(192,57,43,.25);border:1px solid var(--red);color:var(--red);border-radius:4px;padding:4px 12px;cursor:pointer;font-size:.8rem;font-weight:bold">🗑 Eliminar</button>
+        <button onclick="deselectProp()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">✕</button>
+      </div>
     </div>
 
     <!-- Laser dot -->
@@ -1047,6 +1077,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div style="border-top:1px solid var(--border)">
       <div class="s-title" onclick="toggleSec('si')">⚔ Iniciativa <span id="si_arr">▾</span></div>
       <div class="s-body" id="si">
+        <div id="turn_indicator" style="display:none;margin-bottom:4px;padding:4px 8px;background:rgba(200,168,75,.1);border:1px solid var(--gold);border-radius:4px;font-size:.72rem;color:var(--text2);text-align:center">
+          ⚔ <span style="color:var(--text3)">Turno:</span> <span id="turn_ind_name" style="color:var(--gold2);font-weight:bold"></span>
+        </div>
         <div id="init_list"><p style="color:var(--text3);font-size:.75rem">Sin iniciativa</p></div>
         <div style="display:flex;gap:4px;margin-top:5px">
           <button class="hbtn" style="flex:1;font-size:.68rem" onclick="rollAllInit()">🎲 Tirar todas</button>
@@ -1307,31 +1340,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   </div>
 </div>
 
-<!-- PROP TRANSFORM PANEL (appears when prop selected) -->
-<div id="prop_ctrl" style="display:none;position:fixed;bottom:48px;left:50%;transform:translateX(-50%);background:rgba(13,15,20,.95);border:1px solid var(--gold);border-radius:8px;padding:10px 16px;z-index:50;display:none;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 4px 20px rgba(0,0,0,.6)">
-  <span id="prop_ctrl_name" style="font-size:.75rem;color:var(--gold2);font-weight:bold"></span>
-  <div style="display:flex;align-items:center;gap:6px">
-    <span style="font-size:.68rem;color:var(--text3)">Escala</span>
-    <button onclick="scaleProp(-0.1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">−</button>
-    <span id="prop_scale_val" style="font-size:.75rem;color:var(--gold2);min-width:36px;text-align:center">1.0×</span>
-    <button onclick="scaleProp(0.1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">＋</button>
-  </div>
-  <div style="display:flex;align-items:center;gap:6px">
-    <span style="font-size:.68rem;color:var(--text3)">Rotar</span>
-    <button onclick="rotateProp(-15)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">↺</button>
-    <span id="prop_rot_val" style="font-size:.75rem;color:var(--gold2);min-width:36px;text-align:center">0°</span>
-    <button onclick="rotateProp(15)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer">↻</button>
-  </div>
-  <div style="display:flex;align-items:center;gap:6px">
-    <span style="font-size:.68rem;color:var(--text3)">Opacidad</span>
-    <input type="range" min="10" max="100" value="100" id="prop_opacity_range"
-      oninput="setPropOpacity(this.value)"
-      style="width:60px;accent-color:var(--gold)">
-  </div>
-  <button onclick="togglePropLock()" id="prop_lock_btn" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">🔓 Libre</button>
-  <button onclick="deleteProp()" style="background:rgba(192,57,43,.15);border:1px solid var(--red);color:var(--red);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">🗑</button>
-  <button onclick="deselectProp()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">✕</button>
-</div>
 
 <!-- NEW SCENE MODAL -->
 <div class="mbg" id="scene_modal">
@@ -5630,10 +5638,30 @@ window.selectProp=function(id){
   draw();
 };
 
+// Unified context bar: shows draw controls OR prop controls, never both
+function updateCtxBar(){
+  var bar=document.getElementById('ctx_bar');
+  var cd=document.getElementById('ctx_draw');
+  var cp=document.getElementById('ctx_prop');
+  if(!bar||!cd||!cp) return;
+  if(selPropId && props[selPropId]){
+    cd.classList.remove('show');
+    cp.classList.add('show');
+    bar.classList.add('show');
+  } else if(tool==='draw'||tool==='erase'){
+    cp.classList.remove('show');
+    cd.classList.add('show');
+    bar.classList.add('show');
+  } else {
+    cd.classList.remove('show');
+    cp.classList.remove('show');
+    bar.classList.remove('show');
+  }
+}
+
 window.deselectProp=function(){
   selPropId=null;
-  var pc=document.getElementById('prop_ctrl');
-  if(pc) pc.style.display='none';
+  updateCtxBar();
   draw();
 };
 
@@ -5641,9 +5669,7 @@ function updatePropCtrl(){
   if(!selPropId) return;
   var prop=props[selPropId];
   if(!prop) return;
-  var pc=document.getElementById('prop_ctrl');
-  if(!pc) return;
-  pc.style.display='flex';
+  updateCtxBar();
   var nameEl=document.getElementById('prop_ctrl_name');
   if(nameEl) nameEl.textContent=(prop.locked?'🔒 ':'')+prop.name;
   var sv=document.getElementById('prop_scale_val');
@@ -6082,6 +6108,11 @@ function showTurnBanner(name,hp,hpMax){
     banner.classList.add('hide');
     banner.classList.remove('show');
   },2500);
+  // Update persistent sidebar indicator
+  var ind=document.getElementById('turn_indicator');
+  var indName=document.getElementById('turn_ind_name');
+  if(ind) ind.style.display='block';
+  if(indName) indName.textContent=name;
 }
 
 // ── CONNECT PING TO DOUBLE-CLICK ON EMPTY SPACE ─────────────
@@ -7197,8 +7228,7 @@ window.setTool=function(t){
   document.getElementById('brush_ctrl').style.display=(t==='fog'||t==='fogadd')?'block':'none';
 
   // Draw controls
-  const dc=document.getElementById('draw_ctrl');
-  if(dc){ t==='draw'||t==='erase' ? dc.classList.add('show') : dc.classList.remove('show'); }
+  updateCtxBar();
 
   // Clear laser when switching away
   if(t!=='laser') clearLaser();
