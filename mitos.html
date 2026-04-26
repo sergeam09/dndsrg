@@ -3942,7 +3942,6 @@ function mdown(e){
     pushLaser(sx,sy); resetLaserTimer(); return;
   }
   if(tool==='select'){
-    // Areas — check if clicking on one to drag
     var ha=hitArea(p.x,p.y);
     if(ha){
       areaDragId=ha;
@@ -3951,8 +3950,25 @@ function mdown(e){
       areaDragOy=p.y-a.y*CELL;
       return;
     }
-
-    // Tokens first — higher priority
+    // Props handles — máxima prioridad si hay prop seleccionado
+    if(isDM && selPropId && !props[selPropId]?.locked){
+      var h2=hitPropHandle(p.x,p.y);
+      if(h2){
+        var prop=props[selPropId];
+        propHandle={
+          type:h2.type, idx:h2.idx,
+          startX:p.x, startY:p.y,
+          startW:prop.w, startH:prop.h,
+          startRot:prop.rot||0,
+          cpx:prop.x*CELL+prop.w*CELL/2,
+          cpy:prop.y*CELL+prop.h*CELL/2,
+          aspectRatio:prop.w/prop.h
+        };
+        panning=false;
+        return;
+      }
+    }
+    // Tokens
     const h=hitTok(p);
     if(h){
       const tok=tokens[h];
@@ -3961,54 +3977,26 @@ function mdown(e){
         selTok=h; dragging=true; dragId=h;
         dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
         lastDragCol=tokens[h].x; lastDragRow=tokens[h].y;
-      } else {
-        selTok=h;
-      }
+      } else { selTok=h; }
       if(selPropId){ selPropId=null; deselectProp(); }
-      draw(); renderToks();
-    } else {
-      selTok=null;
-      if(selPropId){ selPropId=null; deselectProp(); }
-      // Solo activar panning si tampoco hay prop en esa posición
-      var hpCheck = isDM ? hitProp(p.x,p.y) : null;
-      if(!hpCheck){
-        panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
-      }
-      draw(); renderToks();
+      draw(); renderToks(); return;
     }
-
-    // Props (DM only) — only if no token at that position
-    if(isDM && !h){
-      // Check handles on selected prop first
-      if(selPropId && !props[selPropId]?.locked){
-        var h2=hitPropHandle(p.x,p.y);
-        if(h2){
-          var prop=props[selPropId];
-          propHandle={
-            type:h2.type, idx:h2.idx,
-            startX:p.x, startY:p.y,
-            startW:prop.w, startH:prop.h,
-            startRot:prop.rot||0,
-            cpx:prop.x*CELL+prop.w*CELL/2,
-            cpy:prop.y*CELL+prop.h*CELL/2,
-            aspectRatio:prop.w/prop.h
-          };
-          return;
-        }
-      }
-      // Hit test prop body
+    // Props body (DM only)
+    if(isDM){
       var hp=hitProp(p.x,p.y);
       if(hp && !props[hp]?.locked){
         selPropId=hp; selTok=null;
-        propDragging=true;
-        panning=false;
+        propDragging=true; panning=false;
         propDragOffX=p.x-props[hp].x*CELL;
         propDragOffY=p.y-props[hp].y*CELL;
         updatePropCtrl(); draw(); return;
       }
-      // Clicked empty space — deselect prop
-      if(selPropId){ selPropId=null; deselectProp(); }
     }
+    // Espacio vacío — panning
+    selTok=null;
+    if(selPropId){ selPropId=null; deselectProp(); }
+    panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
+    draw(); renderToks();
   } else if(tool==='fog'&&isDM)   { brushFog(cl,true); }
   else if(tool==='fogadd'&&isDM)  { brushFog(cl,false); }
   else if(tool==='measure') { ms={c:cl.c,r:cl.r}; me=null; }
