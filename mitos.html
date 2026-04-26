@@ -5463,6 +5463,15 @@ window.addProp = function(){
     rot: 0, opacity: 1, locked: false, hidden: true
   };
   set(ref(db,'rooms/'+room+'/props/'+id), prop);
+
+  // Reset drag state
+  dragging = false;
+  dragId = null;
+  propDragging = false;
+  propHandle = null;
+  areaDragId = null;
+  selPropId = id;
+
   closeModal('prop_modal');
   toast('🖼 "'+name+'" añadido al mapa');
 };
