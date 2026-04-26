@@ -3969,7 +3969,11 @@ function mdown(e){
     } else {
       selTok=null;
       if(selPropId){ selPropId=null; deselectProp(); }
-      panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
+      // Solo activar panning si tampoco hay prop en esa posición
+      var hpCheck = isDM ? hitProp(p.x,p.y) : null;
+      if(!hpCheck){
+        panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
+      }
       draw(); renderToks();
     }
 
