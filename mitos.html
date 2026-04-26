@@ -862,6 +862,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
             style="width:60px;accent-color:var(--gold)">
         </div>
         <button onclick="togglePropLock()" id="prop_lock_btn" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">🔓 Libre</button>
+        <button onclick="togglePropHidden()" id="prop_hidden_btn" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">🙈 Ocultar</button>
         <button onclick="deleteProp()" style="background:rgba(192,57,43,.25);border:1px solid var(--red);color:var(--red);border-radius:4px;padding:4px 12px;cursor:pointer;font-size:.8rem;font-weight:bold">🗑 Eliminar</button>
         <button onclick="deselectProp()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem">✕</button>
       </div>
@@ -5501,11 +5502,13 @@ function loadPropImage(id, url){
 function drawProps(){
   var list = Object.values(props).sort(function(a,b){return (a.zIndex||0)-(b.zIndex||0);});
   list.forEach(function(prop){
+    if((playerViewMode || !isDM) && prop.hidden) return;
+
     var img = propImgs[prop.id];
     var pw = prop.w*CELL, ph = prop.h*CELL;
 
     cx.save();
-    cx.globalAlpha = prop.opacity||1;
+    cx.globalAlpha = (prop.hidden && isDM) ? 0.4 : (prop.opacity||1);
     cx.translate(prop.x*CELL + pw/2, prop.y*CELL + ph/2);
     cx.rotate((prop.rot||0)*Math.PI/180);
 
@@ -5680,6 +5683,9 @@ function updatePropCtrl(){
   if(opEl) opEl.value=Math.round((prop.opacity||1)*100);
   var lb=document.getElementById('prop_lock_btn');
   if(lb) lb.textContent=prop.locked?'🔒 Fijo':'🔓 Libre';
+  var hb=document.getElementById('prop_hidden_btn');
+  if(hb) hb.textContent=prop.hidden?'👁 Mostrar':'🙈 Ocultar';
+  if(hb) hb.style.color=prop.hidden?'#2ecc71':'var(--text2)';
 }
 
 window.scaleProp=function(delta){
@@ -5706,6 +5712,15 @@ window.togglePropLock=function(){
   if(!selPropId) return;
   var prop=props[selPropId]; if(!prop) return;
   update(ref(db,'rooms/'+room+'/props/'+selPropId),{locked:!prop.locked});
+};
+
+window.togglePropHidden=function(){
+  if(!selPropId) return;
+  var prop=props[selPropId]; if(!prop) return;
+  prop.hidden=!prop.hidden;
+  set(r('props/'+selPropId+'/hidden'), prop.hidden);
+  updatePropCtrl();
+  draw();
 };
 
 window.deleteProp=function(){
