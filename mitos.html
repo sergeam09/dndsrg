@@ -3997,6 +3997,7 @@ function mdown(e){
       if(hp && !props[hp]?.locked){
         selPropId=hp; selTok=null;
         propDragging=true;
+        panning=false;
         propDragOffX=p.x-props[hp].x*CELL;
         propDragOffY=p.y-props[hp].y*CELL;
         updatePropCtrl(); draw(); return;
