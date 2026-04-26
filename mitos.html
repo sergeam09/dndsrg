@@ -3699,9 +3699,6 @@ function draw(){
   for(let x=0;x<=mw;x+=CELL){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,mh);cx.stroke();}
   for(let y=0;y<=mh;y+=CELL){cx.beginPath();cx.moveTo(0,y);cx.lineTo(mw,y);cx.stroke();}
 
-  // Fog
-  drawFogLayer(mw,mh);
-
   // Measure
   if(tool==='measure'&&ms&&me) drawMeasure();
 
@@ -3710,6 +3707,9 @@ function draw(){
 
   // Props (images) — below tokens, above map
   drawProps();
+
+  // Fog
+  drawFogLayer(mw,mh);
 
   // Tokens (including speech bubbles)
   Object.entries(tokens).forEach(([id,t])=>drawTok(id,t));
@@ -6301,7 +6301,7 @@ window.toggleAudio = function(layer){
     if(isDM){ var d={}; d[layer]={playing:true}; update(r('audio'),d); }
   } else {
     el.pause(); audioState[layer].playing=false; playing=false;
-    if(isDM){ var d={}; d[layer]={playing:false}; update(r('audio'),d); }
+    if(isDM){ var d={}; d[layer]={playing:false,ts:Date.now()}; update(r('audio'),d); }
   }
   // Update all play buttons (desktop + mobile)
   [layer+'_playbtn','mob_'+layer+'_playbtn'].forEach(function(id){
@@ -6316,7 +6316,7 @@ window.stopAudio = function(layer){
   audioState[layer]={playing:false,url:'',title:''};
   var nowEl=document.getElementById(layer+'_now');
   if(nowEl) nowEl.style.display='none';
-  if(isDM){ var d={}; d[layer]={url:'',playing:false}; update(r('audio'),d); }
+  if(isDM){ var d={}; d[layer]={url:'',playing:false,ts:Date.now()}; update(r('audio'),d); }
 };
 
 // Web Audio API for volume control (works on iOS unlike .volume)
