@@ -3384,6 +3384,15 @@ function initCanvas(){
   cv.addEventListener('touchend',   tend,   {passive:false});
   cv.addEventListener('touchcancel',tend,   {passive:false});
 
+  // Mouse leave — reset all drag states
+  cv.addEventListener('mouseleave', function(){
+    dragging=false; dragId=null; panning=false;
+    propDragging=false;
+    propHandle=null;
+    document.body.style.cursor='default';
+    draw();
+  });
+
   draw();
 }
 
@@ -3670,6 +3679,10 @@ function tend(e){
     draw();
   }
   dragging=false; dragId=null; panning=false;
+  propDragging=false;
+  propHandle=null;
+  propPinching=false;
+  document.body.style.cursor='default';
   touch1=null; touch2=null;
   document.getElementById('mtip').style.display='none';
 }
@@ -4145,6 +4158,9 @@ function mup(e){
     draw();
   }
   dragging=false; dragId=null; panning=false;
+  propDragging=false;
+  propHandle=null;
+  document.body.style.cursor='default';
   document.getElementById('mtip').style.display='none';
   if(tool==='measure'&&me){
     var mRef=r("measure"); setTimeout(function(){ update(mRef,{active:false}); },1500);
