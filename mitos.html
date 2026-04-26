@@ -3939,8 +3939,29 @@ function mdown(e){
       return;
     }
 
-    // Props first (DM only, on top visually)
-    if(isDM){
+    // Tokens first — higher priority
+    const h=hitTok(p);
+    if(h){
+      const tok=tokens[h];
+      const canMove=isDM||(tok&&(tok.addedBy===myName||tok.playerOwner===myName))||(h===myCharId)||false;
+      if(canMove){
+        selTok=h; dragging=true; dragId=h;
+        dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
+        lastDragCol=tokens[h].x; lastDragRow=tokens[h].y;
+      } else {
+        selTok=h;
+      }
+      if(selPropId){ selPropId=null; deselectProp(); }
+      draw(); renderToks();
+    } else {
+      selTok=null;
+      if(selPropId){ selPropId=null; deselectProp(); }
+      panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
+      draw(); renderToks();
+    }
+
+    // Props (DM only) — only if no token at that position
+    if(isDM && !h){
       // Check handles on selected prop first
       if(selPropId && !props[selPropId]?.locked){
         var h2=hitPropHandle(p.x,p.y);
@@ -3969,26 +3990,6 @@ function mdown(e){
       }
       // Clicked empty space — deselect prop
       if(selPropId){ selPropId=null; deselectProp(); }
-    }
-    // Tokens
-    const h=hitTok(p);
-    if(h){
-      const tok=tokens[h];
-      const canMove=isDM||(tok&&(tok.addedBy===myName||tok.playerOwner===myName))||(h===myCharId)||false;
-      if(canMove){
-        selTok=h; dragging=true; dragId=h;
-        dox=p.x-tokens[h].x*CELL; doy=p.y-tokens[h].y*CELL;
-        lastDragCol=tokens[h].x; lastDragRow=tokens[h].y;
-      } else {
-        selTok=h;
-      }
-      if(selPropId){ selPropId=null; deselectProp(); }
-      draw(); renderToks();
-    } else {
-      selTok=null;
-      if(selPropId){ selPropId=null; deselectProp(); }
-      panning=true; panX=e.clientX-ox; panY=e.clientY-oy;
-      draw(); renderToks();
     }
   } else if(tool==='fog'&&isDM)   { brushFog(cl,true); }
   else if(tool==='fogadd'&&isDM)  { brushFog(cl,false); }
