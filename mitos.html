@@ -75,6 +75,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 
 /* SIDEBAR */
 #sidebar{width:220px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width .2s}
+#sb_sections{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden}
+#sb_chat{flex:0 0 auto;display:flex;flex-direction:column;min-height:160px;max-height:45%}
 .s-title{padding:7px 10px;font-size:.65rem;letter-spacing:2px;color:var(--gold2);text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);user-select:none;-webkit-tap-highlight-color:transparent}
 .s-title:hover{background:var(--bg3)}
 .s-body{padding:6px 8px}
@@ -971,6 +973,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   </div>
 
   <div id="sidebar">
+    <div id="sb_sections">
     <!-- Audio (DM only) -->
     <div id="audio_section" style="border-top:1px solid var(--border);display:none">
       <div class="s-title" onclick="toggleSec('sau')">🎵 Audio <span id="sau_arr">▾</span></div>
@@ -1089,6 +1092,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
         </div>
       </div>
     </div>
+    </div><!-- /sb_sections -->
+    <div id="sb_chat">
     <!-- Chat / Dice tabs -->
     <div style="display:flex;border-top:1px solid var(--border);border-bottom:1px solid var(--border);flex-shrink:0">
       <div id="tab_chat" class="s-tab active" onclick="switchSideTab('chat')" style="flex:1;padding:5px;text-align:center;font-size:.7rem;cursor:pointer;color:var(--gold2);border-bottom:2px solid var(--gold)">💬 Chat</div>
@@ -1119,6 +1124,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
       <input id="cinput" placeholder="Mensaje, /r d20, /w susurro, /me acción, /rs secreto" onkeydown="if(event.key==='Enter')sendChat()">
       <button class="hbtn" onclick="sendChat()">↵</button>
     </div>
+    </div><!-- /sb_chat -->
   </div>
 
   <!-- MOBILE PANEL (slides up from bottom tabs) -->
