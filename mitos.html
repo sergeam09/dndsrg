@@ -1084,6 +1084,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
           <button class="hbtn" style="flex:1;font-size:.7rem" onclick="openNewScene()">＋ Nueva escena</button>
           <button class="hbtn" style="font-size:.7rem" onclick="openCurrentSceneNotes()" title="Notas de la escena activa">📝</button>
         </div>
+        <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px;display:flex;gap:4px">
+          <button class="hbtn" style="flex:1;font-size:.68rem" onclick="saveGame()" title="Exportar partida como JSON">💾 Guardar</button>
+          <label class="hbtn" style="flex:1;font-size:.68rem;cursor:pointer;text-align:center;display:flex;align-items:center;justify-content:center" title="Importar partida desde JSON">
+            📂 Cargar<input type="file" accept=".json" style="display:none" onchange="loadGame(this)">
+          </label>
+        </div>
       </div>
     </div>
     <!-- Tokens -->
@@ -5121,6 +5127,70 @@ function renderScenes(){
   }).join('');
 }
 
+// ── SAVE / LOAD GAME (DM only) ─────────────────────────────
+window.saveGame = async function(){
+  if(!isDM) return;
+  try{
+    var snap = await get(r(''));
+    var d = snap.val()||{};
+    var save = {
+      v: 1,
+      ts: Date.now(),
+      mapUrl:      d.mapUrl      || '',
+      cellSize:    d.cellSize    || 70,
+      mapOffX2:    d.mapOffX2    || 0,
+      mapOffY2:    d.mapOffY2    || 0,
+      mapScaleAdj: d.mapScaleAdj || 1,
+      fog:         d.fog         || null,
+      tokens:      d.tokens      || {},
+      areas:       d.areas       || {},
+      drawing:     d.drawing     || null,
+      currentTurn: d.currentTurn || null,
+      scenes:      d.scenes      || {}
+    };
+    var blob = new Blob([JSON.stringify(save,null,2)],{type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'mito-'+room+'-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
+    toast('💾 Partida exportada');
+  } catch(err){
+    toast('❌ Error al guardar: '+err.message);
+  }
+};
+
+window.loadGame = function(input){
+  if(!isDM) return;
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(e){
+    try{
+      var save = JSON.parse(e.target.result);
+      if(!save.v) throw new Error('Archivo inválido');
+      var upd = {};
+      upd.mapUrl      = save.mapUrl      || '';
+      upd.cellSize    = save.cellSize    || 70;
+      upd.mapOffX2    = save.mapOffX2    || 0;
+      upd.mapOffY2    = save.mapOffY2    || 0;
+      upd.mapScaleAdj = save.mapScaleAdj || 1;
+      upd.tokens      = save.tokens      || {};
+      upd.areas       = save.areas       || {};
+      if(save.fog)         upd.fog         = save.fog;
+      if(save.drawing)     upd.drawing     = save.drawing;
+      if(save.currentTurn) upd.currentTurn = save.currentTurn;
+      if(save.scenes)      upd.scenes      = save.scenes;
+      await update(r(''), upd);
+      toast('✅ Partida cargada');
+    } catch(err){
+      toast('❌ Error al cargar: '+err.message);
+    }
+    input.value='';
+  };
+  reader.readAsText(file);
+};
+
 // ── DM NOTES ───────────────────────────────────────────────
 var notesSceneId=null;
 var notesSaveTimer=null;
@@ -6619,12 +6689,14 @@ function spawnSpellEffect(tokenId, type){
   if(area && area.shape && area.shape!=='personal'){
     // Spawn particles across the area shape
     spawnAreaEffect(area, def, type);
-    // Remove area after effect
+    // Fade area out while particles play, then remove
+    fadingAreas[tokenId] = { start: Date.now(), duration: 2800 };
     setTimeout(function(){
       delete activeAreas[tokenId];
+      delete fadingAreas[tokenId];
       remove(r('areas/'+tokenId));
       draw();
-    }, 1500); // area and particles disappear together
+    }, 2800);
   } else {
     // No area — spawn on token (personal or no area set)
     var x=tok.x*CELL+CELL/2, y=tok.y*CELL+CELL/2;
@@ -6727,7 +6799,7 @@ function spawnAreaEffect(area, def, type){
 
 function animateSpells(){
   var hasActive=false;
-  var dt=0.006; // very slow = long lasting particles
+  var dt=0.004; // slower = particles last ~2.5-3s
   spellEffects=spellEffects.filter(function(p){
     p.life-=dt;
     if(p.life<=0) return false;
@@ -6832,6 +6904,7 @@ function subscribeSpells(){
 
 // ── AREA OF EFFECT SYSTEM ──────────────────────────────────
 var activeAreas = {}; // tokenId -> {shape,ft,x,y,angle,color,owner}
+var fadingAreas = {}; // tokenId -> {start, duration} for fade-out after spell cast
 var areaTokenId = null; // which token is being edited
 var areaDragging = false;
 var areaPlacing = false;  // true while area follows cursor before being fixed
@@ -6982,6 +7055,13 @@ function drawAreas(){
     var r4=(area.ft/5)*CELL; // ft to pixels (5ft per cell)
 
     cx.save();
+    // Apply fade-out if this area is fading after a spell cast
+    if(fadingAreas[id]){
+      var fd=fadingAreas[id];
+      var elapsed=Date.now()-fd.start;
+      var alpha=Math.max(0, 1-(elapsed/fd.duration));
+      cx.globalAlpha=alpha;
+    }
     cx.translate(px,py);
     cx.rotate((area.angle||0)*Math.PI/180);
 
